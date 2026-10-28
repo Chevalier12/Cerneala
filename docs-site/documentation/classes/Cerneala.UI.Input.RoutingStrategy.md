@@ -59,7 +59,27 @@ The strategy is fixed when the event is created with `RoutedEventRegistry.Regist
 | `Bubble` | The target element, then each ancestor up to the root. |
 | `Tunnel` | The root, then each descendant down to the target element. |
 
-`UIElement.RaiseEvent` sends a `Direct` event straight to the element's own handlers. It does the same for any strategy when the element has no root, or its root's route map does not contain it.
+`UIElement.RaiseEvent` sends a `Direct` event straight to the element's own handlers. It does the same for any strategy when the element has no root (it is detached).
+
+As in WPF's `UIElement.RaiseEvent`, the route of a `Bubble` or `Tunnel` event that an attached element raises follows the element's ancestors whatever their `IsEnabled` and `Visibility`: a disabled, hidden or collapsed element, or one under such an ancestor, still reaches every ancestor, and the handlers of a disabled ancestor run too. Those properties only keep pointer and keyboard input away from an element. For example, a `Thumb` that is disabled while it drags raises `Thumb.DragCompletedEvent`, and the `Slider` around it receives it:
+
+```csharp
+UIRoot root = new(200, 200);
+UIElement parent = new();
+UIElement child = new() { IsEnabled = false };
+root.VisualChildren.Add(parent);
+parent.VisualChildren.Add(child);
+
+List<string> calls = [];
+child.AddHandler(InputEvents.MouseDownEvent, (_, _) => calls.Add("child"));
+parent.AddHandler(InputEvents.MouseDownEvent, (_, _) => calls.Add("parent"));
+child.RaiseEvent(new MouseButtonEventArgs(InputEvents.MouseDownEvent, child, InputMouseButton.Left, 0, 0, 1));
+
+Console.WriteLine(string.Join(", ", calls));
+// child, parent
+```
+
+The route goes through projected content the same way as input does: from the content of a `Popup` or `ToolTip` to its owner, then along the owner's ancestors.
 
 Setting `RoutedEventArgs.Handled` to `true` does not shorten the route. The remaining elements are still visited, and only handlers registered with `handledEventsToo: true` run on them.
 

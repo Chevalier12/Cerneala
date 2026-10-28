@@ -1,6 +1,8 @@
 namespace Cerneala.UI.Aspect;
 
+using Cerneala.UI.Core;
 using Cerneala.UI.Detective;
+using Cerneala.UI.Motion.Core;
 using Cerneala.UI.Theming;
 
 internal sealed class AspectEngineElementState
@@ -11,6 +13,9 @@ internal sealed class AspectEngineElementState
     public ResolvedAspect? LastResolved { get; set; }
 
     public ThemeProvider? LastThemeProvider { get; set; }
+
+    // The Motion transitions that this engine started for the element, by property.
+    public Dictionary<UiProperty, MotionHandle> Animations { get; } = new(ReferenceEqualityComparer.Instance);
 
     public AspectRuleEvaluationSnapshot[] RuleEvaluations { get; set; } = [];
 

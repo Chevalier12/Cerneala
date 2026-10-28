@@ -133,21 +133,16 @@ public sealed class FocusManager
         return false;
     }
 
-    // Handlers of the frame can change the input route after the supplied route map was
-    // built. A focused element that they attached is routed over its root's current route
-    // map, and one that they removed from the route, for example by hiding an ancestor
-    // (#953), is checked against that map, which no longer contains it.
+    // Handlers of the frame can change the input route and its handlers after the supplied
+    // route map was built: attach the focused element, hide one of its ancestors (#953), or
+    // add or remove a handler (#1177). A focused element of a UIRoot is therefore routed over
+    // the root's current route map, as WPF builds each event route from the handlers
+    // registered when the event is raised.
     private static ElementInputRouteMap ResolveRouteMap(UIElement element, ElementInputRouteMap routeMap)
     {
-        if (element.Root is not UIRoot root)
-        {
-            return routeMap;
-        }
-
-        ElementInputRouteMap currentMap = root.InputCache.EnsureCurrent(root);
-        return routeMap.Contains(element) && currentMap.Contains(element)
-            ? routeMap
-            : currentMap;
+        return element.Root is UIRoot root
+            ? root.InputCache.EnsureCurrent(root)
+            : routeMap;
     }
 
     private void NotifyFocusChanged()
@@ -264,6 +259,13 @@ public sealed class FocusManager
                 routeMap.InputTree,
                 newFocus,
                 new KeyboardFocusChangedEventArgs(InputEvents.GotKeyboardFocusEvent, newFocus, oldFocus, newFocus));
+        }
+
+        // As WPF's FrameworkElement.OnGotFocus, an element that still has the keyboard focus when GotFocus is raised is
+        // brought into view first, so the ScrollViewers around it scroll until it is visible (#1158).
+        if (newFocus.IsKeyboardFocused)
+        {
+            newFocus.BringIntoView();
         }
 
         RoutedEventRouter.Raise(routeMap.InputTree, newFocus, new RoutedEventArgs(InputEvents.GotFocusEvent, newFocus));

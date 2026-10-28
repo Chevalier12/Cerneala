@@ -111,6 +111,56 @@ public sealed class RetainedInputBindingTests
         Assert.Equal(10, executions);
     }
 
+    // As WPF's KeyGesture.Matches, which checks the key of the KeyEventArgs: a key binding runs for the press of its own
+    // key, once, however many other keys go down in the same frame (#771).
+    [Theory]
+    [InlineData(new InputKey[] { }, new[] { InputKey.LeftCtrl, InputKey.S }, 1)]
+    [InlineData(new[] { InputKey.LeftCtrl }, new[] { InputKey.LeftCtrl, InputKey.S, InputKey.A }, 1)]
+    [InlineData(new[] { InputKey.LeftCtrl }, new[] { InputKey.LeftCtrl, InputKey.S }, 1)]
+    public void KeyBindingExecutesOncePerFrameWhenSeveralKeysGoDownTogether(
+        InputKey[] previousKeys, InputKey[] currentKeys, int expectedExecutions)
+    {
+        UIRoot root = RootWithFocusableChild(out UIElement child);
+        ElementInputBridge bridge = FocusedBridge(root, child);
+        int executions = 0;
+        child.InputBindings.Add(new KeyBinding(new ActionCommand(_ => executions++), InputKey.S, KeyModifiers.Control));
+        InputFrame frame = new(
+            PointerSnapshot.Empty,
+            PointerSnapshot.Empty,
+            KeyboardSnapshot.FromDownKeys(previousKeys),
+            KeyboardSnapshot.FromDownKeys(currentKeys),
+            []);
+
+        bridge.Dispatch(root, frame);
+
+        Assert.Equal(expectedExecutions, executions);
+    }
+
+    [Fact]
+    public void HandledKeyDownOfTheGestureKeyKeepsTheBindingFromRunningWhenAModifierGoesDownInTheSameFrame()
+    {
+        UIRoot root = RootWithFocusableChild(out UIElement child);
+        ElementInputBridge bridge = FocusedBridge(root, child);
+        int executions = 0;
+        child.InputBindings.Add(new KeyBinding(new ActionCommand(_ => executions++), InputKey.S, KeyModifiers.Control));
+        child.Handlers.AddHandler(InputEvents.KeyDownEvent, (_, args) =>
+        {
+            if (((KeyEventArgs)args).Key == InputKey.S)
+            {
+                args.Handled = true;
+            }
+        });
+
+        bridge.Dispatch(root, new InputFrame(
+            PointerSnapshot.Empty,
+            PointerSnapshot.Empty,
+            KeyboardSnapshot.Empty,
+            KeyboardSnapshot.FromDownKeys([InputKey.LeftCtrl, InputKey.S]),
+            []));
+
+        Assert.Equal(0, executions);
+    }
+
     private static ElementInputBridge FocusedBridge(UIRoot root, UIElement element)
     {
         ElementInputBridge bridge = new();

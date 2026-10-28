@@ -7,25 +7,41 @@ public sealed class ElementInputRouteBuilder
     {
         ArgumentNullException.ThrowIfNull(root);
 
-        return new RouteBuild(includeDisabled: false).Run(root);
+        return new RouteBuild(RouteScope.Input).Run(root);
     }
 
     public ElementInputRouteMap BuildForCommandState(UIRoot root)
     {
         ArgumentNullException.ThrowIfNull(root);
 
-        return new RouteBuild(includeDisabled: true).Run(root);
+        return new RouteBuild(RouteScope.CommandState).Run(root);
     }
 
-    private static bool ShouldInclude(UIElement element, bool includeDisabled)
+    // The routes of the events that elements raise themselves with UIElement.RaiseEvent. As WPF's event route, they
+    // contain every attached element, also a disabled, hidden or collapsed one, and the handlers of each run.
+    internal ElementInputRouteMap BuildForRaisedEvents(UIRoot root)
     {
-        return (includeDisabled || element.IsEnabled) && UIElementVisibility.ParticipatesInInput(element);
+        ArgumentNullException.ThrowIfNull(root);
+
+        return new RouteBuild(RouteScope.RaisedEvents).Run(root);
+    }
+
+    private enum RouteScope
+    {
+        // Enabled elements that take part in input: where pointer and keyboard input may go.
+        Input,
+
+        // As Input, also with disabled elements, whose handlers do not run.
+        CommandState,
+
+        // Every attached element, whatever its IsEnabled and Visibility.
+        RaisedEvents
     }
 
     // Projected content is a visual child of the root-owned layer, but routes like WPF Popup content: from its visual
     // root to the projection owner, then along the owner's ancestors. Traversal order stays visual, in the drawing order
     // of each element's visual children (Panel.ZIndex), and so does route order (and with it keyboard navigation order).
-    private sealed class RouteBuild(bool includeDisabled)
+    private sealed class RouteBuild(RouteScope scope)
     {
         private readonly ElementInputRouteMap map = new();
         private readonly Dictionary<IInputProjectionOwner, UIElement?> ownerRouteParents = new(ReferenceEqualityComparer.Instance);
@@ -40,7 +56,7 @@ public sealed class ElementInputRouteBuilder
 
         private void AddElementAndDescendants(UIElement element, UIElement? routeParent, UIElement? visualParent)
         {
-            if (!UIElementVisibility.ParticipatesInInput(element))
+            if (scope != RouteScope.RaisedEvents && !UIElementVisibility.ParticipatesInInput(element))
             {
                 return;
             }
@@ -66,9 +82,9 @@ public sealed class ElementInputRouteBuilder
             UIElement? routeParentForDescendants = routeParent;
             UIElement? visualParentForDescendants = visualParent;
 
-            if (element.IsAttached && ShouldInclude(element, includeDisabled))
+            if (element.IsAttached && ShouldInclude(element))
             {
-                map.Add(element, routeParent, visualParent);
+                map.Add(element, routeParent, visualParent, runsHandlers: scope == RouteScope.RaisedEvents || element.IsEnabled);
                 routeParentForDescendants = element;
                 visualParentForDescendants = element;
 
@@ -116,6 +132,16 @@ public sealed class ElementInputRouteBuilder
                         visualParentForDescendants);
                 }
             }
+        }
+
+        private bool ShouldInclude(UIElement element)
+        {
+            return scope switch
+            {
+                RouteScope.Input => element.IsEnabled && UIElementVisibility.ParticipatesInInput(element),
+                RouteScope.CommandState => UIElementVisibility.ParticipatesInInput(element),
+                _ => true
+            };
         }
 
         private void AddPendingProjections()

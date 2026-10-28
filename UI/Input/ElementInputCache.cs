@@ -9,6 +9,8 @@ public sealed class ElementInputCache
     private UIRoot? currentRoot;
     private int currentTreeVersion = -1;
     private bool isDirty = true;
+    private ElementInputRouteMap? raisedEventRoutes;
+    private ElementInputRouteMap? raisedEventRoutesSource;
 
     public ElementInputCache()
     {
@@ -54,6 +56,21 @@ public sealed class ElementInputCache
         RebuildCount++;
         isDirty = false;
         return RouteMap;
+    }
+
+    // The routes of the events that elements raise themselves (ElementInputRouteBuilder.BuildForRaisedEvents). They
+    // change with everything that changes the input routes, so they are built again, when first needed, after each
+    // rebuild of RouteMap.
+    internal ElementInputRouteMap EnsureRaisedEventRoutesCurrent(UIRoot root)
+    {
+        ElementInputRouteMap inputRoutes = EnsureCurrent(root);
+        if (raisedEventRoutes is null || !ReferenceEquals(raisedEventRoutesSource, inputRoutes))
+        {
+            raisedEventRoutes = routeBuilder.BuildForRaisedEvents(root);
+            raisedEventRoutesSource = inputRoutes;
+        }
+
+        return raisedEventRoutes;
     }
 
     public HitTestResult? HitTest(UIRoot root, float x, float y, HitTestFilter? filter = null)

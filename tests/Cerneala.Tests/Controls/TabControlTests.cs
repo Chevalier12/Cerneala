@@ -1743,6 +1743,66 @@ public sealed class TabControlTests
         Assert.Equal([template], templateChanges);
     }
 
+    // A SelectedContent or SelectedContentTemplate handler that selects another tab runs a nested update for that tab;
+    // the outer update for the old tab does not write the old tab's template over it, and with a ComponentTemplate the
+    // newly selected tab keeps its UIElement content released for the template (#1171).
+    [Theory]
+    [InlineData(true, false)]
+    [InlineData(false, false)]
+    [InlineData(true, true)]
+    [InlineData(false, true)]
+    public void SelectionChangeFromASelectedContentHandlerLeavesTheNewTabsContentAndTemplate(bool templated, bool templateHandler)
+    {
+        UIRoot root = new(300, 200);
+        ContentTemplate<string> tabTemplate = new("tab", key: null, priority: 0, _ => new FixedElement());
+        ContentTemplate<string> otherTemplate = new("other", key: null, priority: 0, _ => new FixedElement());
+        Border uElement = new();
+        TabItem first = new() { Header = "1", Content = "C1", ContentTemplate = tabTemplate };
+        TabItem second = new() { Header = "2", Content = uElement };
+        TabControl tabControl = new();
+        tabControl.SetItems(new[] { first, second });
+        tabControl.SelectedIndex = 0;
+        if (templated)
+        {
+            tabControl.ComponentTemplate = new ComponentTemplate<TabControl>("tabs", context =>
+            {
+                ContentPresenter presenter = new();
+                context.Bind(TabControl.SelectedContentProperty, presenter, ContentPresenter.ContentProperty);
+                context.Bind(TabControl.SelectedContentTemplateProperty, presenter, ContentPresenter.ContentTemplateProperty);
+                return presenter;
+            });
+        }
+
+        root.VisualChildren.Add(tabControl);
+        root.ProcessFrame();
+        tabControl.PropertyChanged += (_, args) =>
+        {
+            if (templateHandler
+                ? ReferenceEquals(args.Property, TabControl.SelectedContentTemplateProperty) && ReferenceEquals(args.NewValue, otherTemplate)
+                : ReferenceEquals(args.Property, TabControl.SelectedContentProperty) && Equals(args.NewValue, "C1b"))
+            {
+                tabControl.SelectedIndex = 1;
+            }
+        };
+
+        if (templateHandler)
+        {
+            first.ContentTemplate = otherTemplate;
+        }
+        else
+        {
+            first.Content = "C1b";
+        }
+
+        Assert.Equal(1, tabControl.SelectedIndex);
+        Assert.Same(uElement, tabControl.SelectedContent);
+        Assert.Null(tabControl.SelectedContentTemplate);
+        if (templated)
+        {
+            Assert.NotSame(second, uElement.LogicalParent);
+        }
+    }
+
     // The selected tab keeps being selected when a virtualizing ItemsPanel clears its container; control: still realized.
     [Theory]
     [InlineData(false)]

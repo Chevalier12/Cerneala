@@ -1,3 +1,4 @@
+using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
 
@@ -325,6 +326,144 @@ public sealed class FocusManagerTests
 
         Assert.Equal(["first Back", "created Tab"], receivers);
         Assert.Same(created, manager.FocusedElement);
+    }
+
+    // As WPF's Keyboard.Focus, which fails for an element whose IsVisible is false: an element whose ancestor was
+    // collapsed or hidden after the supplied route map was built cannot take focus, although that map contains it (#1176).
+    [Theory]
+    [InlineData("panelCollapsed")]
+    [InlineData("panelHidden")]
+    public void FocusReturnsFalseForAnElementWhoseAncestorWasHiddenAfterTheRouteMapWasBuilt(string change)
+    {
+        UIRoot root = new();
+        UIElement panel = new();
+        UIElement field = new() { Focusable = true };
+        panel.VisualChildren.Add(field);
+        root.VisualChildren.Add(panel);
+        ElementInputRouteMap frameMap = root.InputCache.EnsureCurrent(root);
+        FocusManager manager = new();
+        Hide(change, panel, field);
+
+        bool focused = manager.Focus(field, frameMap);
+
+        Assert.True(frameMap.Contains(field));
+        Assert.True(
+            !focused && manager.FocusedElement is null && !field.IsKeyboardFocused,
+            $"row={change}: Focus returned {focused}, FocusedElement is {(manager.FocusedElement is null ? "null" : "the field")}, IsKeyboardFocused {field.IsKeyboardFocused}.");
+    }
+
+    // As WPF's KeyboardNavigation, which moves Tab focus only to visible elements: a tab stop whose ancestor a KeyDown
+    // handler of the same frame hid is skipped, and the focus moves to the next visible tab stop (#1176).
+    [Theory]
+    [InlineData("none")]
+    [InlineData("panelCollapsed")]
+    [InlineData("panelHidden")]
+    public void TabSkipsATabStopWhoseAncestorAKeyDownHandlerOfTheSameFrameHid(string change)
+    {
+        UIRoot root = new(200, 200);
+        ButtonBase x = new();
+        UIElement panel = new();
+        ButtonBase y = new();
+        ButtonBase z = new();
+        panel.VisualChildren.Add(y);
+        root.VisualChildren.Add(x);
+        root.VisualChildren.Add(panel);
+        root.VisualChildren.Add(z);
+        x.Handlers.AddHandler(InputEvents.KeyDownEvent, (_, _) => Hide(change, panel, y));
+        ElementInputBridge bridge = new();
+        Assert.True(bridge.FocusManager.Focus(x, root.InputCache.EnsureCurrent(root)));
+
+        bridge.Dispatch(root, FrameWithKey(InputKey.Tab));
+
+        UIElement expected = change == "none" ? y : z;
+        string Name(UIElement? element) => element is null ? "null" : ReferenceEquals(element, x) ? "x" : ReferenceEquals(element, y) ? "y" : ReferenceEquals(element, z) ? "z" : "other";
+        Assert.True(
+            ReferenceEquals(bridge.FocusManager.FocusedElement, expected) && y.IsKeyboardFocused == (change == "none"),
+            $"row={change}: focused after Tab = {Name(bridge.FocusManager.FocusedElement)} (expected {Name(expected)}), y.IsKeyboardFocused {y.IsKeyboardFocused}.");
+    }
+
+    // As WPF, where every RaiseEvent builds its route from the handlers registered at that moment: a handler that a
+    // KeyDown handler removes or adds changes the next key event of the same frame (#1177).
+    [Theory]
+    [InlineData("remove", 1)]
+    [InlineData("add", 1)]
+    public void HandlerChangedByAKeyDownHandlerAppliesToTheNextKeyEventOfTheSameFrame(string change, int expectedCalls)
+    {
+        UIRoot root = new();
+        UIElement panel = new();
+        UIElement field = new() { Focusable = true };
+        panel.VisualChildren.Add(field);
+        root.VisualChildren.Add(panel);
+        int calls = 0;
+        RoutedEventHandler handler = (_, _) => calls++;
+        if (change == "remove")
+        {
+            panel.Handlers.AddHandler(InputEvents.KeyDownEvent, handler);
+        }
+
+        bool changed = false;
+        field.Handlers.AddHandler(InputEvents.KeyDownEvent, (_, _) =>
+        {
+            if (changed)
+            {
+                return;
+            }
+
+            changed = true;
+            if (change == "remove")
+            {
+                panel.Handlers.RemoveHandler(InputEvents.KeyDownEvent, handler);
+            }
+            else
+            {
+                panel.Handlers.AddHandler(InputEvents.KeyDownEvent, handler);
+            }
+        });
+        ElementInputBridge bridge = new();
+        Assert.True(bridge.FocusManager.Focus(field, root.InputCache.EnsureCurrent(root)));
+        KeyboardSnapshot down = KeyboardSnapshot.FromDownKeys([InputKey.Down]);
+
+        bridge.Dispatch(root, new InputFrame(PointerSnapshot.Empty, PointerSnapshot.Empty, down, down, [], [InputKey.Down, InputKey.Down]));
+
+        Assert.True(calls == expectedCalls, $"row={change}: the panel handler ran {calls} time(s) (expected {expectedCalls}).");
+    }
+
+    // The TextInput of a frame comes after its key events, so a TextInput handler that a KeyDown handler removes or adds
+    // applies to it (#1177).
+    [Theory]
+    [InlineData("remove", 0)]
+    [InlineData("add", 1)]
+    public void TextInputHandlerChangedByAKeyDownHandlerAppliesToTheTextInputOfTheSameFrame(string change, int expectedCalls)
+    {
+        UIRoot root = new();
+        UIElement panel = new();
+        UIElement field = new() { Focusable = true };
+        panel.VisualChildren.Add(field);
+        root.VisualChildren.Add(panel);
+        int calls = 0;
+        RoutedEventHandler handler = (_, _) => calls++;
+        if (change == "remove")
+        {
+            panel.Handlers.AddHandler(InputEvents.TextInputEvent, handler);
+        }
+
+        field.Handlers.AddHandler(InputEvents.KeyDownEvent, (_, _) =>
+        {
+            if (change == "remove")
+            {
+                panel.Handlers.RemoveHandler(InputEvents.TextInputEvent, handler);
+            }
+            else
+            {
+                panel.Handlers.AddHandler(InputEvents.TextInputEvent, handler);
+            }
+        });
+        ElementInputBridge bridge = new();
+        Assert.True(bridge.FocusManager.Focus(field, root.InputCache.EnsureCurrent(root)));
+
+        bridge.Dispatch(root, new InputFrame(PointerSnapshot.Empty, PointerSnapshot.Empty, KeyboardSnapshot.Empty, KeyboardSnapshot.FromDownKeys([InputKey.A]), [new TextInputSnapshotEvent("a")]));
+
+        Assert.True(calls == expectedCalls, $"row={change}: the panel TextInput handler ran {calls} time(s) (expected {expectedCalls}).");
     }
 
     [Fact]

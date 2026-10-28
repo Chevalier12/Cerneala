@@ -19,7 +19,7 @@ internal sealed class RetainedInputBindingProcessor
         foreach (KeyboardDispatchResult result in results)
         {
             if (ShouldExecuteBinding(result) &&
-                TryExecuteFirstBinding(result.Target, inputFrame, commandRouter, routeMap))
+                TryExecuteFirstBinding(result.Target, result.Key, inputFrame, commandRouter, routeMap))
             {
                 continue;
             }
@@ -37,6 +37,7 @@ internal sealed class RetainedInputBindingProcessor
 
     private static bool TryExecuteFirstBinding(
         UIElement focusedElement,
+        InputKey pressedKey,
         InputFrame inputFrame,
         CommandRouter commandRouter,
         ElementInputRouteMap routeMap)
@@ -50,6 +51,14 @@ internal sealed class RetainedInputBindingProcessor
 
             foreach (InputBinding binding in owner.InputBindings)
             {
+                // As WPF's KeyGesture.Matches, which compares its key with the key of the KeyEventArgs, a key binding
+                // runs only for the press of its own key: Ctrl and S pressed in one frame run a Ctrl+S binding once,
+                // for the S press, and a handled KeyDown of S keeps it from running (#771).
+                if (binding.Gesture is KeyGesture keyGesture && keyGesture.Key != pressedKey)
+                {
+                    continue;
+                }
+
                 if (binding.TryExecute(inputFrame, commandRouter, routeMap, owner))
                 {
                     return true;

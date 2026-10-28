@@ -56,6 +56,9 @@ public class ListBox : Selector, ITabOnceScope
     public ListBox()
     {
         SetFrameworkDefault(ItemsPanelProperty, new StackPanel());
+        // As a WPF ListBox, a Control whose Focusable defaults to true, the list can hold the keyboard focus itself, for
+        // example when its focused row is recycled (#822); IsTabStop stays false, as the Tab key enters it on a row.
+        SetFrameworkDefault(FocusableProperty, true);
         Handlers.AddHandler(InputEvents.KeyDownEvent, OnKeyDown);
         Handlers.AddHandler(InputEvents.TextInputEvent, OnTextInput);
         SetFrameworkDefault(ComponentTemplateProperty, ListBoxTemplates.Default);
@@ -131,10 +134,18 @@ public class ListBox : Selector, ITabOnceScope
 
     protected override Type DefaultContainerType => typeof(ListBoxItem);
 
+    // As a WPF ListBox, which has no MouseLeftButtonDown handler that focuses it, a press on the list outside its rows,
+    // such as on its scroll bar, leaves the focus where it was (#700); only a row focuses itself on a press.
+    internal override bool TakesFocusOnPress => false;
+
     // As a WPF ListBox, whose TabNavigation is Once, the Tab key enters the list once, on the focused row, else the
     // selected row, else the first row; the rows are no Tab stops, so the next Tab leaves the list (#905).
     UIElement? ITabOnceScope.GetTabOnceElement(ElementInputRouteMap routeMap) =>
         FindTabOnceContainer(routeMap, ItemContainerGenerator.RealizedContainers.GetValueOrDefault(SelectedIndex));
+
+    // The rows: a Tab stop inside a row, such as a TextBox from the ItemTemplate, is no Tab stop of its own, so the
+    // list stays one Tab stop (#1159).
+    IEnumerable<UIElement> ITabOnceScope.GetTabOnceContainers() => ItemContainerGenerator.RealizedContainers.Values;
 
     // The default template places the rows below BorderThickness and Padding, as the layout without a template does.
     internal override float ItemsTopInset =>
@@ -332,25 +343,28 @@ public class ListBox : Selector, ITabOnceScope
             return;
         }
 
-        int current = focusedIndex >= 0 ? focusedIndex : SelectedIndex;
-        int last = ItemCount - 1;
-        int target = keyArgs.Key switch
-        {
-            InputKey.Up => current < 0 ? 0 : Math.Max(0, current - 1),
-            InputKey.Down => current < 0 ? 0 : Math.Min(last, current + 1),
-            InputKey.Home => 0,
-            InputKey.End => last,
-            InputKey.PageDown => current < 0 ? 0 : GetPageTarget(current, down: true),
-            InputKey.PageUp => current < 0 ? 0 : GetPageTarget(current, down: false),
-            _ => -1
-        };
-        if (target < 0)
+        if (keyArgs.Key is not (InputKey.Up or InputKey.Down or InputKey.Home or InputKey.End or InputKey.PageDown or InputKey.PageUp))
         {
             return;
         }
 
-        // As WPF's line navigation, Up on the first row and Down on the last row find no row and change nothing.
-        if (keyArgs.Key is InputKey.Up or InputKey.Down && target == focusedIndex)
+        // As WPF's ItemsControl.FindFocusable, the keys skip a row that cannot take the keyboard focus, so the focus and
+        // the selection never stop on a disabled row (#775).
+        int current = focusedIndex >= 0 ? focusedIndex : SelectedIndex;
+        int target = keyArgs.Key switch
+        {
+            _ when current < 0 && keyArgs.Key is not InputKey.End => FindFocusableRow(0, 1),
+            InputKey.Up => FindFocusableRow(current - 1, -1),
+            InputKey.Down => FindFocusableRow(current + 1, 1),
+            InputKey.Home => FindFocusableRow(0, 1),
+            InputKey.End => FindFocusableRow(ItemCount - 1, -1),
+            InputKey.PageDown => FindFocusablePageRow(GetPageTarget(current, down: true), 1),
+            _ => FindFocusablePageRow(GetPageTarget(current, down: false), -1)
+        };
+
+        // As WPF's line navigation, Up on the first row and Down on the last row find no row and change nothing, and so
+        // does a key that finds no row that can take the focus.
+        if (target < 0 || (keyArgs.Key is InputKey.Up or InputKey.Down && target == focusedIndex))
         {
             args.Handled = true;
             return;
@@ -490,21 +504,25 @@ public class ListBox : Selector, ITabOnceScope
     // ScrollViewer, so the next scroll moves none of them. Each record holds the height of one item, so with rows whose
     // height does not change, the records change only as long as rows that were never measured are realized, which
     // happens at most once per item.
+    // As WPF's ListBox, which lays out before it focuses the row, a row that was realized in this layout pass and that
+    // the panel has not arranged yet gets the focus in a later arrange too: focusing a row brings it into view (#1158),
+    // and before its arrange the row has no place to bring into view.
     private void BringRowIntoView(int index, bool focus)
     {
         float[] offsetsBefore = GetScrollOffsetsAroundRows();
         bool realized = ScrollRowIntoView(index);
-        if (realized && focus)
+        bool arranged = realized && !ItemContainerGenerator.RealizedContainers[index].DirtyState.Has(InvalidationFlags.Arrange);
+        if (arranged && focus)
         {
             FocusRow(index);
         }
 
-        if (!offsetsBefore.AsSpan().SequenceEqual(GetScrollOffsetsAroundRows()))
+        if (!offsetsBefore.AsSpan().SequenceEqual(GetScrollOffsetsAroundRows()) || (focus && realized && !arranged))
         {
             pendingScrollItem = null;
             hasPendingScrollItem = false;
             pendingScrollIndex = index;
-            focusPendingRow = focus && !realized;
+            focusPendingRow = focus && !arranged;
             Invalidate(InvalidationFlags.Arrange, "ListBox bring row into view");
         }
     }
@@ -646,6 +664,33 @@ public class ListBox : Selector, ITabOnceScope
         }
     }
 
+    // As WPF's ItemsControl.FindFocusable, the first row from start, going by step, that can take the keyboard focus, or
+    // -1: a realized row counts when it is attached, Focusable, enabled, and visible, and a row without a container
+    // counts as WPF counts it, as a row that can.
+    private int FindFocusableRow(int start, int step)
+    {
+        ElementInputRouteMap? routeMap = Root is UIRoot root ? root.InputCache.EnsureCurrent(root) : null;
+        for (int index = start; index >= 0 && index < ItemCount; index += step)
+        {
+            if (routeMap is null ||
+                !ItemContainerGenerator.RealizedContainers.TryGetValue(index, out UIElement? row) ||
+                FocusPolicy.CanFocus(row, routeMap))
+            {
+                return index;
+            }
+        }
+
+        return -1;
+    }
+
+    // The row a page key moves to: the page row, else the nearest row after it (step 1 for PageDown, -1 for PageUp)
+    // that can take the focus, else the nearest one before it.
+    private int FindFocusablePageRow(int pageRow, int step)
+    {
+        int row = FindFocusableRow(pageRow, step);
+        return row >= 0 ? row : FindFocusableRow(pageRow, -step);
+    }
+
     // The index of the row that has the keyboard focus or holds the focused element, or -1.
     private int FindFocusedRowIndex()
     {
@@ -774,12 +819,22 @@ public class ListBox : Selector, ITabOnceScope
         base.PrepareItemContent(container, index, item);
     }
 
+    // A row that has or holds the keyboard focus and stops being a row, because it scrolled out of the realized rows and
+    // is recycled or its item was removed, gives the focus to the list, as WPF moves the focus of an element that leaves
+    // the tree to its nearest focusable ancestor. The keys then move from SelectedIndex, and a recycled row that shows
+    // another item later does not keep the focus (#822).
     protected internal override void ClearItemContainer(UIElement container)
     {
+        bool hadFocus = container.IsKeyboardFocusWithin;
         base.ClearItemContainer(container);
         if (container is ListBoxItem listBoxItem)
         {
             listBoxItem.SetItemPresentation(null, null, null, -1);
+        }
+
+        if (hadFocus && Root is UIRoot { ActiveFocusManager: { } focusManager } root)
+        {
+            focusManager.Focus(this, root.InputCache.EnsureCurrent(root));
         }
     }
 }

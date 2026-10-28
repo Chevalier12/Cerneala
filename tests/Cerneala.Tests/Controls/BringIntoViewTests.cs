@@ -1,3 +1,4 @@
+using Cerneala.UI;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
@@ -34,6 +35,24 @@ public sealed class BringIntoViewTests
 
         Assert.Equal(10, viewer.Presenter.VerticalOffset);
         AssertInsideViewport(viewer, top);
+    }
+
+    // As WPF, RequestBringIntoView bubbles also from a disabled element: a disabled Button that ends at 320 scrolls the
+    // viewport 100 pixels high to offset 220 (#1175).
+    [Fact]
+    public void BringIntoViewOfADisabledElementScrollsTheScrollViewer()
+    {
+        Button button = new() { Height = 20, IsEnabled = false };
+        StackPanel stack = new();
+        stack.VisualChildren.Add(new Border { Height = 300 });
+        stack.VisualChildren.Add(button);
+        stack.VisualChildren.Add(new Border { Height = 200 });
+        (UIRoot root, ScrollViewer viewer) = CreateViewer(stack, width: 200, height: 100);
+
+        button.BringIntoView();
+        root.ProcessFrame();
+
+        Assert.Equal(220, viewer.Presenter.VerticalOffset);
     }
 
     // BringIntoView with a rectangle brings only that part of the element into view: the top 5 pixels of a Button that
@@ -129,6 +148,141 @@ public sealed class BringIntoViewTests
 
         Assert.Equal(240, viewer.Presenter.HorizontalOffset);
         Assert.Equal(0, viewer.Presenter.VerticalOffset);
+    }
+
+    // As WPF's FrameworkElement.OnGotFocus, which brings an element that gets the keyboard focus into view, Tab scrolls
+    // a ScrollViewer 90 pixels high by the least amount that shows the focused element. Tab from "before" focuses
+    // "first" at 0 to 30, which is already visible, so nothing scrolls; the next Tab focuses "deep" at 300 to 330, so the
+    // offset becomes 330 - 90 = 240; Shift+Tab focuses "first" again, so the offset goes back to 0 (#1158).
+    [Fact]
+    public void TabAndShiftTabScrollTheFocusedElementIntoView()
+    {
+        Button before = new() { Content = "before", Width = 100, Height = 30 };
+        Button first = new() { Content = "first", Width = 100, Height = 30 };
+        Button deep = new() { Content = "deep", Width = 100, Height = 30 };
+        StackPanel inner = new();
+        inner.VisualChildren.Add(first);
+        for (int i = 0; i < 9; i++)
+        {
+            inner.VisualChildren.Add(new Border { Width = 50, Height = 30 });
+        }
+
+        inner.VisualChildren.Add(deep);
+        ScrollViewer viewer = new() { Content = inner, Width = 150, Height = 90 };
+        (UIRoot root, ElementInputBridge bridge) = CreateTabRoot(before, viewer);
+        ClickCenter(root, bridge, before);
+
+        PressKey(root, bridge, InputKey.Tab);
+
+        Assert.True(first.IsKeyboardFocused);
+        Assert.Equal(0, viewer.Presenter.VerticalOffset);
+
+        PressKey(root, bridge, InputKey.Tab);
+
+        Assert.True(deep.IsKeyboardFocused);
+        Assert.Equal(240, viewer.Presenter.VerticalOffset);
+        AssertInsideViewport(viewer, deep);
+
+        PressKey(root, bridge, InputKey.Tab, InputKey.LeftShift);
+
+        Assert.True(first.IsKeyboardFocused);
+        Assert.Equal(0, viewer.Presenter.VerticalOffset);
+        AssertInsideViewport(viewer, first);
+    }
+
+    // With PR #1039, Tab enters a ListBox on its selected row. With 100 rows in a list 100 pixels high and row 80
+    // selected, that row is below the viewport, so the list scrolls until the row is visible (#1158).
+    [Fact]
+    public void TabIntoAListBoxScrollsTheSelectedRowIntoView()
+    {
+        Button before = new() { Content = "before", Width = 100, Height = 30 };
+        ListBox listBox = new() { Width = 150, Height = 100 };
+        listBox.SetItems(Enumerable.Range(0, 100).Select(index => $"R{index}").ToArray());
+        listBox.SelectedIndex = 80;
+        (UIRoot root, ElementInputBridge bridge) = CreateTabRoot(before, listBox);
+        ScrollViewer viewer = FindDescendant<ScrollViewer>(listBox)!;
+        ClickCenter(root, bridge, before);
+        Assert.Equal(0, viewer.Presenter.VerticalOffset);
+
+        PressKey(root, bridge, InputKey.Tab);
+
+        UIElement row = listBox.ItemContainerGenerator.RealizedContainers[80];
+        Assert.Same(row, bridge.FocusManager.FocusedElement);
+        Assert.True(viewer.Presenter.VerticalOffset > 0, $"VerticalOffset stayed {viewer.Presenter.VerticalOffset}.");
+        AssertInsideViewport(viewer, row);
+    }
+
+    // The button and then the target in a StackPanel in a window, after the first layout.
+    private static (UIRoot Root, ElementInputBridge Bridge) CreateTabRoot(UIElement before, UIElement target)
+    {
+        StackPanel panel = new();
+        panel.VisualChildren.Add(before);
+        panel.VisualChildren.Add(target);
+        UIRoot root = new(360, 400);
+        root.VisualChildren.Add(new Window { Content = panel, Width = 360, Height = 400 });
+        root.ProcessFrame();
+        return (root, new ElementInputBridge());
+    }
+
+    private static void ClickCenter(UIRoot root, ElementInputBridge bridge, UIElement element)
+    {
+        LayoutRect bounds = element.ArrangedBounds;
+        float x = bounds.X + bounds.Width / 2;
+        float y = bounds.Y + bounds.Height / 2;
+        bridge.Dispatch(root, new InputFrame(
+            PointerSnapshot.Empty.WithPosition(x, y),
+            PointerSnapshot.Empty.WithPosition(x, y).WithButton(InputMouseButton.Left, true),
+            KeyboardSnapshot.Empty,
+            KeyboardSnapshot.Empty,
+            []));
+        root.ProcessFrame();
+        bridge.Dispatch(root, new InputFrame(
+            PointerSnapshot.Empty.WithPosition(x, y).WithButton(InputMouseButton.Left, true),
+            PointerSnapshot.Empty.WithPosition(x, y),
+            KeyboardSnapshot.Empty,
+            KeyboardSnapshot.Empty,
+            []));
+        root.ProcessFrame();
+    }
+
+    // A press and release of key, with the modifier keys held down around it.
+    private static void PressKey(UIRoot root, ElementInputBridge bridge, InputKey key, params InputKey[] modifiers)
+    {
+        InputKey[] withKey = [.. modifiers, key];
+        bridge.Dispatch(root, KeyFrame([], modifiers));
+        bridge.Dispatch(root, KeyFrame(modifiers, withKey));
+        bridge.Dispatch(root, KeyFrame(withKey, modifiers));
+        bridge.Dispatch(root, KeyFrame(modifiers, []));
+        root.ProcessFrame();
+    }
+
+    private static InputFrame KeyFrame(InputKey[] previous, InputKey[] current)
+    {
+        return new InputFrame(
+            PointerSnapshot.Empty,
+            PointerSnapshot.Empty,
+            KeyboardSnapshot.FromDownKeys(previous),
+            KeyboardSnapshot.FromDownKeys(current),
+            []);
+    }
+
+    private static T? FindDescendant<T>(UIElement element)
+        where T : UIElement
+    {
+        if (element is T match)
+        {
+            return match;
+        }
+
+        foreach (UIElement child in element.VisualChildren)
+        {
+            if (FindDescendant<T>(child) is T found)
+            {
+                return found;
+            }
+        }
+
+        return null;
     }
 
     // The viewer as the only child of a root of the given size, after the first layout.

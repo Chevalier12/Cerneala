@@ -483,6 +483,125 @@ public sealed class GeneratedMarkupMotionTests
         Assert.Equal(UiPropertyValueSource.Animation, target.GetValueSource(UIElement.OpacityProperty));
     }
 
+    // `@animate { @to { Opacity = 0.2; } }` completes without hold, so Opacity falls back to
+    // its markup value 1. A later `@animate { @to { Opacity = 0.6; } }` without `@from` must
+    // start from that visible 1, not from the 0.2 where the first animation ended.
+    [Fact]
+    public void AnimateWithoutFromStartsFromTheShownValueAfterAnAnimationWithoutHold()
+    {
+        TestMotionClock clock = new();
+        UIRoot root = new(motionClock: clock);
+        UIElement element = new();
+        element.SetValue(UIElement.OpacityProperty, 1f, UiPropertyValueSource.MarkupBase);
+        using IDisposable session = GeneratedMarkup.AttachMotionSession(element);
+        root.VisualChildren.Add(element);
+        root.ProcessFrame();
+
+        _ = StartLinearOpacity(session, element, 0.2f);
+        root.Motion.Tick();
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        root.Motion.Tick();
+        float afterFirst = element.Opacity;
+
+        _ = StartLinearOpacity(session, element, 0.6f);
+        root.Motion.Tick();
+        clock.Advance(TimeSpan.FromMilliseconds(10));
+        root.Motion.Tick();
+
+        Assert.Equal(1f, afterFirst);
+        Assert.InRange(element.Opacity, 0.959f, 0.961f);
+    }
+
+    // Hiding the owner halfway through `@to { Opacity = 0.2; }` cancels the session and restores
+    // the markup value 1. After it is shown again, `@to { Opacity = 0.5; }` without `@from` must
+    // start from that visible 1, not from the 0.6 where the canceled animation stopped.
+    [Fact]
+    public void AnimateWithoutFromStartsFromTheShownValueAfterTheSessionRestoredTheBase()
+    {
+        TestMotionClock clock = new();
+        UIRoot root = new(motionClock: clock);
+        Border owner = new();
+        Border target = new();
+        target.SetValue(UIElement.OpacityProperty, 1f, UiPropertyValueSource.MarkupBase);
+        owner.VisualChildren.Add(target);
+        using IDisposable session = GeneratedMarkup.AttachMotionSession(owner);
+        root.VisualChildren.Add(owner);
+        root.ProcessFrame();
+
+        _ = StartLinearOpacity(session, target, 0.2f);
+        root.Motion.Tick();
+        clock.Advance(TimeSpan.FromMilliseconds(50));
+        root.Motion.Tick();
+        owner.Visibility = Visibility.Collapsed;
+        root.ProcessFrame();
+        owner.Visibility = Visibility.Visible;
+        root.ProcessFrame();
+        float afterShow = target.Opacity;
+
+        _ = StartLinearOpacity(session, target, 0.5f);
+        root.Motion.Tick();
+        clock.Advance(TimeSpan.FromMilliseconds(10));
+        root.Motion.Tick();
+
+        Assert.Equal(1f, afterShow);
+        Assert.InRange(target.Opacity, 0.949f, 0.951f);
+    }
+
+    // The bound form `@to { Opacity = {Binding ...}; }` without `@from` follows the same rule.
+    [Fact]
+    public void BoundAnimateWithoutFromStartsFromTheShownValueAfterAnAnimationWithoutHold()
+    {
+        TestMotionClock clock = new();
+        UIRoot root = new(motionClock: clock);
+        Grid owner = new();
+        UIElement target = new();
+        UIElement source = new() { Opacity = 0.6f };
+        target.SetValue(UIElement.OpacityProperty, 1f, UiPropertyValueSource.MarkupBase);
+        owner.VisualChildren.Add(target);
+        owner.VisualChildren.Add(source);
+        using IDisposable session = GeneratedMarkup.AttachMotionSession(owner);
+        root.VisualChildren.Add(owner);
+        root.ProcessFrame();
+
+        _ = StartLinearOpacity(session, target, 0.2f);
+        root.Motion.Tick();
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        root.Motion.Tick();
+        float afterFirst = target.Opacity;
+
+        _ = GeneratedMarkup.StartBoundMotionProperty(
+            session,
+            target,
+            UIElement.OpacityProperty,
+            false,
+            default,
+            GeneratedMarkup.ObserveProperty(source, UIElement.OpacityProperty),
+            BindingMode.OneWay,
+            value => (float)value!,
+            MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100), Cerneala.UI.Motion.Specs.Easings.Linear),
+            new MotionPropertyStartOptions());
+        root.Motion.Tick();
+        clock.Advance(TimeSpan.FromMilliseconds(10));
+        root.Motion.Tick();
+
+        Assert.Equal(1f, afterFirst);
+        Assert.InRange(target.Opacity, 0.959f, 0.961f);
+    }
+
+    private static MotionHandle StartLinearOpacity(IDisposable session, UIElement element, float destination)
+    {
+        return GeneratedMarkup.StartMotionProperty(
+            session,
+            element,
+            UIElement.OpacityProperty,
+            false,
+            default,
+            false,
+            destination,
+            MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(100), Cerneala.UI.Motion.Specs.Easings.Linear),
+            new MotionPropertyStartOptions());
+    }
+
     private static MotionHandle StartHalfwayReducedMotionOpacity(UIRoot root, TestMotionClock clock, UIElement element)
     {
         MotionHandle high = element.Motion()

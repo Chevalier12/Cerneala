@@ -309,13 +309,6 @@ public sealed class ElementInputBridge
                     out bool buttonPreviewHandled,
                     routedPressOwner,
                     out bool handledBeforePressOwner);
-                // As WPF's Control, which raises the double click from its MouseLeftButtonDown class handler when the
-                // press counts 2, the double click belongs to the second press: a release outside the element after it
-                // does not cancel it, and the release raises no double click (#957).
-                if (button == InputMouseButton.Left && pressClickCount == 2)
-                {
-                    RaiseDirectMousePairAlongRoute(routeMap, pointerTarget, InputEvents.PreviewMouseDoubleClickEvent, InputEvents.MouseDoubleClickEvent, button, pressClickCount, modifiers, genericPreviewHandledOnArrival: null, genericHandledOnArrival: null, out _, null, out _);
-                }
 
                 // As in WPF, where a control focuses itself when MouseLeftButtonDown reaches its class handler, the press
                 // moves the focus after its events and before the drag begins. A handled PreviewMouseDown or
@@ -334,7 +327,7 @@ public sealed class ElementInputBridge
 
                 if (!previewHandled && !buttonPreviewHandled)
                 {
-                    BeginPointerDrag(routeMap, pointerTarget, button, pressClickCount);
+                    BeginPointerDrag(routeMap, pointerTarget, button, pressClickCount, modifiers);
                 }
                 else if (button == InputMouseButton.Left)
                 {
@@ -484,7 +477,13 @@ public sealed class ElementInputBridge
         commandSource.ExecuteCommand(commandRouter, routeMap);
     }
 
-    private void BeginPointerDrag(ElementInputRouteMap routeMap, HitTestResult? target, InputMouseButton button, int clickCount)
+    // The press carries the modifiers of its frame, as the MouseDown it follows, so a drag source can read Shift+click.
+    private void BeginPointerDrag(
+        ElementInputRouteMap routeMap,
+        HitTestResult? target,
+        InputMouseButton button,
+        int clickCount,
+        KeyModifiers modifiers)
     {
         if (button != InputMouseButton.Left || target is null)
         {
@@ -496,7 +495,15 @@ public sealed class ElementInputBridge
             return;
         }
 
-        dragSource.BeginPointerDrag(pointerCaptureManager, routeMap, new MouseButtonEventArgs(InputEvents.MouseDownEvent, target.Element, button, target.X, target.Y, clickCount));
+        dragSource.BeginPointerDrag(
+            pointerCaptureManager,
+            routeMap,
+            new MouseButtonEventArgs(InputEvents.MouseDownEvent, target.Element, button, target.X, target.Y, clickCount)
+            {
+                IsControlDown = modifiers.HasFlag(KeyModifiers.Control),
+                IsShiftDown = modifiers.HasFlag(KeyModifiers.Shift),
+                IsAltDown = modifiers.HasFlag(KeyModifiers.Alt)
+            });
     }
 
     private static void UpdatePointerDrag(
@@ -596,14 +603,14 @@ public sealed class ElementInputBridge
         return element;
     }
 
-    // A press focuses the nearest focusable element. An element that owns its clicks takes the press for itself, as a
-    // WPF Thumb marks MouseLeftButtonDown handled before an enclosing ButtonBase focuses itself, so when it cannot take
-    // focus, the focus stays where it was (#640).
+    // A press focuses the nearest focusable element that takes the focus on a press. An element that owns its clicks
+    // takes the press for itself, as a WPF Thumb marks MouseLeftButtonDown handled before an enclosing ButtonBase
+    // focuses itself, so when it cannot take focus, the focus stays where it was (#640).
     private static UIElement? ResolveFocusTarget(UIElement element, ElementInputRouteMap routeMap)
     {
         foreach (UIElement current in routeMap.GetVisualRouteToRoot(element))
         {
-            if (FocusPolicy.CanFocus(current, routeMap))
+            if (current.TakesFocusOnPress && FocusPolicy.CanFocus(current, routeMap))
             {
                 return current;
             }
@@ -697,7 +704,34 @@ public sealed class ElementInputBridge
             return false;
         }
 
-        return RaiseDirectMousePairAlongRoute(routeMap, target, events.Preview, events.Bubble, button, clickCount, modifiers, genericPreviewHandledOnArrival, genericHandledOnArrival, out previewHandled, observedBubble, out bubbleHandledBeforeObserved, pressOriginalSource);
+        // As WPF's Control, which raises the double click from its Preview and bubbling MouseLeftButtonDown and
+        // MouseRightButtonDown class handlers when the press counts 2, the double click belongs to the second press: a
+        // release outside the element after it does not cancel it, and the release raises no double click (#957). The
+        // middle and extra buttons raise none, as WPF registers no such handler for them (#868).
+        bool raiseDoubleClick = button is InputMouseButton.Left or InputMouseButton.Right && isDown && clickCount == 2;
+        return RaiseDirectMousePairAlongRoute(routeMap, target, events.Preview, events.Bubble, button, clickCount, modifiers, genericPreviewHandledOnArrival, genericHandledOnArrival, out previewHandled, observedBubble, out bubbleHandledBeforeObserved, pressOriginalSource, raiseDoubleClick);
+    }
+
+    // As WPF's Control.HandleDoubleClick, a class handler that runs on each element before its own handlers: the double
+    // click of the element reaches it with the Handled value of the press there, and a handled double click marks the
+    // press handled from that element on, so its own and the later button-down handlers do not run, and a handled
+    // preview keeps the press from the focus, the drag and the button press (#1178). Returns whether it was handled.
+    private static bool RaiseDoubleClick(
+        ElementInputRouteMap routeMap,
+        UIElement element,
+        HitTestResult target,
+        RoutedEvent doubleClickEvent,
+        MouseButtonEventArgs press)
+    {
+        MouseButtonEventArgs args = new(doubleClickEvent, target.Element, press.ChangedButton, target.X, target.Y, press.ClickCount)
+        {
+            Handled = press.Handled,
+            IsControlDown = press.IsControlDown,
+            IsShiftDown = press.IsShiftDown,
+            IsAltDown = press.IsAltDown
+        };
+        RoutedEventRouter.Raise(routeMap.InputTree, element, args);
+        return args.Handled;
     }
 
     private static bool RaiseDirectMousePairAlongRoute(
@@ -713,7 +747,8 @@ public sealed class ElementInputBridge
         out bool previewHandled,
         UIElement? observedBubble,
         out bool bubbleHandledBeforeObserved,
-        object? pressOriginalSource = null)
+        object? pressOriginalSource = null,
+        bool raiseDoubleClick = false)
     {
         if (target is null)
         {
@@ -735,6 +770,11 @@ public sealed class ElementInputBridge
                 IsShiftDown = modifiers.HasFlag(KeyModifiers.Shift),
                 IsAltDown = modifiers.HasFlag(KeyModifiers.Alt)
             };
+            if (raiseDoubleClick && RaiseDoubleClick(routeMap, element, target, InputEvents.PreviewMouseDoubleClickEvent, args))
+            {
+                args.Handled = true;
+            }
+
             RoutedEventRouter.Raise(routeMap.InputTree, element, args);
             handled |= args.Handled;
         }
@@ -757,6 +797,11 @@ public sealed class ElementInputBridge
                 IsShiftDown = modifiers.HasFlag(KeyModifiers.Shift),
                 IsAltDown = modifiers.HasFlag(KeyModifiers.Alt)
             };
+            if (raiseDoubleClick && RaiseDoubleClick(routeMap, element, target, InputEvents.MouseDoubleClickEvent, args))
+            {
+                args.Handled = true;
+            }
+
             RoutedEventRouter.Raise(routeMap.InputTree, element, args);
             handled |= args.Handled;
         }

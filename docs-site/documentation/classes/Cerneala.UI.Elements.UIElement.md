@@ -88,6 +88,8 @@ button.BringIntoView();
 
 A handler that sets `Handled` before the event reaches a `ScrollViewer` stops the scroll.
 
+As in WPF, an element that gets the keyboard focus, for example through Tab, Shift+Tab, a click, or `FocusManager.Focus`, calls `BringIntoView()` before its `GotFocus` event is raised, so it scrolls into view in the same frame (see `FocusManager`).
+
 Invalidation is routed to the attached `UIRoot` when available. Detached elements mark their local `DirtyState`; measure invalidation also propagates to visual ancestors until a layout boundary is reached.
 
 ### Minimum and maximum size

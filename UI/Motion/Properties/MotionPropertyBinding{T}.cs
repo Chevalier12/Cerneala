@@ -17,6 +17,9 @@ public sealed class MotionPropertyBinding<T> : MotionPropertyBinding
     private bool holdOnComplete;
     private bool completedNaturally;
     private bool holdsSetValue;
+    // True while the property does not show the Animation value of this binding: it never wrote one, or its last write
+    // cleared it (an animation completed without HoldOnComplete, or Clear restored the base value).
+    private bool releasedAnimationValue = true;
     private bool disposed;
 
     public MotionPropertyBinding(MotionSystem motion, UiObject target, UiProperty<T> property, MotionValue<T> value)
@@ -42,6 +45,8 @@ public sealed class MotionPropertyBinding<T> : MotionPropertyBinding
         activeHandle?.IsActive == true || Value.IsAnimating || hasPendingSample;
 
     internal override bool HoldsSetValue => holdsSetValue;
+
+    internal override MotionHandle? ActiveHandle => activeHandle?.IsActive == true ? activeHandle : null;
 
     public override UiObject Target { get; }
 
@@ -81,11 +86,11 @@ public sealed class MotionPropertyBinding<T> : MotionPropertyBinding
             completedNaturally = true;
             if (holdOnComplete)
             {
-                motion.Properties.StageSet(Target, Property, Value.Current, invalidationCategory);
+                StageAnimationValue(Value.Current);
             }
             else
             {
-                motion.Properties.StageClear(Target, Property, invalidationCategory);
+                ReleaseAnimationValue();
             }
 
             return handle;
@@ -111,7 +116,7 @@ public sealed class MotionPropertyBinding<T> : MotionPropertyBinding
         completedNaturally = true;
         hasPendingSample = false;
         motion.Graph.Unregister(node);
-        motion.Properties.StageSet(Target, Property, Value.Current, invalidationCategory);
+        StageAnimationValue(Value.Current);
     }
 
     public override void Clear(MotionClearBehavior behavior = MotionClearBehavior.RestoreBase)
@@ -129,11 +134,11 @@ public sealed class MotionPropertyBinding<T> : MotionPropertyBinding
 
         if (behavior == MotionClearBehavior.HoldCurrent)
         {
-            motion.Properties.StageSet(Target, Property, Value.Current, invalidationCategory);
+            StageAnimationValue(Value.Current);
         }
         else
         {
-            motion.Properties.StageClear(Target, Property, invalidationCategory);
+            ReleaseAnimationValue();
         }
 
         motion.Graph.Unregister(node);
@@ -182,7 +187,7 @@ public sealed class MotionPropertyBinding<T> : MotionPropertyBinding
         activeHandle = null;
         if (!holdOnComplete)
         {
-            motion.Properties.StageClear(Target, Property, invalidationCategory);
+            ReleaseAnimationValue();
         }
     }
 
@@ -202,21 +207,51 @@ public sealed class MotionPropertyBinding<T> : MotionPropertyBinding
 
         if (hasPendingSample)
         {
-            motion.Properties.StageSet(Target, Property, pendingSample, invalidationCategory);
+            StageAnimationValue(pendingSample);
             hasPendingSample = false;
         }
 
         if (completedNaturally && !holdOnComplete)
         {
-            motion.Properties.StageClear(Target, Property, invalidationCategory);
+            ReleaseAnimationValue();
         }
 
         bool finished = completedNaturally || activeHandle is null || !activeHandle.IsActive;
         return new MotionNodeTickResult(Completed: finished);
     }
 
+    // A markup @animate without @from starts at the value the property shows. While this binding drives or holds the
+    // Animation value, that is the Motion value. Once it released the Animation value, the property shows the value
+    // below it again, while the Motion value can still be where the last animation ended.
+    internal void JumpToShownValue()
+    {
+        ThrowIfDisposed();
+        motion.VerifyAccess();
+        if (!releasedAnimationValue || Value.IsAnimating)
+        {
+            return;
+        }
+
+        Value.JumpTo(Target.GetValueAfterClear(Property, UiPropertyValueSource.Animation));
+        // The property already shows the value, so the jump stages no Animation write.
+        hasPendingSample = false;
+    }
+
+    private void StageAnimationValue(T value)
+    {
+        releasedAnimationValue = false;
+        motion.Properties.StageSet(Target, Property, value, invalidationCategory);
+    }
+
+    private void ReleaseAnimationValue()
+    {
+        releasedAnimationValue = true;
+        motion.Properties.StageClear(Target, Property, invalidationCategory);
+    }
+
     private void StageCurrent()
     {
+        releasedAnimationValue = false;
         pendingSample = Value.Current;
         hasPendingSample = true;
     }

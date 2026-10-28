@@ -98,6 +98,28 @@ public sealed class WpfEventSurfaceTests
     }
 
     [Fact]
+    public void SizeChangedIsNotRaisedWhenTheElementOnlyMoves()
+    {
+        UIElement element = new();
+        int count = 0;
+        SizeChangedEventArgs? lastArgs = null;
+        element.SizeChanged += (_, args) => { count++; lastArgs = args; };
+        element.Arrange(new ArrangeContext(new LayoutRect(0, 0, 20, 10), LayoutRounding.Disabled));
+        count = 0;
+
+        element.Arrange(new ArrangeContext(new LayoutRect(5, 0, 20, 10), LayoutRounding.Disabled));
+
+        Assert.Equal(0, count);
+        Assert.Equal(new LayoutRect(5, 0, 20, 10), element.ArrangedBounds);
+
+        element.Arrange(new ArrangeContext(new LayoutRect(5, 0, 30, 10), LayoutRounding.Disabled));
+
+        Assert.Equal(1, count);
+        Assert.True(lastArgs!.WidthChanged);
+        Assert.False(lastArgs.HeightChanged);
+    }
+
+    [Fact]
     public void ControlSpecificPropertyChangesRaiseCanonicalEvents()
     {
         RangeBase range = new();

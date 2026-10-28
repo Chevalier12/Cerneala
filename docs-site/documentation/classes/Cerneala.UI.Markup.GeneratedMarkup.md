@@ -242,6 +242,34 @@ cancels all remaining slots and releases their references.
 property metadata. An explicit `from` value is staged before the animation is
 started, while `toCurrent` captures the binding's current sampled value.
 
+Without a `from` value (`hasFrom: false`, which is also what `@from { X = current; }`
+lowers to), the animation starts from the value the property shows.
+`StartMotionProperty<T>`, `StartBoundMotionProperty<T>`, `StartPrismMotionProperty<T>`
+and `StartBoundPrismMotionProperty<T>` follow this rule. While an earlier animation of
+the same target and property runs or holds its value, that value is the shown value,
+so the new animation continues from it. After an earlier animation completed with
+`HoldOnComplete = false`, the property shows its base value again, and the new
+animation starts from that base value, not from where the earlier animation ended.
+The same applies after the session cleared the binding and restored the base value.
+The C# builder `MotionAnimationBuilder<T>` keeps its own rule: without `From` it
+starts from the binding's Motion value.
+
+```csharp
+// Opacity has the markup value 1. A ends at 0.2 and falls back to 1.
+GeneratedMarkup.StartMotionProperty(
+    session, border, UIElement.OpacityProperty,
+    hasFrom: false, from: default, toCurrent: false, to: 0.2f,
+    new TweenSpec<float>(TimeSpan.FromMilliseconds(100), Easings.Linear),
+    new MotionPropertyStartOptions { HoldOnComplete = false });
+// ...100 ms later: border.Opacity == 1f
+GeneratedMarkup.StartMotionProperty(
+    session, border, UIElement.OpacityProperty,
+    hasFrom: false, from: default, toCurrent: false, to: 0.6f,
+    new TweenSpec<float>(TimeSpan.FromMilliseconds(100), Easings.Linear),
+    new MotionPropertyStartOptions { HoldOnComplete = false });
+// 10 ms later: border.Opacity == 0.96f (from 1 toward 0.6), not 0.24f (from 0.2)
+```
+
 A Motion `@set` of a UI property whose type has a built-in mixer (the
 properties `@animate` accepts) is lowered to `SetMotionProperty<T>`. It uses the
 same per-target, per-property Motion binding as `StartMotionProperty<T>`: an
@@ -332,7 +360,20 @@ sounds.Dispose(); // the Aspect is replaced: every sound it started stops
 and cancellation. Numbers and colors interpolate continuously; generated Boolean,
 integer, and enum targets use the discrete flag. A hidden, collapsed, invisible,
 detached, or replaced target is canceled without restoring a value into an inert
-Prism instance.
+Prism instance. A `PrismInstance.ReplaceDefinition` that changes the topology
+(`StructuralVersion`) replaces the target too: the generated accessors address
+nodes, filter and style indexes, and masks of the old topology, so a running
+animation is canceled once in the next Motion frame and writes nothing, also when
+the new definition still has the animated node. A later start of the property
+animates the new definition. A replacement with the same topology keeps the
+animation running.
+
+A start that does not interrupt a running animation of the same property begins
+from the value the Prism instance holds, and without `HoldOnComplete` the animation
+returns to that value when it completes. A start that interrupts a running
+animation returns to the value from before the interrupted animation. Example:
+`Glow.Opacity` is `0`; a fade to `0.8` completes and returns to `0`; the application
+sets `Glow.Opacity = 0.3`; the next fade to `0.8` starts at `0.3` and returns to `0.3`.
 
 `scope` is the Prism layer or group that owns the animated property. While the
 animation runs, and when it starts, the binding checks that node and every group

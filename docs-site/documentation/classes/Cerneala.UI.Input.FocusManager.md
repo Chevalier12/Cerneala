@@ -108,17 +108,51 @@ focusManager.DispatchKeyboard(
 
 `FocusManager` stores the current keyboard-focused `UIElement` in `FocusedElement`. Calling `Focus` with the same element returns `false` and does not raise focus events. Calling `Focus(null, routeMap)` clears focus when an element is currently focused.
 
-For non-null targets, focus is accepted only when `FocusPolicy.CanFocus` accepts the element. The target must be attached, focusable, enabled, participate in input visibility, and exist in the supplied `ElementInputRouteMap`.
+For non-null targets, focus is accepted only when `FocusPolicy.CanFocus` accepts the element. The target must be attached, focusable, enabled, participate in input visibility, and exist in the supplied `ElementInputRouteMap` and in the current route map of its `UIRoot`. So `Focus(element, frameMap)` returns `false` for an element whose ancestor a handler collapsed or hid after `frameMap` was built, although `frameMap` still contains the element.
 
 When focus changes, the manager updates `IsKeyboardFocused` on the old and new focused elements and updates `IsKeyboardFocusWithin` along the input route from the focused element to the root. Ancestors that are not in the input route map, for example disabled ones, are not marked. Shared ancestors remain marked as containing keyboard focus when focus moves within the same branch.
 
 Focus events are raised after state is updated. Preview keyboard focus events are raised before bubbling keyboard focus events. If a preview lost or got keyboard focus event is handled, the matching `LostKeyboardFocus` or `GotKeyboardFocus` event is suppressed. The non-keyboard `LostFocus` and `GotFocus` events are still raised when the old or new element has a route-map id.
 
+As WPF's `FrameworkElement.OnGotFocus`, the newly focused element is brought into view before `GotFocus` is raised: when it still has `IsKeyboardFocused` after `GotKeyboardFocus`, the manager calls its `UIElement.BringIntoView()`, so each `ScrollViewer` around it scrolls by the least amount that shows it. A `GotKeyboardFocus` handler that moves the focus elsewhere therefore stops the scroll, and an element that is already fully visible does not scroll. For example, Tab from a `Button` to a `Button` 30 pixels high at 300 in the content of a `ScrollViewer` 90 pixels high sets the viewer's `VerticalOffset` from `0` to `240` (`330 - 90`) in the same frame.
+
 `DispatchKeyboard` sends the key events of an `InputFrame` to the focused element: for each key, the press, then one `PreviewKeyDown`/`KeyDown` pair with `IsRepeat == true` for each auto-repeat in `InputFrame.KeyboardFrame.GetRepeatCount`, then the release. It raises preview and bubbling key events through the routed event system, skips `InputKey.None` and `InputKey.Unknown`, and includes current Ctrl, Shift, and Alt modifier state in `KeyEventArgs`. If the focused element can no longer receive focus when dispatch starts, dispatch clears focus and does not route the keyboard input.
 
 Each key event goes to the element that has keyboard focus at the moment the event is raised, not to the element that had focus when dispatch started. A handler that moves focus during one key event therefore changes the target of the next key event of the same frame, including the next repeat of the same key. When a handler clears focus or makes the focused element unable to receive focus, for example by detaching, disabling, or hiding it, the remaining key events of the frame are not raised.
 
-A key event is routed over the supplied route map when the focused element is in it and also in the current route map of the element's root (`UIRoot.InputCache.EnsureCurrent`). When the element is not in the supplied map, for example because a handler of the same frame attached the element after the map was built and then focused it, the event is routed over the root's current route map. The remaining key events of the frame, including a release, therefore reach that element. When the element is in the supplied map but no longer in the root's current map, for example because a handler of the same frame collapsed or hid one of its ancestors, the element can no longer receive focus and the remaining key events of the frame are not raised. The same rule decides, when dispatch starts, whether the focused element can still receive focus, and `TextInput` of the same frame uses the same check.
+A key event of a focused element that belongs to a `UIRoot` is routed over the current route map of that root (`UIRoot.InputCache.EnsureCurrent`), resolved when the event is raised; the supplied route map is used only for an element without a `UIRoot`. As in WPF, where every raise builds its route from the handlers registered at that moment, each key event of a frame sees the tree and the handlers as the handlers of the earlier key events left them:
+
+- When a handler of the same frame attaches an element after the supplied map was built and focuses it, the remaining key events of the frame, including a release, reach that element.
+- When a handler of the same frame collapses or hides an ancestor of the focused element, the element can no longer receive focus and the remaining key events of the frame are not raised.
+- When a handler of one key event removes a handler with `RemoveHandler`, the removed handler does not run on the next key event of the same frame; a handler added with `AddHandler` runs on it. The event that is being raised keeps the route it already built.
+
+The same rule decides, when dispatch starts, whether the focused element can still receive focus, and `TextInput` of the same frame is routed the same way. For example, a field gets two auto-repeats of Down in one frame, and its `KeyDown` handler removes handler `h` from the field's parent during the first repeat. `h` runs once, on the first repeat.
+
+```csharp
+using Cerneala.UI.Elements;
+using Cerneala.UI.Input;
+
+UIRoot root = new();
+UIElement panel = new();
+UIElement field = new() { Focusable = true };
+panel.VisualChildren.Add(field);
+root.VisualChildren.Add(panel);
+
+int hCalls = 0;
+RoutedEventHandler h = (_, _) => hCalls++;
+panel.Handlers.AddHandler(InputEvents.KeyDownEvent, h);
+field.Handlers.AddHandler(InputEvents.KeyDownEvent, (_, _) => panel.Handlers.RemoveHandler(InputEvents.KeyDownEvent, h));
+
+ElementInputRouteMap frameMap = root.InputCache.EnsureCurrent(root);
+FocusManager focusManager = new();
+focusManager.Focus(field, frameMap);
+KeyboardSnapshot held = KeyboardSnapshot.FromDownKeys([InputKey.Down]);
+focusManager.DispatchKeyboard(
+    new InputFrame(PointerSnapshot.Empty, PointerSnapshot.Empty, held, held, [], [InputKey.Down, InputKey.Down]),
+    frameMap);
+
+// hCalls is 1.
+```
 
 ## Constructors
 

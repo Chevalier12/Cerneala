@@ -44,7 +44,7 @@ As in WPF, `UIElement.BringIntoView` raises `RequestBringIntoViewEvent` from the
 
 A handler that sets `Handled` to `true` before the event reaches a `ScrollViewer` stops the scroll, because the `ScrollViewer` handler does not run for handled events.
 
-The event routes through the element input route, like the other bubbling events of Cerneala. An element that is not in that route, such as a disabled element, raises it only to its own handlers.
+The event bubbles along the element's ancestors, like the other events that `UIElement.RaiseEvent` raises. As in WPF, this holds also when the element or an ancestor is disabled, hidden or collapsed: `BringIntoView` on a disabled element inside a `ScrollViewer` still scrolls it into view. Only a detached element raises it just to its own handlers.
 
 ## Constructors
 | Name | Description |

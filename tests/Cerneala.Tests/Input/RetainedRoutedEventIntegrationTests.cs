@@ -1,5 +1,6 @@
 using Cerneala.UI.Elements;
 using Cerneala.UI.Input;
+using Cerneala.UI.Layout;
 
 namespace Cerneala.Tests.Input;
 
@@ -86,6 +87,103 @@ public sealed class RetainedRoutedEventIntegrationTests
         element.RaiseEvent(new MouseButtonEventArgs(InputEvents.MouseDownEvent, element, InputMouseButton.Left, 0, 0, 1));
 
         Assert.Same(element, sender);
+    }
+
+    // As WPF's UIElement.RaiseEvent: the route of an event that an attached element raises follows its parents whatever
+    // their IsEnabled and Visibility. Being outside the input route only keeps pointer and keyboard input away.
+    [Theory]
+    [InlineData("disabled child")]
+    [InlineData("hidden child")]
+    [InlineData("collapsed child")]
+    [InlineData("disabled parent")]
+    [InlineData("hidden parent")]
+    [InlineData("collapsed parent")]
+    public void BubbleEventRaisedOutsideTheInputRouteReachesEveryAncestor(string state)
+    {
+        UIRoot root = new();
+        UIElement parent = new();
+        UIElement child = new();
+        root.VisualChildren.Add(parent);
+        parent.VisualChildren.Add(child);
+        List<string> calls = [];
+        child.Handlers.AddHandler(InputEvents.MouseDownEvent, (_, _) => calls.Add("child"));
+        parent.Handlers.AddHandler(InputEvents.MouseDownEvent, (_, _) => calls.Add("parent"));
+        root.Handlers.AddHandler(InputEvents.MouseDownEvent, (_, _) => calls.Add("root"));
+        Apply(state, state.EndsWith("child", StringComparison.Ordinal) ? child : parent);
+        root.ProcessFrame();
+
+        child.RaiseEvent(new MouseButtonEventArgs(InputEvents.MouseDownEvent, child, InputMouseButton.Left, 0, 0, 1));
+
+        Assert.Equal(["child", "parent", "root"], calls);
+    }
+
+    // A Tunnel event that a disabled element raises starts at the root, as in WPF.
+    [Fact]
+    public void TunnelEventRaisedByADisabledElementStartsAtTheRoot()
+    {
+        UIRoot root = new();
+        UIElement parent = new();
+        UIElement child = new() { IsEnabled = false };
+        root.VisualChildren.Add(parent);
+        parent.VisualChildren.Add(child);
+        List<string> calls = [];
+        root.Handlers.AddHandler(InputEvents.PreviewMouseDownEvent, (_, _) => calls.Add("root"));
+        parent.Handlers.AddHandler(InputEvents.PreviewMouseDownEvent, (_, _) => calls.Add("parent"));
+        child.Handlers.AddHandler(InputEvents.PreviewMouseDownEvent, (_, _) => calls.Add("child"));
+        root.ProcessFrame();
+
+        child.RaiseEvent(new MouseButtonEventArgs(InputEvents.PreviewMouseDownEvent, child, InputMouseButton.Left, 0, 0, 1));
+
+        Assert.Equal(["root", "parent", "child"], calls);
+    }
+
+    // The route of a raised event changes with the tree, not only with the input route: a handler added to a hidden
+    // element after an earlier raise runs on the next raise.
+    [Fact]
+    public void RaisedEventRouteFollowsHandlersAddedToAHiddenAncestor()
+    {
+        UIRoot root = new();
+        UIElement parent = new() { Visibility = Visibility.Hidden };
+        UIElement child = new();
+        root.VisualChildren.Add(parent);
+        parent.VisualChildren.Add(child);
+        List<string> calls = [];
+        child.RaiseEvent(new MouseButtonEventArgs(InputEvents.MouseDownEvent, child, InputMouseButton.Left, 0, 0, 1));
+
+        parent.Handlers.AddHandler(InputEvents.MouseDownEvent, (_, _) => calls.Add("parent"));
+        child.RaiseEvent(new MouseButtonEventArgs(InputEvents.MouseDownEvent, child, InputMouseButton.Left, 0, 0, 1));
+
+        Assert.Equal(["parent"], calls);
+    }
+
+    // Raising an event does not change where input goes: a disabled, hidden or collapsed element stays outside the
+    // input route.
+    [Theory]
+    [InlineData("disabled child")]
+    [InlineData("hidden child")]
+    [InlineData("collapsed child")]
+    public void RaisingAnEventKeepsTheElementOutsideTheInputRoute(string state)
+    {
+        UIRoot root = new();
+        UIElement child = new();
+        root.VisualChildren.Add(child);
+        Apply(state, child);
+
+        child.RaiseEvent(new MouseButtonEventArgs(InputEvents.MouseDownEvent, child, InputMouseButton.Left, 0, 0, 1));
+
+        Assert.False(root.InputCache.EnsureCurrent(root).Contains(child));
+    }
+
+    private static void Apply(string state, UIElement element)
+    {
+        if (state.StartsWith("disabled", StringComparison.Ordinal))
+        {
+            element.IsEnabled = false;
+        }
+        else
+        {
+            element.Visibility = state.StartsWith("hidden", StringComparison.Ordinal) ? Visibility.Hidden : Visibility.Collapsed;
+        }
     }
 
     // A Direct event runs only the raising element's handlers. As on a route, the handler's sender and args.Source are

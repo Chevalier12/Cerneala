@@ -293,16 +293,19 @@ internal sealed class TextInputCore
         };
         if (mouseSelectionUnit == MouseSelectionUnit.Character)
         {
+            // As WPF's text editor, Shift+click extends the selection from its anchor to the click, and the drag that
+            // follows keeps that anchor (#1200).
+            bool extendSelection = args.IsShiftDown;
             int displayIndex = GetDisplayIndexAtPointer(args, out bool atLineEnd);
-            int index = host.GetTextPosition(displayIndex);
+            int index = extendSelection ? Selection.Anchor : host.GetTextPosition(displayIndex);
             mouseSelectionAnchor = index;
             mouseSelectionAnchorEnd = index;
-            MoveCaretToDisplayIndex(displayIndex, extendSelection: false, atLineEnd);
+            MoveCaretToDisplayIndex(displayIndex, extendSelection, atLineEnd);
         }
         else
         {
             (mouseSelectionAnchor, mouseSelectionAnchorEnd) = GetMouseSelectionUnitRange(args);
-            Select(mouseSelectionAnchor, mouseSelectionAnchorEnd);
+            SelectUnits(mouseSelectionAnchor, mouseSelectionAnchorEnd);
             view.ResetCaretBlink();
         }
 
@@ -407,15 +410,24 @@ internal sealed class TextInputCore
             (int start, int end) = GetMouseSelectionUnitRange(args);
             if (start >= mouseSelectionAnchor)
             {
-                Select(mouseSelectionAnchor, Math.Max(end, mouseSelectionAnchorEnd));
+                SelectUnits(mouseSelectionAnchor, Math.Max(end, mouseSelectionAnchorEnd));
             }
             else
             {
-                Select(mouseSelectionAnchorEnd, start);
+                SelectUnits(mouseSelectionAnchorEnd, start);
             }
         }
 
         view.ResetCaretBlink();
+    }
+
+    // Whole words or lines selected forward end after their last character, so an end at the end of a wrapped line is
+    // drawn at the end of that line, before the reveal, as a click right of the line's end: the reveal does not scroll to
+    // the next line (#1199). Selected backward, the caret is at the start of a word or line.
+    private void SelectUnits(int anchor, int active)
+    {
+        bool atLineEnd = active > anchor && view.IsSoftWrappedLineEnd(host.GetDisplayIndex(active));
+        Select(anchor, active, atLineEnd);
     }
 
     // The word (with the whitespace after it) or the text line (without its line break) of the character under the

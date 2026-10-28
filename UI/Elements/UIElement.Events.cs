@@ -149,7 +149,9 @@ public partial class UIElement
             return;
         }
 
-        ElementInputRouteMap routeMap = Root.InputCache.EnsureCurrent(Root);
+        // As WPF's UIElement.RaiseEvent, the route follows the element's ancestors whatever their IsEnabled and
+        // Visibility: those only keep pointer and keyboard input away from an element.
+        ElementInputRouteMap routeMap = Root.InputCache.EnsureRaisedEventRoutesCurrent(Root);
         if (routeMap.Contains(this))
         {
             RoutedEventRouter.Raise(routeMap.InputTree, this, args);

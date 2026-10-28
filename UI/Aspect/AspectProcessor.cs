@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using Cerneala.UI.Controls;
@@ -18,6 +19,7 @@ public sealed class AspectProcessor
     private readonly ConditionalWeakTable<UIElement, EnvironmentState> environmentStates = new();
     private readonly ConditionalWeakTable<UIElement, BehaviorState> behaviorStates = new();
     private readonly ConditionalWeakTable<Control, TemplateOwnerState> templateOwnerStates = new();
+    private readonly ConditionalWeakTable<UIElement, DataSubscription> dataSubscriptions = new();
     private bool isApplying;
 
     public AspectProcessor(UIRoot root)
@@ -79,6 +81,7 @@ public sealed class AspectProcessor
             return;
         }
 
+        SynchronizeDataSubscription(element);
         if (element is Control templatedControl)
         {
             templatedControl.ApplyTemplateOutsideLayout();
@@ -97,13 +100,16 @@ public sealed class AspectProcessor
         TemplateOwnerState state = templateOwnerStates.GetOrCreateValue(owner);
         AspectStateSet next = AspectStateSet.FromElement(owner);
         AspectStateSet? previous = state.States;
-        if (next.Equals(previous))
+        AspectVariantSet nextVariants = owner.AspectVariants;
+        AspectVariantSet? previousVariants = state.Variants;
+        if (next.Equals(previous) && nextVariants.Equals(previousVariants))
         {
             return;
         }
 
         state.States = next;
-        // Slot state dependencies belong to the part, but read the template owner.
+        state.Variants = nextVariants;
+        // Slot state and variant dependencies belong to the part, but read the template owner.
         // An unchanged template does not reattach or otherwise queue those parts.
         foreach ((AspectSlot _, UIElement part) in instance.Slots.Entries)
         {
@@ -114,12 +120,53 @@ public sealed class AspectProcessor
                 continue;
             }
 
-            if (engine.GetDependencies(part).States.Any(dependency =>
-                previous is null || previous.Contains(dependency) != next.Contains(dependency)))
+            AspectDependencySet dependencies = engine.GetDependencies(part);
+            if (dependencies.States.Any(dependency =>
+                    previous is null || previous.Contains(dependency) != next.Contains(dependency)) ||
+                dependencies.Variants.Any(dependency =>
+                    previousVariants is null || VariantChanged(previousVariants, nextVariants, dependency)))
             {
                 part.Invalidate(InvalidationFlags.Aspect, "Template owner Aspect state changed");
             }
         }
+    }
+
+    // A data condition reads the element's DataContext, so a PropertyChanged of that object for a declared property
+    // dependency queues the element's Aspect work, as a DataContext change does. The subscription follows the
+    // DataContext and the dependencies of the last apply, and the detach's Clear removes it.
+    private void SynchronizeDataSubscription(UIElement element)
+    {
+        IReadOnlyList<AspectDataDependency> dependencies = engine.GetDependencies(element).Data;
+        object? data = element.DataContext;
+        string[] propertyNames = data is INotifyPropertyChanged
+            ? dependencies
+                .Where(dependency => dependency.PropertyName is not null &&
+                    (dependency.OwnerType is null || dependency.OwnerType.IsInstanceOfType(data)))
+                .Select(dependency => dependency.PropertyName!)
+                .Distinct(StringComparer.Ordinal)
+                .ToArray()
+            : [];
+        if (propertyNames.Length == 0)
+        {
+            if (dataSubscriptions.TryGetValue(element, out DataSubscription? existing))
+            {
+                existing.Dispose();
+                dataSubscriptions.Remove(element);
+            }
+
+            return;
+        }
+
+        dataSubscriptions
+            .GetValue(element, key => new DataSubscription(root, key))
+            .Update((INotifyPropertyChanged)data!, propertyNames);
+    }
+
+    private static bool VariantChanged(AspectVariantSet previous, AspectVariantSet next, AspectVariantKey key)
+    {
+        bool hadValue = previous.TryGetUntyped(key, out object? previousValue);
+        bool hasValue = next.TryGetUntyped(key, out object? nextValue);
+        return hadValue != hasValue || !Equals(previousValue, nextValue);
     }
 
     // Package behaviors (the program of default Aspects) attach with the
@@ -146,6 +193,12 @@ public sealed class AspectProcessor
 
         try { ApplyEngine(() => engine.Clear(element)); }
         catch (Exception exception) { failure ??= ExceptionDispatchInfo.Capture(exception); }
+
+        if (dataSubscriptions.TryGetValue(element, out DataSubscription? dataSubscription))
+        {
+            dataSubscription.Dispose();
+            dataSubscriptions.Remove(element);
+        }
 
         catalogStates.Remove(element);
         environmentStates.Remove(element);
@@ -432,6 +485,8 @@ public sealed class AspectProcessor
     private sealed class TemplateOwnerState
     {
         public AspectStateSet? States { get; set; }
+
+        public AspectVariantSet? Variants { get; set; }
     }
 
     private sealed class CatalogState
@@ -495,6 +550,67 @@ public sealed class AspectProcessor
             localAspect = nextLocalAspect;
             localAspectVersion = nextLocalAspectVersion;
             ContentTemplates = null;
+        }
+    }
+
+    // A PropertyChanged whose PropertyName is null or empty reports that every property changed. An event raised on
+    // another thread is posted to the root's thread, and only an element still in the root with this source is queued.
+    private sealed class DataSubscription(UIRoot root, UIElement element) : IDisposable
+    {
+        private INotifyPropertyChanged? source;
+        private string[] propertyNames = [];
+
+        public void Update(INotifyPropertyChanged nextSource, string[] nextPropertyNames)
+        {
+            propertyNames = nextPropertyNames;
+            if (ReferenceEquals(source, nextSource))
+            {
+                return;
+            }
+
+            Unsubscribe();
+            source = nextSource;
+            source.PropertyChanged += OnPropertyChanged;
+        }
+
+        public void Dispose()
+        {
+            Unsubscribe();
+            propertyNames = [];
+        }
+
+        private void Unsubscribe()
+        {
+            if (source is not null)
+            {
+                source.PropertyChanged -= OnPropertyChanged;
+                source = null;
+            }
+        }
+
+        private void OnPropertyChanged(object? sender, PropertyChangedEventArgs args)
+        {
+            if (!string.IsNullOrEmpty(args.PropertyName) && Array.IndexOf(propertyNames, args.PropertyName) < 0)
+            {
+                return;
+            }
+
+            if (root.Relay.CheckAccess())
+            {
+                Invalidate(source);
+                return;
+            }
+
+            INotifyPropertyChanged? observed = source;
+            root.Relay.Post(() => Invalidate(observed));
+        }
+
+        private void Invalidate(INotifyPropertyChanged? observed)
+        {
+            if (observed is not null && ReferenceEquals(source, observed) && ReferenceEquals(element.Root, root))
+            {
+                element.Invalidate(InvalidationFlags.Aspect, "Aspect data dependency changed");
+            }
         }
     }
 
