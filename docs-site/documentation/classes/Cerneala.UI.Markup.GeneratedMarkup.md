@@ -185,7 +185,13 @@ root provider. A local resource therefore shadows an application resource with
 the same key. The controller subscribes only while its owner is attached
 (at once when the owner is already attached at the call, otherwise when it
 attaches), re-resolves the nearest value after matching application-provider changes, and
-marshals a cross-thread provider notification through the root Relay. A call
+marshals a cross-thread provider notification through the root Relay. "The
+attached root provider" is the provider the root has now: when
+`UIRoot.SetResourceProvider` replaces it, the controller unsubscribes from the
+replaced provider, subscribes to the new one, and re-resolves the nearest value
+at once. For example, after `root.SetResourceProvider(darkTheme)` a target
+attached to `"Accent"` shows `darkTheme`'s `Accent`, follows later changes of
+`darkTheme`, and ignores later changes of the replaced provider. A call
 made while the owner is detaching from its root only applies the current value;
 the controller subscribes when the owner attaches again. When applying the
 first value throws, for example because the resource value fails the target

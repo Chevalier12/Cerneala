@@ -254,6 +254,98 @@ public sealed class ApplicationResourceIntegrationTests
     }
 
     [Fact]
+    public void AttachedResourceConsumerFollowsAValueChangeInsideTheRootProvider()
+    {
+        ResourceStore storeA = new();
+        ResourceId<Brush> id = new("Accent");
+        SolidColorBrush red = new(new Color(255, 0, 0));
+        SolidColorBrush green = new(new Color(0, 255, 0));
+        storeA.SetResource(id, red);
+        UIRoot root = new(100, 100);
+        root.SetResourceProvider(storeA);
+        Border border = CreateConsumer(root);
+        root.ProcessFrame();
+        Assert.Same(red, border.Background);
+
+        storeA.SetResource(id, green);
+        root.ProcessFrame();
+
+        Assert.Same(green, border.Background);
+    }
+
+    [Fact]
+    public void AttachedResourceConsumerFollowsTheRootProviderBeingReplaced()
+    {
+        ResourceStore storeA = new();
+        ResourceStore storeB = new();
+        ResourceId<Brush> id = new("Accent");
+        SolidColorBrush red = new(new Color(255, 0, 0));
+        SolidColorBrush blue = new(new Color(0, 0, 255));
+        SolidColorBrush green = new(new Color(0, 255, 0));
+        storeA.SetResource(id, red);
+        storeB.SetResource(id, blue);
+        UIRoot root = new(100, 100);
+        root.SetResourceProvider(storeA);
+        Border border = CreateConsumer(root);
+        root.ProcessFrame();
+        Assert.Same(red, border.Background);
+
+        root.SetResourceProvider(storeB);
+        root.ProcessFrame();
+
+        Assert.Same(blue, border.Background);
+
+        // The consumer now follows the new provider's later changes.
+        storeB.SetResource(id, green);
+        root.ProcessFrame();
+        Assert.Same(green, border.Background);
+    }
+
+    [Fact]
+    public void AttachedResourceConsumerIgnoresChangesInTheReplacedRootProvider()
+    {
+        ResourceStore storeA = new();
+        ResourceStore storeB = new();
+        ResourceId<Brush> id = new("Accent");
+        SolidColorBrush blue = new(new Color(0, 0, 255));
+        storeA.SetResource(id, new SolidColorBrush(new Color(255, 0, 0)));
+        storeB.SetResource(id, blue);
+        UIRoot root = new(100, 100);
+        root.SetResourceProvider(storeA);
+        Border border = CreateConsumer(root);
+        root.ProcessFrame();
+        root.SetResourceProvider(storeB);
+        root.ProcessFrame();
+
+        storeA.SetResource(id, new SolidColorBrush(new Color(1, 1, 1)));
+        root.ProcessFrame();
+
+        Assert.Same(blue, border.Background);
+    }
+
+    [Fact]
+    public void AttachedResourceConsumerUnsubscribesFromTheReplacedRootProvider()
+    {
+        CountingResourceProvider providerA = new();
+        CountingResourceProvider providerB = new();
+        ResourceId<Brush?> id = new("Accent");
+        providerA.Store.SetResource(id, new SolidColorBrush(new Color(255, 0, 0)));
+        providerB.Store.SetResource(id, new SolidColorBrush(new Color(0, 0, 255)));
+        UIRoot root = new(100, 100);
+        root.SetResourceProvider(providerA);
+        Border border = CreateConsumer(root);
+        root.ProcessFrame();
+        Assert.Equal(2, providerA.Handlers);
+
+        root.SetResourceProvider(providerB);
+
+        Assert.Equal(0, providerA.Handlers);
+        Assert.Equal(2, providerB.Handlers);
+        root.VisualChildren.Remove(border);
+        Assert.Equal(1, providerB.Handlers);
+    }
+
+    [Fact]
     public void ApplicationAspectAppliesToCodeCreatedDerivedControlAtCorrectPrecedence()
     {
         Application application = new();

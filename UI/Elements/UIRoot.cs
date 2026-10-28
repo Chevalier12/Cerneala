@@ -168,6 +168,10 @@ public sealed partial class UIRoot : UIElement, IElementHost, IInvalidationSink
 
     public IResourceProvider? ResourceProvider { get; private set; }
 
+    // Raised on the root's thread after SetResourceProvider replaced ResourceProvider, so attachments that subscribed to
+    // the previous provider move to the new one and re-resolve (#838).
+    internal event Action? ResourceProviderChanged;
+
     public ResourceDependencyTracker ResourceDependencyTracker { get; }
 
     public IPlatformServices PlatformServices { get; private set; } = Cerneala.UI.Platform.PlatformServices.Empty;
@@ -220,6 +224,7 @@ public sealed partial class UIRoot : UIElement, IElementHost, IInvalidationSink
         }
 
         Invalidate(InvalidationFlags.Resource | InvalidationFlags.Aspect | InvalidationFlags.Subtree, "Root resource provider changed");
+        ResourceProviderChanged?.Invoke();
     }
 
     public void SetPlatformServices(IPlatformServices? services)

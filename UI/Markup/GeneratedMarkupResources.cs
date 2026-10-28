@@ -55,6 +55,7 @@ public static partial class GeneratedMarkup
         private readonly UiProperty<T> targetProperty;
         private readonly string key;
         private readonly UiPropertyValueSource valueSource;
+        private UIRoot? root;
         private IObservableResourceProvider? provider;
         private bool disposed;
 
@@ -79,22 +80,25 @@ public static partial class GeneratedMarkup
                 return;
             }
 
-            provider = owner.Root?.ResourceProvider as IObservableResourceProvider;
-            if (provider is not null)
+            root = owner.Root;
+            if (root is not null)
             {
-                provider.ResourceChanged += OnResourceChanged;
+                root.ResourceProviderChanged += OnRootResourceProviderChanged;
             }
 
+            SubscribeToRootProvider();
             ApplyAvailableValue();
         }
 
         public void Detach()
         {
-            if (provider is not null)
+            if (root is not null)
             {
-                provider.ResourceChanged -= OnResourceChanged;
-                provider = null;
+                root.ResourceProviderChanged -= OnRootResourceProviderChanged;
+                root = null;
             }
+
+            UnsubscribeFromProvider();
         }
 
         public void Dispose()
@@ -121,6 +125,32 @@ public static partial class GeneratedMarkup
             {
                 target.SetValue(targetProperty, resource, valueSource);
             }
+        }
+
+        private void SubscribeToRootProvider()
+        {
+            provider = root?.ResourceProvider as IObservableResourceProvider;
+            if (provider is not null)
+            {
+                provider.ResourceChanged += OnResourceChanged;
+            }
+        }
+
+        private void UnsubscribeFromProvider()
+        {
+            if (provider is not null)
+            {
+                provider.ResourceChanged -= OnResourceChanged;
+                provider = null;
+            }
+        }
+
+        // The root replaced its provider: follow the new one only, and re-resolve the nearest value from it.
+        private void OnRootResourceProviderChanged()
+        {
+            UnsubscribeFromProvider();
+            SubscribeToRootProvider();
+            ApplyAvailableValue();
         }
 
         private void OnResourceChanged(object? sender, ResourceChangedEventArgs args)
