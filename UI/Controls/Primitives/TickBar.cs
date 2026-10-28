@@ -120,10 +120,12 @@ public class TickBar : UIElement
         LayoutRect bounds = context.Bounds;
         float width = MathF.Max(0, bounds.Width);
         float height = MathF.Max(0, bounds.Height);
-        float range = Maximum - Minimum;
+        // In double, as WPF: Maximum - Minimum of two finite floats can overflow float (for example 3e38 - -3e38), and so
+        // can a tick's distance from Minimum and every value computed from them (#1118).
+        double range = (double)Maximum - Minimum;
         float halfReservedSpace = ReservedSpace * 0.5f;
         float tickLength;
-        float logicalToPhysical;
+        double logicalToPhysical;
         DrawPoint start;
         DrawPoint end;
         bool vertical = Placement is TickBarPlacement.Left or TickBarPlacement.Right;
@@ -187,10 +189,10 @@ public class TickBar : UIElement
         }
 
         // A TickFrequency that would put ticks closer than one pixel is raised to the range of one pixel.
-        float interval = TickFrequency;
+        double interval = TickFrequency;
         if (interval > 0)
         {
-            float minimumInterval = range / (vertical ? height : width);
+            double minimumInterval = range / (vertical ? height : width);
             if (interval < minimumInterval)
             {
                 interval = minimumInterval;
@@ -221,15 +223,15 @@ public class TickBar : UIElement
                     continue;
                 }
 
-                float along = ((tick - Minimum) * logicalToPhysical) + startAlong;
+                float along = (float)((((double)tick - Minimum) * logicalToPhysical) + startAlong);
                 DrawAlong(drawing, fill, originX, originY, start, along, shortTickLength, vertical);
             }
         }
         else if (interval > 0)
         {
-            for (float value = interval; value < range; value += interval)
+            for (double value = interval; value < range; value += interval)
             {
-                float along = (value * logicalToPhysical) + startAlong;
+                float along = (float)((value * logicalToPhysical) + startAlong);
                 DrawAlong(drawing, fill, originX, originY, start, along, shortTickLength, vertical);
             }
         }
