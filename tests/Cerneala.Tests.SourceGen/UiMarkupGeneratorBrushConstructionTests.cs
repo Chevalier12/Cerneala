@@ -50,4 +50,62 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.Equal(namedButton.Background.GetType(), inlineButton.Background!.GetType());
         Assert.NotSame(namedButton.Background, inlineButton.Background);
     }
+
+    [Theory]
+    [InlineData("<StackPanel><Button Background=\"255,0,0\" /></StackPanel>")]
+    [InlineData("<StackPanel><StackPanel.Resources><SolidColorBrush Name=\"P\" Color=\"#FF0000\" /></StackPanel.Resources></StackPanel>")]
+    [InlineData("<StackPanel><StackPanel.Resources><SolidColorBrush Name=\"P\" Color=\"255,0,0\" /></StackPanel.Resources></StackPanel>")]
+    [InlineData("<StackPanel><StackPanel.Resources><SolidColorBrush Name=\"P\" Color=\"1, 2, 3, 128\" /></StackPanel.Resources></StackPanel>")]
+    [InlineData("<StackPanel><StackPanel.Resources><LinearGradientBrush Name=\"P\" StartPoint=\"0,0\" EndPoint=\"1,1\"><GradientStop Offset=\"0\" Color=\"255,0,0\" /><GradientStop Offset=\"1\" Color=\"0, 0, 255, 128\" /></LinearGradientBrush></StackPanel.Resources></StackPanel>")]
+    [InlineData("<StackPanel><StackPanel.Resources><DrawingBrush Name=\"P\" ContentBounds=\"0,0,8,8\"><FillRectangle Rect=\"0,0,8,8\" Color=\"0,128,0\" /></DrawingBrush></StackPanel.Resources></StackPanel>")]
+    public void ColorSyntaxIsTheSameInPlainAttributesAndBrushResources(string markup)
+    {
+        GeneratorRunResult result = RunGenerator("BrushColorSyntax.crn", markup, out _);
+
+        Assert.True(
+            result.Diagnostics.Length == 0,
+            "Diagnostics: " + string.Join(" | ", result.Diagnostics));
+    }
+
+    [Fact]
+    public void ByteChannelColorInSolidColorBrushResourceBuildsTheSameColorAsAPlainAttribute()
+    {
+        const string markup = """
+            <StackPanel>
+              <StackPanel.Resources>
+                <SolidColorBrush Name="Rgb" Color="255,0,0" />
+                <SolidColorBrush Name="Rgba" Color="1, 2, 3, 128" />
+              </StackPanel.Resources>
+              <Button Background="$Rgb" />
+              <Button Background="$Rgba" />
+              <Button Background="1, 2, 3, 128" />
+            </StackPanel>
+            """;
+
+        GeneratorRunResult result = RunGenerator("BrushColorValues.crn", markup, out Compilation compilation);
+        Assert.Empty(result.Diagnostics);
+
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+        StackPanel panel = Assert.IsType<StackPanel>(InvokeCreate(stream, "Cerneala.GeneratedUi.BrushColorValuesFactory"));
+        Assert.Equal(new Cerneala.Drawing.Color(255, 0, 0), Assert.IsType<Button>(panel.VisualChildren[0]).Background!.SolidColor);
+        Assert.Equal(new Cerneala.Drawing.Color(1, 2, 3, 128), Assert.IsType<Button>(panel.VisualChildren[1]).Background!.SolidColor);
+        Assert.Equal(new Cerneala.Drawing.Color(1, 2, 3, 128), Assert.IsType<Button>(panel.VisualChildren[2]).Background!.SolidColor);
+    }
+
+    [Theory]
+    [InlineData("256,0,0")]
+    [InlineData("1,2")]
+    [InlineData("1,2,3,4,5")]
+    [InlineData("-1,0,0")]
+    [InlineData("#GG0000")]
+    public void InvalidColorInSolidColorBrushResourceReportsInvalidPropertyValue(string color)
+    {
+        string markup = "<StackPanel><StackPanel.Resources><SolidColorBrush Name=\"P\" Color=\"" + color + "\" /></StackPanel.Resources></StackPanel>";
+
+        GeneratorRunResult result = RunGenerator("InvalidBrushColor.crn", markup, out _);
+
+        AssertDiagnostic(result, "CERNEALAUI004", "InvalidBrushColor.crn");
+    }
 }

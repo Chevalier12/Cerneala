@@ -211,18 +211,7 @@ public sealed partial class UiMarkupGenerator
 
         private static string? ParseBrushColor(MarkupAttribute? attribute)
         {
-            if (attribute is null)
-            {
-                return null;
-            }
-
-            string value = attribute.Value.Trim();
-            if (NamedColorNames.TryGetValue(value, out string? named))
-            {
-                return "global::Cerneala.Drawing.Color." + named;
-            }
-
-            return ParseHexColor(value) is ColorLiteral color ? color.ToExpression() : null;
+            return attribute is null ? null : ColorExpression(attribute.Value.Trim());
         }
     }
 }

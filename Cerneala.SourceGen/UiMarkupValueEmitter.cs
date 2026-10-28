@@ -461,7 +461,13 @@ public sealed partial class UiMarkupGenerator
 
         private string? Color(string elementName, string propertyName, MarkupAttribute attribute)
         {
-            string value = attribute.Value;
+            return ColorExpression(attribute.Value) ?? Invalid(attribute, elementName, propertyName, attribute.Value);
+        }
+
+        // The C# expression of a color literal: a named color, a hexadecimal color, or byte components in R, G, B or
+        // R, G, B, A form. Null when the value is none of these. Plain color attributes and brush resources share it.
+        private static string? ColorExpression(string value)
+        {
             if (NamedColorNames.TryGetValue(value, out string? namedColor))
             {
                 return "global::Cerneala.Drawing.Color." + namedColor;
@@ -483,7 +489,7 @@ public sealed partial class UiMarkupGenerator
                 return "new global::Cerneala.Drawing.Color(" + r + ", " + g + ", " + b + alpha + ")";
             }
 
-            return Invalid(attribute, elementName, propertyName, value);
+            return null;
         }
 
         private string? Brush(string elementName, string propertyName, MarkupAttribute attribute)
