@@ -159,6 +159,9 @@ public class PasswordBox : Control, ITimeSensitiveRenderElement, IPointerDragSou
         if (ReferenceEquals(property, PasswordCharProperty) ||
             ReferenceEquals(property, FontFamilyProperty) ||
             ReferenceEquals(property, FontSizeProperty) ||
+            ReferenceEquals(property, FontWeightProperty) ||
+            ReferenceEquals(property, FontStyleProperty) ||
+            ReferenceEquals(property, FontStretchProperty) ||
             ReferenceEquals(property, ForegroundProperty) ||
             ReferenceEquals(property, PaddingProperty))
         {
