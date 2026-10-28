@@ -92,15 +92,22 @@ public sealed class LayoutMotionCoordinator
                 continue;
             }
 
+            if (!TryGetRootVisualBounds(element, includeOwnLayoutCorrection: true, ignoreScrollOffsets: true,
+                out LayoutRect firstBounds))
+            {
+                continue;
+            }
+
             firstSnapshots[element] = new LayoutSnapshot(
                 element,
-                GetRootVisualBounds(element, includeOwnLayoutCorrection: true, ignoreScrollOffsets: true),
+                firstBounds,
                 element.VisualParent,
                 element.LayoutMotionId);
-            if (HasScrollAncestor(element))
+            if (HasScrollAncestor(element) &&
+                TryGetRootVisualBounds(element, includeOwnLayoutCorrection: false, ignoreScrollOffsets: true,
+                    out LayoutRect uncorrectedBounds))
             {
-                firstUncorrectedScrollBounds[element] = GetRootVisualBounds(
-                    element, includeOwnLayoutCorrection: false, ignoreScrollOffsets: true);
+                firstUncorrectedScrollBounds[element] = uncorrectedBounds;
             }
         }
     }
@@ -144,7 +151,12 @@ public sealed class LayoutMotionCoordinator
                 continue;
             }
 
-            LayoutRect last = GetRootVisualBounds(element, includeOwnLayoutCorrection: false, ignoreScrollOffsets: !reparented);
+            if (!TryGetRootVisualBounds(element, includeOwnLayoutCorrection: false, ignoreScrollOffsets: !reparented,
+                out LayoutRect last))
+            {
+                continue;
+            }
+
             // A scroll-only arrange must not retarget an existing correction either.
             if (!reparented && firstUncorrectedScrollBounds.TryGetValue(element, out LayoutRect uncorrected) &&
                 uncorrected == last)
@@ -166,7 +178,12 @@ public sealed class LayoutMotionCoordinator
             if (!reparented)
             {
                 // Convert the scroll-neutral comparison back to the current render space.
-                LayoutRect visualLast = GetRootVisualBounds(element, includeOwnLayoutCorrection: false);
+                if (!TryGetRootVisualBounds(element, includeOwnLayoutCorrection: false, ignoreScrollOffsets: false,
+                    out LayoutRect visualLast) || !IsValidLayoutRect(visualLast))
+                {
+                    continue;
+                }
+
                 firstBounds = firstBounds with
                 {
                     X = firstBounds.X + (visualLast.X - last.X),
@@ -243,14 +260,16 @@ public sealed class LayoutMotionCoordinator
         previousSnapshotsById.Clear();
         foreach (UIElement element in ElementTreeWalker.PreOrder(motion.Root))
         {
-            if (!IsParticipating(element) || element.LayoutMotionId is not LayoutMotionId id)
+            if (!IsParticipating(element) || element.LayoutMotionId is not LayoutMotionId id ||
+                !TryGetRootVisualBounds(element, includeOwnLayoutCorrection: true, ignoreScrollOffsets: false,
+                    out LayoutRect bounds))
             {
                 continue;
             }
 
             previousSnapshotsById[id] = new LayoutSnapshot(
                 element,
-                GetRootVisualBounds(element, includeOwnLayoutCorrection: true),
+                bounds,
                 element.VisualParent,
                 id);
         }
@@ -269,8 +288,15 @@ public sealed class LayoutMotionCoordinator
         return false;
     }
 
-    private static LayoutRect GetRootVisualBounds(UIElement element, bool includeOwnLayoutCorrection, bool ignoreScrollOffsets = false)
+    // Returns false when composing the visual transform chain overflows float; such an element has no
+    // representable visual bounds, so it starts no layout correction.
+    private static bool TryGetRootVisualBounds(
+        UIElement element,
+        bool includeOwnLayoutCorrection,
+        bool ignoreScrollOffsets,
+        out LayoutRect visualBounds)
     {
+        visualBounds = default;
         Matrix3x2 transform = Matrix3x2.Identity;
         Stack<UIElement> stack = new();
         for (UIElement? current = element; current is not null; current = current.VisualParent)
@@ -310,44 +336,50 @@ public sealed class LayoutMotionCoordinator
             }
 
             bool includeLayoutCorrection = includeOwnLayoutCorrection || !ReferenceEquals(current, element);
-            transform = Matrix3x2.Multiply(
-                ElementVisualTransform.GetElementTransform(current, bounds, includeLayoutCorrection),
-                transform);
+            if (!ElementVisualTransform.TryGetElementTransform(
+                    current, bounds, includeLayoutCorrection, out Matrix3x2 elementTransform) ||
+                !Matrix3x2.TryMultiply(elementTransform, transform, out transform))
+            {
+                return false;
+            }
         }
 
-        return TransformBounds(bounds, transform);
+        visualBounds = TransformBounds(bounds, transform);
+        return true;
     }
 
     private static Transform CreateElementSpaceCorrection(UIElement element, LayoutRect first, LayoutRect last)
     {
         Matrix3x2 rootCorrection = CreateInverseCorrection(first, last).Matrix;
-        Matrix3x2 ancestorTransform = GetAncestorTransform(element);
-        if (!ElementVisualTransform.TryInvert(ancestorTransform, out Matrix3x2 inverseAncestorTransform))
+        // An ancestor chain that overflows float or cannot be inverted, or a converted correction that overflows,
+        // cannot be represented in element space; no correction starts.
+        if (!TryGetAncestorTransform(element, out Matrix3x2 ancestorTransform) ||
+            !ElementVisualTransform.TryInvert(ancestorTransform, out Matrix3x2 inverseAncestorTransform) ||
+            !Matrix3x2.TryMultiply(ancestorTransform, rootCorrection, out Matrix3x2 correction) ||
+            !Matrix3x2.TryMultiply(correction, inverseAncestorTransform, out correction) ||
+            !TryCompensateForRenderPivot(element, correction, out correction))
         {
             return Transform.Identity;
         }
 
-        Matrix3x2 correction = Matrix3x2.Multiply(
-            Matrix3x2.Multiply(ancestorTransform, rootCorrection),
-            inverseAncestorTransform);
-        correction = CompensateForRenderPivot(element, correction);
         return new Transform(correction);
     }
 
-    private static Matrix3x2 CompensateForRenderPivot(UIElement element, Matrix3x2 correction)
+    private static bool TryCompensateForRenderPivot(UIElement element, Matrix3x2 correction, out Matrix3x2 compensated)
     {
         LayoutRect bounds = element.ArrangedBounds;
         LayoutPoint origin = element.RenderTransformOrigin;
         float pivotX = bounds.X + (bounds.Width * origin.X);
         float pivotY = bounds.Y + (bounds.Height * origin.Y);
-        return Matrix3x2.Multiply(
-            Matrix3x2.Multiply(Matrix3x2.CreateTranslation(pivotX, pivotY), correction),
-            Matrix3x2.CreateTranslation(-pivotX, -pivotY));
+        compensated = Matrix3x2.Identity;
+        return float.IsFinite(pivotX) && float.IsFinite(pivotY) &&
+            Matrix3x2.TryMultiply(Matrix3x2.CreateTranslation(pivotX, pivotY), correction, out Matrix3x2 pivoted) &&
+            Matrix3x2.TryMultiply(pivoted, Matrix3x2.CreateTranslation(-pivotX, -pivotY), out compensated);
     }
 
-    private static Matrix3x2 GetAncestorTransform(UIElement element)
+    private static bool TryGetAncestorTransform(UIElement element, out Matrix3x2 transform)
     {
-        Matrix3x2 transform = Matrix3x2.Identity;
+        transform = Matrix3x2.Identity;
         Stack<UIElement> stack = new();
         for (UIElement? current = element.VisualParent; current is not null; current = current.VisualParent)
         {
@@ -356,12 +388,14 @@ public sealed class LayoutMotionCoordinator
 
         while (stack.Count > 0)
         {
-            transform = Matrix3x2.Multiply(
-                ElementVisualTransform.GetElementTransform(stack.Pop(), includeLayoutCorrection: true),
-                transform);
+            if (!ElementVisualTransform.TryGetElementTransform(stack.Pop(), out Matrix3x2 elementTransform) ||
+                !Matrix3x2.TryMultiply(elementTransform, transform, out transform))
+            {
+                return false;
+            }
         }
 
-        return transform;
+        return true;
     }
 
     private static Transform CreateInverseCorrection(LayoutRect first, LayoutRect last)

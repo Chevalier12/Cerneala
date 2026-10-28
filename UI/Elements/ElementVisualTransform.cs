@@ -5,37 +5,22 @@ namespace Cerneala.UI.Elements;
 
 internal static class ElementVisualTransform
 {
-    internal static Matrix3x2 GetElementTransform(UIElement element, bool includeLayoutCorrection = true)
-    {
-        ArgumentNullException.ThrowIfNull(element);
-        return GetElementTransform(element, element.ArrangedBounds, includeLayoutCorrection);
-    }
-
-    internal static Matrix3x2 GetElementTransform(UIElement element, LayoutRect bounds, bool includeLayoutCorrection = true)
-    {
-        ArgumentNullException.ThrowIfNull(element);
-        if (!TryGetElementTransform(element, bounds, includeLayoutCorrection, out Matrix3x2 transform))
-        {
-            throw new ArgumentOutOfRangeException(nameof(element), "Matrix values must be finite.");
-        }
-
-        return transform;
-    }
-
     // Returns false when composing the element transform overflows float; such a
-    // transform is non-finite, so input treats it like a non-invertible transform.
+    // transform is non-finite, so input treats it like a non-invertible transform
+    // and rendering skips the element and its subtree.
     internal static bool TryGetElementTransform(UIElement element, out Matrix3x2 transform)
     {
         ArgumentNullException.ThrowIfNull(element);
         return TryGetElementTransform(element, element.ArrangedBounds, includeLayoutCorrection: true, out transform);
     }
 
-    private static bool TryGetElementTransform(
+    internal static bool TryGetElementTransform(
         UIElement element,
         LayoutRect bounds,
         bool includeLayoutCorrection,
         out Matrix3x2 transform)
     {
+        ArgumentNullException.ThrowIfNull(element);
         transform = Matrix3x2.Identity;
         LayoutPoint origin = element.RenderTransformOrigin;
         float pivotX = bounds.X + (bounds.Width * origin.X);

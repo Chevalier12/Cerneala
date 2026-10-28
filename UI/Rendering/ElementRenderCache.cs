@@ -16,6 +16,7 @@ public sealed class ElementRenderCache : IDisposable
     private int transformScopeVersion;
     private LayoutRect transformBounds;
     private Matrix3x2 elementTransform;
+    private bool elementTransformIsFinite;
     private bool disposed;
 
     public DrawCommandList Commands => commands;
@@ -28,7 +29,9 @@ public sealed class ElementRenderCache : IDisposable
 
     public LayoutRect ContentBounds { get; private set; }
 
-    internal Matrix3x2 GetElementTransform(UIElement element)
+    // Returns false when composing the element transform overflows float; the
+    // element and its subtree then draw nothing, as they are un-hittable for input.
+    internal bool TryGetElementTransform(UIElement element, out Matrix3x2 transform)
     {
         ObjectDisposedException.ThrowIf(disposed, this);
         ArgumentNullException.ThrowIfNull(element);
@@ -40,13 +43,14 @@ public sealed class ElementRenderCache : IDisposable
             transformScopeVersion != element.RenderScopeVersion ||
             transformBounds != element.ArrangedBounds)
         {
-            elementTransform = ElementVisualTransform.GetElementTransform(element);
+            elementTransformIsFinite = ElementVisualTransform.TryGetElementTransform(element, out elementTransform);
             transformElement = element;
             transformPropertyVersion = element.PropertyValueVersion;
             transformScopeVersion = element.RenderScopeVersion;
             transformBounds = element.ArrangedBounds;
         }
-        return elementTransform;
+        transform = elementTransform;
+        return elementTransformIsFinite;
     }
 
     public bool IsStale(UIElement element)

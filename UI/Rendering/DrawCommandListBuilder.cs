@@ -62,7 +62,10 @@ public sealed class DrawCommandListBuilder
         }
 
         ElementRenderCache localCache = renderCache.GetElementCache(element);
-        Matrix3x2 elementTransform = localCache.GetElementTransform(element);
+        if (!localCache.TryGetElementTransform(element, out Matrix3x2 elementTransform))
+        {
+            return;
+        }
 
         counters.CountComposedElement();
         bool hasTransform = elementTransform != Matrix3x2.Identity;

@@ -28,7 +28,7 @@ public sealed class ElementRenderCacheTests
     {
         FailingTransformElement element = new();
         cache.Ensure(element, new RenderCounters());
-        cache.GetElementTransform(element);
+        cache.TryGetElementTransform(element, out _);
         if (failRebuild)
         {
             element.Fail = true;
@@ -80,10 +80,10 @@ public sealed class ElementRenderCacheTests
         ];
         foreach (Action change in changes)
         {
-            Assert.Equal(ElementVisualTransform.GetElementTransform(element), cache.GetElementTransform(element));
+            Assert.Equal(Composed(element), Cached(cache, element));
             change();
-            Assert.Equal(ElementVisualTransform.GetElementTransform(element), cache.GetElementTransform(element));
-            Assert.Equal(ElementVisualTransform.GetElementTransform(element), cache.GetElementTransform(element));
+            Assert.Equal(Composed(element), Cached(cache, element));
+            Assert.Equal(Composed(element), Cached(cache, element));
         }
     }
 
@@ -92,14 +92,14 @@ public sealed class ElementRenderCacheTests
     {
         UIElement element = new();
         ElementRenderCache cache = new();
-        cache.GetElementTransform(element);
+        cache.TryGetElementTransform(element, out _);
         int observed = 0;
         element.PropertyChanged += (_, args) =>
         {
             if (ReferenceEquals(args.Property, UIElement.TranslateXProperty))
             {
                 observed++;
-                Assert.Equal(ElementVisualTransform.GetElementTransform(element), cache.GetElementTransform(element));
+                Assert.Equal(Composed(element), Cached(cache, element));
             }
         };
 
@@ -113,7 +113,7 @@ public sealed class ElementRenderCacheTests
         element.SetFrameworkDefault(UIElement.TranslateXProperty, 2f);
 
         Assert.Equal(8, observed);
-        Assert.Equal(ElementVisualTransform.GetElementTransform(element), cache.GetElementTransform(element));
+        Assert.Equal(Composed(element), Cached(cache, element));
     }
 
     [Fact]
@@ -124,10 +124,22 @@ public sealed class ElementRenderCacheTests
         Assert.Equal(first.PropertyValueVersion, second.PropertyValueVersion);
         Assert.Equal(first.RenderScopeVersion, second.RenderScopeVersion);
         ElementRenderCache cache = new();
-        Assert.Equal(ElementVisualTransform.GetElementTransform(first), cache.GetElementTransform(first));
-        Assert.Equal(ElementVisualTransform.GetElementTransform(second), cache.GetElementTransform(second));
+        Assert.Equal(Composed(first), Cached(cache, first));
+        Assert.Equal(Composed(second), Cached(cache, second));
         cache.Invalidate();
-        Assert.Equal(ElementVisualTransform.GetElementTransform(first), cache.GetElementTransform(first));
+        Assert.Equal(Composed(first), Cached(cache, first));
+    }
+
+    private static Matrix3x2 Composed(UIElement element)
+    {
+        Assert.True(ElementVisualTransform.TryGetElementTransform(element, out Matrix3x2 transform));
+        return transform;
+    }
+
+    private static Matrix3x2 Cached(ElementRenderCache cache, UIElement element)
+    {
+        Assert.True(cache.TryGetElementTransform(element, out Matrix3x2 transform));
+        return transform;
     }
 
     [Fact]
