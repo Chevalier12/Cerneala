@@ -234,7 +234,31 @@ the following text is not parsed as a binding, resource, or interpolation.
 <TextBlock Text="Literal: \$DataContext.Name:TwoWay" />
 ```
 
-A standalone `$` that does not begin a valid path also remains literal.
+Inside interpolated text, a `$` that does not begin a valid path also remains
+a literal character. This rule applies only after the first character of the
+value:
+
+```xml
+<!-- Builds and shows: Price $5 off -->
+<TextBlock Text="Price $5 off" />
+```
+
+A value that starts with `$` and is not a binding is a resource reference, not
+literal text. When no resource has that name, the build fails with
+`CERNEALAUI004`. A value that is only `$` fails with `CERNEALAUI007`, because a
+binding path needs an identifier after the `$`:
+
+```xml
+<!-- CERNEALAUI004: Markup property 'TextBlock.Text' has invalid value '$5 off' -->
+<TextBlock Text="$5 off" />
+```
+
+To start a value with a literal dollar sign, write `\$`:
+
+```xml
+<!-- Builds and shows: $5 off -->
+<TextBlock Text="\$5 off" />
+```
 
 ## Logical Binding Expressions
 

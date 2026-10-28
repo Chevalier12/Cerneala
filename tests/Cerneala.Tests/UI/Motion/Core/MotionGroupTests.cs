@@ -177,6 +177,65 @@ public sealed class MotionGroupTests
         Assert.Equal(TimeSpan.FromMilliseconds(40), stagger.GetDelay(2));
     }
 
+    [Fact]
+    public async Task DocumentedSequenceExampleCompletesItsAwait()
+    {
+        // The first example of docs-site/documentation/classes/Cerneala.UI.Motion.Core.MotionSequence.md.
+        MotionGraph graph = new();
+        MotionValue<float> opacity = graph.CreateValue(1f);
+        MotionValue<float> scale = graph.CreateValue(1f);
+
+        MotionGroupHandle sequence = MotionSequence.Start(
+            () => opacity.AnimateTo(0f, MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(150))),
+            () => scale.AnimateTo(1.1f, MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(150))));
+
+        TimeSpan now = TimeSpan.Zero;
+        graph.Tick(new MotionFrame(now, TimeSpan.Zero, 0, MotionFrameReason.Scheduled, MotionFramePhase.BeforeRender));
+        for (int frame = 1; frame <= 12 && !sequence.IsCompleted; frame++)
+        {
+            now += TimeSpan.FromMilliseconds(50);
+            graph.Tick(new MotionFrame(now, TimeSpan.FromMilliseconds(50), frame, MotionFrameReason.Scheduled, MotionFramePhase.BeforeRender));
+        }
+
+        await AssertCompletesWithinTwoSeconds(sequence.Completion);
+        Assert.Equal(0f, opacity.Current);
+        Assert.Equal(1.1f, scale.Current);
+    }
+
+    [Fact]
+    public async Task DocumentedParallelExampleCompletesItsAwait()
+    {
+        // The first example of docs-site/documentation/classes/Cerneala.UI.Motion.Core.MotionGroupHandle.md.
+        MotionGraph graph = new();
+        MotionValue<float> opacity = graph.CreateValue(1f);
+        MotionValue<float> scale = graph.CreateValue(1f);
+
+        MotionHandle fade = opacity.AnimateTo(0f, MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(150)));
+        MotionHandle grow = scale.AnimateTo(1.1f, MotionFactory.Tween<float>(TimeSpan.FromMilliseconds(150)));
+
+        MotionGroupHandle group = MotionGroup.Parallel(fade, grow);
+
+        TimeSpan now = TimeSpan.Zero;
+        graph.Tick(new MotionFrame(now, TimeSpan.Zero, 0, MotionFrameReason.Scheduled, MotionFramePhase.BeforeRender));
+        for (int frame = 1; frame <= 12 && !group.IsCompleted; frame++)
+        {
+            now += TimeSpan.FromMilliseconds(50);
+            graph.Tick(new MotionFrame(now, TimeSpan.FromMilliseconds(50), frame, MotionFrameReason.Scheduled, MotionFramePhase.BeforeRender));
+        }
+
+        await AssertCompletesWithinTwoSeconds(group.Completion);
+        Assert.Equal(0f, opacity.Current);
+        Assert.Equal(1.1f, scale.Current);
+    }
+
+    private static async Task AssertCompletesWithinTwoSeconds(ValueTask completion)
+    {
+        Task completionTask = completion.AsTask();
+        Task finished = await Task.WhenAny(completionTask, Task.Delay(TimeSpan.FromSeconds(2)));
+        Assert.Same(completionTask, finished);
+        await completionTask;
+    }
+
     private static MotionHandle FakeHandle()
     {
         MotionHandle? handle = null;

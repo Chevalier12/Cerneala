@@ -18,21 +18,30 @@ Inheritance:
 
 ## Examples
 
-Start a sequence where each motion begins only after the previous handle completes:
+Start a sequence where each motion begins only after the previous handle completes. The values belong to a `MotionGraph`, and the example advances time with `MotionGraph.Tick` in 50 ms frames; a motion only advances when its graph is ticked:
 
 ```csharp
 using Cerneala.UI.Motion.Core;
 using Cerneala.UI.Motion.Specs;
 
-ManualMotionTimeline timeline = new();
-MotionValue<float> opacity = timeline.CreateValue(1f);
-MotionValue<float> scale = timeline.CreateValue(1f);
+MotionGraph graph = new();
+MotionValue<float> opacity = graph.CreateValue(1f);
+MotionValue<float> scale = graph.CreateValue(1f);
 
 MotionGroupHandle sequence = MotionSequence.Start(
     () => opacity.AnimateTo(0f, Motion.Tween<float>(TimeSpan.FromMilliseconds(150))),
     () => scale.AnimateTo(1.1f, Motion.Tween<float>(TimeSpan.FromMilliseconds(150))));
 
+TimeSpan now = TimeSpan.Zero;
+graph.Tick(new MotionFrame(now, TimeSpan.Zero, 0, MotionFrameReason.Scheduled, MotionFramePhase.BeforeRender));
+for (int frame = 1; frame <= 12 && !sequence.IsCompleted; frame++)
+{
+    now += TimeSpan.FromMilliseconds(50);
+    graph.Tick(new MotionFrame(now, TimeSpan.FromMilliseconds(50), frame, MotionFrameReason.Scheduled, MotionFramePhase.BeforeRender));
+}
+
 await sequence.Completion;
+// opacity.Current is 0f and scale.Current is 1.1f.
 ```
 
 Cancel the active sequence step and prevent later steps from starting:

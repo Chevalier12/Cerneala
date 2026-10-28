@@ -290,6 +290,30 @@ public sealed partial class UiMarkupGeneratorTests
     }
 
     [Fact]
+    public void BindingStageFive_LeadingDollarIsAResourceReferenceAndInnerOrEscapedDollarIsLiteral()
+    {
+        // docs/reference/markup-data-bindings.md, "Reactive String Interpolation".
+        GeneratorRunResult leading = RunGenerator("LeadingDollar.crn", "<TextBlock Text=\"$5 off\" />", out _);
+        Diagnostic missingResource = Assert.Single(leading.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        Assert.Equal("CERNEALAUI004", missingResource.Id);
+        Assert.Contains("'$5 off'", missingResource.GetMessage(), StringComparison.Ordinal);
+
+        GeneratorRunResult lone = RunGenerator("LoneDollar.crn", "<TextBlock Text=\"$\" />", out _);
+        Diagnostic invalidSource = Assert.Single(lone.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        Assert.Equal("CERNEALAUI007", invalidSource.Id);
+
+        GeneratorRunResult inner = RunGenerator("InnerDollar.crn", "<TextBlock Text=\"Price $5 off\" />", out _);
+        Assert.DoesNotContain(inner.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        Assert.Contains("\"Price $5 off\"", SingleGeneratedSource(inner), StringComparison.Ordinal);
+
+        GeneratorRunResult escaped = RunGenerator("EscapedDollar.crn", "<TextBlock Text=\"\\$5 off\" />", out _);
+        Assert.DoesNotContain(escaped.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        string escapedSource = SingleGeneratedSource(escaped);
+        Assert.Contains("\"$5 off\"", escapedSource, StringComparison.Ordinal);
+        Assert.DoesNotContain("\\\\$5 off", escapedSource, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void BindingStageFive_InterpolationPunctuationProjectionAndEscapesStayReactive()
     {
         const string markup = """
