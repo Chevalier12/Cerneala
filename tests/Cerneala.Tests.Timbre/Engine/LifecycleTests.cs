@@ -557,6 +557,62 @@ public sealed class LifecycleTests
         }
     }
 
+    // A negative total violates the reader contract (InvalidData), whatever the
+    // value and the loading mode, and never surfaces as an arithmetic failure.
+    [Theory]
+    [InlineData(-1L, TimbreLoading.Preload)]
+    [InlineData(-1L, TimbreLoading.Auto)]
+    [InlineData(-1L, TimbreLoading.Streaming)]
+    [InlineData(long.MinValue, TimbreLoading.Preload)]
+    [InlineData(long.MinValue, TimbreLoading.Auto)]
+    [InlineData(long.MinValue, TimbreLoading.Streaming)]
+    public async Task NegativeReportedLengthFailsAsInvalidDataInEveryLoadingMode(long lengthFrames, TimbreLoading loading)
+    {
+        using TimbreRig rig = new(hold: false);
+        int reads = 0;
+        TimbreSound sound = new(
+            TimbreSource.FromReader(() => new FixedLengthReader(lengthFrames, () => Interlocked.Increment(ref reads)), "negative"),
+            1f,
+            false,
+            loading);
+
+        TimbreException prepared = await Assert.ThrowsAsync<TimbreException>(() => rig.Runtime.PrepareAsync(sound));
+        TimbrePlaybackResult played = await TimbreRig.CompletionAsync(rig.Scope.Play(sound));
+
+        Assert.Equal(TimbreErrorKind.InvalidData, prepared.Kind);
+        Assert.Contains(lengthFrames.ToString(System.Globalization.CultureInfo.InvariantCulture), prepared.Message, StringComparison.Ordinal);
+        Assert.Equal(TimbrePlaybackState.Failed, played.State);
+        Assert.Equal(TimbreErrorKind.InvalidData, played.Error!.Kind);
+        Assert.Contains(lengthFrames.ToString(System.Globalization.CultureInfo.InvariantCulture), played.Error.Message, StringComparison.Ordinal);
+        Assert.Equal(0, Volatile.Read(ref reads));
+    }
+
+    // One preloaded payload is one float[]: a declared length above
+    // Array.MaxLength / 2 frames cannot be held, whatever the configured limits.
+    [Theory]
+    [InlineData(0x7FFFFFC7L / 2 + 1)]
+    [InlineData(1L << 31)]
+    public async Task PreloadLargerThanOneManagedArrayIsRefusedAsAResourceLimitBeforeReading(long lengthFrames)
+    {
+        const long limit = 64L << 30;
+        Assert.Equal(0x7FFFFFC7, Array.MaxLength);
+        using TimbreRig rig = new(options =>
+        {
+            options.MaxPreloadBytes = limit;
+            options.MaxCacheBytes = limit;
+        }, hold: false);
+        DeterministicTimbreSourceFactory factory = new(lengthFrames);
+        TimbreSound sound = TimbreRig.Clip(factory);
+
+        TimbreException prepared = await Assert.ThrowsAsync<TimbreException>(() => rig.Runtime.PrepareAsync(sound));
+        TimbrePlaybackResult played = await TimbreRig.CompletionAsync(rig.Scope.Play(sound));
+
+        Assert.Equal(TimbreErrorKind.ResourceLimitExceeded, prepared.Kind);
+        Assert.Equal(TimbreErrorKind.ResourceLimitExceeded, played.Error!.Kind);
+        Assert.Equal(0, factory.Readers.Sum(reader => reader.FramesRead));
+        Assert.Equal(0, rig.Runtime.GetDiagnostics().CacheBytes);
+    }
+
     [Fact]
     public async Task CacheEvictsOnlyUnpinnedPayloadsAndRefusesWhenPinnedDataFillsIt()
     {
@@ -586,6 +642,20 @@ public sealed class LifecycleTests
     private sealed class NonSeekableStream : MemoryStream
     {
         public override bool CanSeek => false;
+    }
+
+    // Reports any length, including an invalid one, and ends at once.
+    private sealed class FixedLengthReader(long lengthFrames, Action onRead) : TimbreReader
+    {
+        public override long? LengthFrames => lengthFrames;
+
+        public override ValueTask<TimbreReadResult> ReadAsync(Memory<float> destination, CancellationToken cancellationToken)
+        {
+            onRead();
+            return ValueTask.FromResult(new TimbreReadResult(0, true));
+        }
+
+        public override ValueTask SeekAsync(long frame, CancellationToken cancellationToken) => ValueTask.CompletedTask;
     }
 
     // Opens the inner sink and, when asked, reports a device loss to the runtime's client before Open returns.

@@ -7,6 +7,10 @@ public sealed partial class TimbreRuntime
 {
     private const int UnknownLengthStepFrames = 64 * 1024;
 
+    // A preloaded payload is one float[]: the largest decoded size one clip
+    // can have, whatever MaxPreloadBytes allows (8,589,934,360 bytes).
+    private static readonly long MaxPayloadBytes = (long)(Array.MaxLength / TimbreCatalog.ChannelCount) * TimbreCatalog.BytesPerFrame;
+
     private async Task LoadAsync(TimbrePlayback playback, object? key)
     {
         TimbreSound sound = playback.Sound;
@@ -124,6 +128,21 @@ public sealed partial class TimbreRuntime
         }
 
         Interlocked.Increment(ref liveReaders);
+        try
+        {
+            // A negative total violates the reader contract; refused before any
+            // loading decision or allocation is derived from it.
+            if (reader.LengthFrames is long length && length < 0)
+            {
+                throw new TimbreException(TimbreErrorKind.InvalidData, $"Reader for '{source.Name}' reported a negative length of {length} frames.");
+            }
+        }
+        catch
+        {
+            ReleaseReader(reader, budget);
+            throw;
+        }
+
         return (reader, budget);
     }
 

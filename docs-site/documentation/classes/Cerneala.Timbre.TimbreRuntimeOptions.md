@@ -42,7 +42,7 @@ Changing the options object after the runtime is constructed has no effect. The 
 | `Output` | `ITimbreOutput?` | `null` | Output for the final mix; `null` fails playbacks with `DeviceUnavailable`. |
 | `MaxVoices` | `int` | 64 | Maximum non-terminal playbacks. |
 | `AutoPreloadMaxBytes` | `long` | 1 MiB | Largest decoded size preloaded by `TimbreLoading.Auto`. |
-| `MaxPreloadBytes` | `long` | 16 MiB | Largest decoded payload per clip. |
+| `MaxPreloadBytes` | `long` | 16 MiB | Largest decoded payload per clip; a value above 8,589,934,360 bytes (one managed array of PCM) acts as that size. |
 | `MaxCacheBytes` | `long` | 64 MiB | Total preload cache. |
 | `StreamingMemoryLimit` | `long` | `long.MaxValue` | Explicit allowance for streaming buffers and reader/decoder reservations. |
 | `DelayTailCap` | `TimeSpan` | 30 s | Longest tail produced after the end of a source. |

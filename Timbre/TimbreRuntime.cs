@@ -44,7 +44,7 @@ public sealed partial class TimbreRuntime : IDisposable
         output = options.Output;
         maxVoices = options.MaxVoices;
         autoPreloadMaxBytes = options.AutoPreloadMaxBytes;
-        maxPreloadBytes = options.MaxPreloadBytes;
+        maxPreloadBytes = Math.Min(options.MaxPreloadBytes, MaxPayloadBytes);
         memory = new TimbreMemoryPool(options.StreamingMemoryLimit);
         tailCapFrames = TimbreTime.ToFrames(options.DelayTailCap);
         baseDirectory = options.BaseDirectory ?? AppContext.BaseDirectory;
