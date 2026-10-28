@@ -36,4 +36,57 @@ public sealed partial class UiMarkupGeneratorTests
             InvokeCreate(stream, "Cerneala.GeneratedUi.ResourceBindingModeFactory"));
         Assert.Equal(new Color(18, 52, 86, 255), Assert.IsType<SolidColorBrush>(textBlock.Foreground).Color);
     }
+
+    // #1153: $Name:OneWay assigns the same SpriteAnimationSet as $Name, so the static state check must see it too.
+    [Theory]
+    [InlineData("$HeroAnimations")]
+    [InlineData("$HeroAnimations:OneWay")]
+    public void OneWaySuffixOnSpriteAnimationsKeepsTheStaticAnimationStateCheck(string animations)
+    {
+        GeneratorRunResult result = RunGenerator(
+            "SpriteOneWayState.crn",
+            SpriteAnimationsMarkup(animations, "Missing"),
+            out _);
+
+        Diagnostic diagnostic = Assert.Single(result.Diagnostics, candidate => candidate.Severity == DiagnosticSeverity.Error);
+        Assert.Equal("CERNEALAUI016", diagnostic.Id);
+        Assert.Contains("'Missing'", diagnostic.GetMessage(), StringComparison.Ordinal);
+        Assert.Contains("'HeroAnimations'", diagnostic.GetMessage(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void OneWaySuffixOnSpriteAnimationsAcceptsAnExistingState()
+    {
+        GeneratorRunResult result = RunGenerator(
+            "SpriteOneWayState.crn",
+            SpriteAnimationsMarkup("$HeroAnimations:OneWay", "Idle"),
+            out Compilation compilation);
+
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+        RenderSurface2D surface = Assert.IsType<RenderSurface2D>(
+            InvokeCreate(stream, "Cerneala.GeneratedUi.SpriteOneWayStateFactory"));
+        Sprite2D sprite = Assert.IsType<Sprite2D>(Assert.Single(surface.Scene!.Children));
+        Assert.Equal("Idle", sprite.AnimationState);
+        Assert.True(sprite.Animations!.TryGetClip("Idle", out _));
+    }
+
+    private static string SpriteAnimationsMarkup(string animations, string state) => $$"""
+        <RenderSurface2D>
+          <RenderSurface2D.Resources>
+            <SpriteAnimationSet Name="HeroAnimations">
+              <SpriteAnimationClip Name="Idle">
+                <SpriteAnimationFrame SourceX="0" SourceY="0" SourceWidth="16" SourceHeight="16" Duration="1ms" />
+              </SpriteAnimationClip>
+            </SpriteAnimationSet>
+          </RenderSurface2D.Resources>
+          <RenderSurface2D.Scene>
+            <Scene2D>
+              <Sprite2D Animations="{{animations}}" AnimationState="{{state}}" />
+            </Scene2D>
+          </RenderSurface2D.Scene>
+        </RenderSurface2D>
+        """;
 }

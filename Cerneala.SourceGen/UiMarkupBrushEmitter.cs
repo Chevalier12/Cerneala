@@ -186,14 +186,35 @@ public sealed partial class UiMarkupGenerator
         private string? ParseBrushRect(MarkupElement element, string attributeName, bool requirePositiveSize = false)
         {
             string[] parts = (element.Attribute(attributeName)?.Value ?? string.Empty).Split(',').Select(value => value.Trim()).ToArray();
-            if (parts.Length != 4 || parts.Any(part => !float.TryParse(part, NumberStyles.Float, CultureInfo.InvariantCulture, out float value) || float.IsNaN(value) || float.IsInfinity(value)) ||
-                (requirePositiveSize && parts.Skip(2).Any(part => float.Parse(part, CultureInfo.InvariantCulture) <= 0)))
+            float[] values = new float[parts.Length];
+            bool parsed = parts.Length == 4;
+            for (int index = 0; parsed && index < parts.Length; index++)
+            {
+                parsed = float.TryParse(parts[index], NumberStyles.Float, CultureInfo.InvariantCulture, out values[index]);
+            }
+
+            if (!parsed || !IsValidDrawRect(values[0], values[1], values[2], values[3]) ||
+                (requirePositiveSize && (values[2] <= 0 || values[3] <= 0)))
             {
                 Report(InvalidPropertyValue, (object?)element.Attribute(attributeName) ?? element, element.Name.LocalName, attributeName, element.Attribute(attributeName)?.Value ?? string.Empty);
                 return null;
             }
 
-            return "new global::Cerneala.Drawing.DrawRect(" + string.Join(", ", parts.Select(part => float.Parse(part, CultureInfo.InvariantCulture).ToString("R", CultureInfo.InvariantCulture) + "f")) + ")";
+            return "new global::Cerneala.Drawing.DrawRect(" + string.Join(", ", values.Select(value => value.ToString("R", CultureInfo.InvariantCulture) + "f")) + ")";
+        }
+
+        // The range the DrawRect constructor accepts (Drawing/DrawRect.cs, DrawArgument.MaxPixelSize): X, Y,
+        // X + Width and Y + Height are finite pixel coordinates within ±2,000,000,000, and Width and Height are
+        // non-negative pixel sizes up to 2,000,000,000. Any other rectangle would throw when the view is created.
+        private static bool IsValidDrawRect(float x, float y, float width, float height)
+        {
+            const float maxPixelSize = 2_000_000_000f;
+            static bool IsCoordinate(float value) =>
+                !float.IsNaN(value) && !float.IsInfinity(value) && value >= -maxPixelSize && value <= maxPixelSize;
+            static bool IsSize(float value) => IsCoordinate(value) && value >= 0;
+
+            return IsCoordinate(x) && IsCoordinate(y) && IsSize(width) && IsSize(height) &&
+                IsCoordinate(x + width) && IsCoordinate(y + height);
         }
 
         private string? ParseBrushFloat(MarkupElement element, string attributeName, float defaultValue, Func<float, bool> validate)

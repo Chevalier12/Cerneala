@@ -330,7 +330,7 @@ internal sealed partial class CernealaCompletionService
                 continue;
             }
 
-            string? label = GetMarkupTypeName(type, model.GetCompletionAliases());
+            string? label = GetMarkupTypeName(type, model.GetCompletionAliases(current));
             if (label is null)
             {
                 continue;
@@ -513,7 +513,7 @@ internal sealed partial class CernealaCompletionService
         }
         if (attributeName is "DataType" or "TargetType" || attributeName.StartsWith("xmlns", StringComparison.Ordinal))
         {
-            AddTypeAndNamespaceValues(result, site, model, attributeName, cancellationToken);
+            AddTypeAndNamespaceValues(result, site, model, element, attributeName, cancellationToken);
             return;
         }
 
@@ -571,6 +571,7 @@ internal sealed partial class CernealaCompletionService
         ICollection<CernealaCompletionItem> result,
         CompletionSite site,
         CernealaSemanticModel? model,
+        ElementSyntax? element,
         string attributeName,
         CancellationToken cancellationToken)
     {
@@ -632,7 +633,7 @@ internal sealed partial class CernealaCompletionService
                 continue;
             }
 
-            string? label = GetMarkupTypeName(type, model.GetCompletionAliases());
+            string? label = GetMarkupTypeName(type, model.GetCompletionAliases(element));
             if (label is null)
             {
                 continue;

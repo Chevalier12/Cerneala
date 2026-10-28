@@ -174,9 +174,7 @@ public sealed partial class UiMarkupGenerator
 
             if (trimmedValue.StartsWith("$", StringComparison.Ordinal))
             {
-                string resourceName = trimmedValue.EndsWith(":OneWay", StringComparison.Ordinal)
-                    ? trimmedValue.Substring(1, trimmedValue.Length - ":OneWay".Length - 1)
-                    : trimmedValue.Substring(1);
+                string resourceName = ResourceReferenceName(trimmedValue);
                 GeneratedExpression? resourceExpression = ResolveReferenceValue(
                     elementName,
                     propertyName,
@@ -229,6 +227,13 @@ public sealed partial class UiMarkupGenerator
                     ", global::Cerneala.UI.Core.UiPropertyValueSource.MarkupBase);"
                 : variable + "." + spec.Name + " = " + expression.Code + ";");
         }
+
+        // The resource that a trimmed $Name or $Name:OneWay reference names: the final :OneWay selects the same
+        // resource. ValidateStaticAnimationState reads Animations through this too, so both see one resource.
+        private static string ResourceReferenceName(string trimmedValue) =>
+            trimmedValue.EndsWith(":OneWay", StringComparison.Ordinal)
+                ? trimmedValue.Substring(1, trimmedValue.Length - ":OneWay".Length - 1)
+                : trimmedValue.Substring(1);
 
         private void EmitApplicationResourceBinding(
             string variable,

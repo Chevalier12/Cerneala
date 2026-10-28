@@ -936,7 +936,7 @@ public sealed partial class UiMarkupGenerator
                 return;
             }
 
-            string resourceName = animationsAttribute.Value.Trim().Substring(1);
+            string resourceName = ResourceReferenceName(animationsAttribute.Value.Trim());
             if (TryResolveResource(animationsAttribute, resourceName, out NamedSymbol symbol) &&
                 symbol.Source is SpriteAnimationSetResource animation &&
                 !animation.ClipNames.Contains(state))
