@@ -72,6 +72,67 @@ public sealed class ColorPickerTests
         Assert.Equal(1, changes);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void SelectedColorHandlerThatReassignsTheColorLeavesChannelsAndPartsInSync(bool changeThroughAlphaSlider)
+    {
+        ColorPicker picker = ArrangePicker();
+        picker.SelectedColor = new Color(0, 255, 0, 255);
+        picker.SelectedColorChanged += (_, args) =>
+        {
+            if (args.NewValue.A != 255)
+            {
+                picker.SelectedColor = new Color(args.NewValue.R, args.NewValue.G, args.NewValue.B, 255);
+            }
+        };
+
+        if (changeThroughAlphaSlider)
+        {
+            Part<Slider>(picker, "PART_AlphaSlider").Value = 0.5f;
+        }
+        else
+        {
+            picker.SelectedColor = new Color(0, 255, 0, 128);
+        }
+
+        Assert.Equal(255, picker.SelectedColor.A);
+        Assert.Equal(1f, picker.Alpha, 3);
+        Assert.Equal(1f, Part<Slider>(picker, "PART_AlphaSlider").Value, 3);
+    }
+
+    // A handler that replaces a hue-slider color with dark blue (0, 0, 128) leaves the HSV channels, the hue slider and the
+    // spectrum on that dark blue, and the picker raises exactly the two changes: the slider's green and the handler's blue.
+    [Fact]
+    public void SelectedColorHandlerThatReassignsTheColorDuringAHueChangeLeavesHsvAndPartsInSync()
+    {
+        ColorPicker picker = ArrangePicker();
+        picker.SelectedColor = new Color(255, 0, 0, 255);
+        Color darkBlue = new(0, 0, 128, 255);
+        int changes = 0;
+        picker.SelectedColorChanged += (_, args) =>
+        {
+            changes++;
+            if (args.NewValue != darkBlue)
+            {
+                picker.SelectedColor = darkBlue;
+            }
+        };
+
+        Part<Slider>(picker, "PART_HueSlider").Value = 120;
+
+        Assert.Equal(darkBlue, picker.SelectedColor);
+        Assert.Equal(2, changes);
+        Assert.Equal(240, picker.Hue, 3);
+        Assert.Equal(1, picker.Saturation, 3);
+        Assert.Equal(128 / 255f, picker.Value, 3);
+        Assert.Equal(240, Part<Slider>(picker, "PART_HueSlider").Value, 3);
+        ColorSpectrum spectrum = Part<ColorSpectrum>(picker, "PART_Spectrum");
+        Assert.Equal(240, spectrum.Hue, 3);
+        Assert.Equal(1, spectrum.Saturation, 3);
+        Assert.Equal(128 / 255f, spectrum.Value, 3);
+    }
+
     [Fact]
     public void SpectrumAndSliderGradientsUseControlLocalCoordinates()
     {

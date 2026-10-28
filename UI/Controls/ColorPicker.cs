@@ -107,11 +107,19 @@ public class ColorPicker : Control
 
     protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)
     {
+        // The channels come from the parts only for the assignment UpdateSelectedColorFromParts made. Consume the flag
+        // before any handler runs, so that a SelectedColor assignment nested in a handler refreshes the channels (#793).
+        bool channelsFromParts = updatingColorFromParts && ReferenceEquals(args.Property, SelectedColorProperty);
+        if (channelsFromParts)
+        {
+            updatingColorFromParts = false;
+        }
+
         base.OnPropertyChanged(args);
         if (ReferenceEquals(args.Property, SelectedColorProperty))
         {
             Color oldColor = (Color)args.OldValue!;
-            if (!updatingColorFromParts)
+            if (!channelsFromParts)
             {
                 ColorPickerColorMath.ToHsv(SelectedColor, out hue, out saturation, out value);
                 alpha = SelectedColor.A / 255f;
