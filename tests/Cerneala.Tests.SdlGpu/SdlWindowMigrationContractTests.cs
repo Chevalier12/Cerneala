@@ -204,9 +204,6 @@ public sealed class SdlWindowMigrationContractTests
         return (api, runtime, windowA, windowB, graphics);
     }
 
-    private static SdlSystemCursor? SelectedCursor(FakeSdlApi api) =>
-        api.CreatedCursors.TryGetValue(api.SelectedCursor, out SdlSystemCursor cursor) ? cursor : null;
-
     [Fact]
     public void GraphicsFactoryReceivesSurfaceAndResizeEventsAreCoalesced()
     {
