@@ -353,6 +353,89 @@ public sealed class TextBoxMultiLineTests
         Assert.True(presenter.VerticalOffset == 0, $"VerticalOffset {presenter.VerticalOffset} after the release at ({endX}, {endY}).");
     }
 
+    // #1199: the word "ddd " ends at the end of the second, visible wrapped line, which is also the start of the hidden third
+    // line. The selection end is drawn at the end of the second line, so the double-click selects only that word and does
+    // not scroll.
+    [Fact]
+    public void DoubleClickOnTheLastWordOfAVisibleWrappedLineDoesNotScroll()
+    {
+        TextBox textBox = WrappedTextBoxShowingTwoOfThreeLines(out UIRoot root, out ScrollContentPresenter presenter);
+        Assert.Equal("ccc ddd ", textBox.GetLineText(1));
+        (float x, float y) = CharacterPoint(textBox, 13, line: 1);
+
+        ElementInputBridge bridge = new();
+        PressAndRelease(root, bridge, x, y);
+        PressAndRelease(root, bridge, x, y);
+        root.ProcessFrame();
+
+        Assert.Equal((12, 16), (textBox.Selection.Start, textBox.Selection.End));
+        Assert.True(presenter.VerticalOffset == 0, $"VerticalOffset {presenter.VerticalOffset} after the double-click.");
+    }
+
+    // #1199: a drag after a double-click on "aaa" to "ddd" selects whole words up to the end of the visible second line.
+    [Fact]
+    public void WordDragToTheLastWordOfAVisibleWrappedLineDoesNotScroll()
+    {
+        TextBox textBox = WrappedTextBoxShowingTwoOfThreeLines(out UIRoot root, out ScrollContentPresenter presenter);
+        (float startX, float startY) = CharacterPoint(textBox, 1, line: 0);
+        (float endX, float endY) = CharacterPoint(textBox, 13, line: 1);
+
+        ElementInputBridge bridge = new();
+        PressAndRelease(root, bridge, startX, startY);
+        PointerSnapshot startUp = PointerSnapshot.Empty.WithPosition(startX, startY);
+        PointerSnapshot startDown = startUp.WithButton(InputMouseButton.Left, true);
+        PointerSnapshot endDown = PointerSnapshot.Empty.WithPosition(endX, endY).WithButton(InputMouseButton.Left, true);
+        PointerSnapshot endUp = PointerSnapshot.Empty.WithPosition(endX, endY);
+        bridge.Dispatch(root, new InputFrame(startUp, startDown, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []));
+        bridge.Dispatch(root, new InputFrame(startDown, endDown, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []));
+        Assert.True(presenter.VerticalOffset == 0, $"VerticalOffset {presenter.VerticalOffset} after the move.");
+        bridge.Dispatch(root, new InputFrame(endDown, endUp, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []));
+        root.ProcessFrame();
+
+        Assert.Equal((0, 16), (textBox.Selection.Anchor, textBox.Selection.Active));
+        Assert.True(presenter.VerticalOffset == 0, $"VerticalOffset {presenter.VerticalOffset} after the release.");
+    }
+
+    // #1199: a drag after a triple-click from the first text line to the second, visible drawn line selects that text line
+    // and does not scroll; the text line ends at its line break, on the second drawn line.
+    [Fact]
+    public void LineDragToAVisibleWrappedLineDoesNotScroll()
+    {
+        TextBox textBox = new()
+        {
+            TextWrapping = TextWrapping.Wrap,
+            Width = 80,
+            MaxLines = 2,
+            Text = "aaa bbb ccc\nddd eee fff",
+            VerticalAlignment = VerticalAlignment.Top
+        };
+        UIRoot root = Host(textBox, out ElementInputBridge keyboard);
+        keyboard.Dispatch(root, KeyFrame(InputKey.Home, InputKey.LeftCtrl));
+        root.ProcessFrame();
+        ScrollContentPresenter presenter = ContentHost(textBox).Presenter;
+        Assert.Equal("aaa bbb ", textBox.GetLineText(0));
+        Assert.Equal("ccc\n", textBox.GetLineText(1));
+        Assert.Equal(0, presenter.VerticalOffset);
+        (float startX, float startY) = CharacterPoint(textBox, 1, line: 0);
+        (float endX, float endY) = CharacterPoint(textBox, 9, line: 1);
+
+        ElementInputBridge bridge = new();
+        PressAndRelease(root, bridge, startX, startY);
+        PressAndRelease(root, bridge, startX, startY);
+        PointerSnapshot startUp = PointerSnapshot.Empty.WithPosition(startX, startY);
+        PointerSnapshot startDown = startUp.WithButton(InputMouseButton.Left, true);
+        PointerSnapshot endDown = PointerSnapshot.Empty.WithPosition(endX, endY).WithButton(InputMouseButton.Left, true);
+        PointerSnapshot endUp = PointerSnapshot.Empty.WithPosition(endX, endY);
+        bridge.Dispatch(root, new InputFrame(startUp, startDown, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []));
+        bridge.Dispatch(root, new InputFrame(startDown, endDown, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []));
+        Assert.True(presenter.VerticalOffset == 0, $"VerticalOffset {presenter.VerticalOffset} after the move.");
+        bridge.Dispatch(root, new InputFrame(endDown, endUp, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []));
+        root.ProcessFrame();
+
+        Assert.Equal((0, 11), (textBox.Selection.Start, textBox.Selection.End));
+        Assert.True(presenter.VerticalOffset == 0, $"VerticalOffset {presenter.VerticalOffset} after the release.");
+    }
+
     [Fact]
     public void TextBoxAndPasswordBoxTemplatesHostContentInScrollViewerPart()
     {
@@ -434,6 +517,31 @@ public sealed class TextBoxMultiLineTests
         PointerSnapshot down = up.WithButton(InputMouseButton.Left, true);
         bridge.Dispatch(root, new InputFrame(up, down, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []));
         bridge.Dispatch(root, new InputFrame(down, up, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []));
+    }
+
+    // One press and release through a bridge the caller keeps, so that consecutive calls count as a double or triple click.
+    private static void PressAndRelease(UIRoot root, ElementInputBridge bridge, float x, float y)
+    {
+        PointerSnapshot up = PointerSnapshot.Empty.WithPosition(x, y);
+        PointerSnapshot down = up.WithButton(InputMouseButton.Left, true);
+        bridge.Dispatch(root, new InputFrame(up, down, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []));
+        bridge.Dispatch(root, new InputFrame(down, up, KeyboardSnapshot.Empty, KeyboardSnapshot.Empty, []));
+    }
+
+    // The middle of the character at textIndex on the given drawn line of an unscrolled text box.
+    private static (float X, float Y) CharacterPoint(TextBox textBox, int textIndex, int line)
+    {
+        int lineStart = 0;
+        for (int i = 0; i < line; i++)
+        {
+            lineStart += textBox.GetLineText(i).Length;
+        }
+
+        TextAspect aspect = new(textBox.FontFamily, textBox.FontSize);
+        float before = TextMeasurer.Default.Measure(textBox.Text[lineStart..textIndex], aspect, float.PositiveInfinity).Size.Width;
+        float character = TextMeasurer.Default.Measure(textBox.Text[textIndex].ToString(), aspect, float.PositiveInfinity).Size.Width;
+        LayoutRect view = textBox.TextView.ArrangedBounds;
+        return (view.X + before + (character / 2), view.Y + ((line + 0.5f) * LineHeight(textBox)));
     }
 
     private static InputFrame WheelFrame(float x, float y, int delta)

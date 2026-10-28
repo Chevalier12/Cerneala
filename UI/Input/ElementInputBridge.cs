@@ -327,7 +327,7 @@ public sealed class ElementInputBridge
 
                 if (!previewHandled && !buttonPreviewHandled)
                 {
-                    BeginPointerDrag(routeMap, pointerTarget, button, pressClickCount);
+                    BeginPointerDrag(routeMap, pointerTarget, button, pressClickCount, modifiers);
                 }
                 else if (button == InputMouseButton.Left)
                 {
@@ -477,7 +477,13 @@ public sealed class ElementInputBridge
         commandSource.ExecuteCommand(commandRouter, routeMap);
     }
 
-    private void BeginPointerDrag(ElementInputRouteMap routeMap, HitTestResult? target, InputMouseButton button, int clickCount)
+    // The press carries the modifiers of its frame, as the MouseDown it follows, so a drag source can read Shift+click.
+    private void BeginPointerDrag(
+        ElementInputRouteMap routeMap,
+        HitTestResult? target,
+        InputMouseButton button,
+        int clickCount,
+        KeyModifiers modifiers)
     {
         if (button != InputMouseButton.Left || target is null)
         {
@@ -489,7 +495,15 @@ public sealed class ElementInputBridge
             return;
         }
 
-        dragSource.BeginPointerDrag(pointerCaptureManager, routeMap, new MouseButtonEventArgs(InputEvents.MouseDownEvent, target.Element, button, target.X, target.Y, clickCount));
+        dragSource.BeginPointerDrag(
+            pointerCaptureManager,
+            routeMap,
+            new MouseButtonEventArgs(InputEvents.MouseDownEvent, target.Element, button, target.X, target.Y, clickCount)
+            {
+                IsControlDown = modifiers.HasFlag(KeyModifiers.Control),
+                IsShiftDown = modifiers.HasFlag(KeyModifiers.Shift),
+                IsAltDown = modifiers.HasFlag(KeyModifiers.Alt)
+            });
     }
 
     private static void UpdatePointerDrag(

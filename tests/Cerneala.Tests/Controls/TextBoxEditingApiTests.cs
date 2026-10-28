@@ -458,6 +458,114 @@ public sealed class TextBoxEditingApiTests
         Assert.Equal(7, textBox.Selection.End);
     }
 
+    // #806: right of the end of a wrapped line the character before the line end is the trailing space, and the
+    // double-click still selects the last word of the line, with that space.
+    [Fact]
+    public void DoubleClickPastTheEndOfAWrappedLineSelectsTheLastWordOfThatLine()
+    {
+        TextBox textBox = new()
+        {
+            Text = "one two three",
+            TextWrapping = TextWrapping.Wrap,
+            Width = 60,
+            VerticalAlignment = VerticalAlignment.Top
+        };
+        UIRoot root = Host(textBox, clipboard: null, out ElementInputBridge bridge);
+        Assert.Equal("one ", textBox.GetLineText(0));
+
+        (float x, float y) = CharacterPoint(textBox, 3, fraction: 1f);
+        x += 3;
+        Click(root, bridge, x, y);
+        Click(root, bridge, x, y);
+
+        Assert.Equal((0, 4), (textBox.Selection.Start, textBox.Selection.End));
+    }
+
+    // #806: a double-click on the trailing space itself still selects the whitespace under the pointer.
+    [Fact]
+    public void DoubleClickOnTheTrailingSpaceOfAWrappedLineSelectsTheSpace()
+    {
+        TextBox textBox = new()
+        {
+            Text = "one two three",
+            TextWrapping = TextWrapping.Wrap,
+            Width = 60,
+            VerticalAlignment = VerticalAlignment.Top
+        };
+        UIRoot root = Host(textBox, clipboard: null, out ElementInputBridge bridge);
+
+        (float x, float y) = CharacterPoint(textBox, 3, fraction: 0.4f);
+        Click(root, bridge, x, y);
+        Click(root, bridge, x, y);
+
+        Assert.Equal((3, 4), (textBox.Selection.Start, textBox.Selection.End));
+    }
+
+    // #1200: as WPF's text editor, Shift+click moves the active end to the click and keeps the anchor.
+    [Fact]
+    public void ShiftClickExtendsTheSelectionFromTheAnchor()
+    {
+        TextBox textBox = NewTextBox("hello world");
+        UIRoot root = Host(textBox, clipboard: null, out ElementInputBridge bridge);
+        bridge.Dispatch(root, KeyFrame(InputKey.Home, InputKey.LeftCtrl));
+        (float x, float y) = CharacterPoint(textBox, 8, fraction: 0f);
+
+        ShiftClick(root, bridge, x, y);
+
+        Assert.Equal(0, textBox.Selection.Anchor);
+        Assert.Equal(8, textBox.Selection.Active);
+    }
+
+    [Fact]
+    public void ShiftClickKeepsTheAnchorOfAnExistingSelection()
+    {
+        TextBox textBox = NewTextBox("hello world");
+        UIRoot root = Host(textBox, clipboard: null, out ElementInputBridge bridge);
+        textBox.Select(2, 5);
+        (float x, float y) = CharacterPoint(textBox, 8, fraction: 0f);
+
+        ShiftClick(root, bridge, x, y);
+
+        Assert.Equal(2, textBox.Selection.Anchor);
+        Assert.Equal(8, textBox.Selection.Active);
+    }
+
+    [Fact]
+    public void ShiftPressDragKeepsTheOldAnchor()
+    {
+        TextBox textBox = NewTextBox("hello world");
+        UIRoot root = Host(textBox, clipboard: null, out ElementInputBridge bridge);
+        bridge.Dispatch(root, KeyFrame(InputKey.Home, InputKey.LeftCtrl));
+        (float pressX, float y) = CharacterPoint(textBox, 8, fraction: 0f);
+        (float dragX, _) = CharacterPoint(textBox, 10, fraction: 0f);
+
+        KeyboardSnapshot shift = KeyboardSnapshot.FromDownKeys([InputKey.LeftShift]);
+        PointerSnapshot up = PointerSnapshot.Empty.WithPosition(pressX, y);
+        PointerSnapshot down = up.WithButton(InputMouseButton.Left, true);
+        PointerSnapshot dragged = PointerSnapshot.Empty.WithPosition(dragX, y).WithButton(InputMouseButton.Left, true);
+        bridge.Dispatch(root, new InputFrame(up, up, KeyboardSnapshot.Empty, shift, []));
+        bridge.Dispatch(root, new InputFrame(up, down, shift, shift, []));
+        bridge.Dispatch(root, new InputFrame(down, dragged, shift, shift, []));
+
+        Assert.Equal(0, textBox.Selection.Anchor);
+        Assert.Equal(10, textBox.Selection.Active);
+    }
+
+    [Fact]
+    public void ShiftClickInAPasswordBoxExtendsTheSelectionFromTheAnchor()
+    {
+        PasswordBox passwordBox = new() { Password = "secret", Width = 200, VerticalAlignment = VerticalAlignment.Top };
+        UIRoot root = Host(passwordBox, clipboard: null, out ElementInputBridge bridge);
+        bridge.Dispatch(root, KeyFrame(InputKey.Home, InputKey.LeftCtrl));
+        LayoutRect bounds = passwordBox.ArrangedBounds;
+
+        // Right of the end of the mask, so the Shift+click selects the whole password, and typing replaces it.
+        ShiftClick(root, bridge, bounds.X + bounds.Width - 10, bounds.Y + (bounds.Height / 2));
+        bridge.Dispatch(root, TextFrame("X"));
+
+        Assert.Equal("X", passwordBox.Password);
+    }
+
     [Fact]
     public void TripleClickSelectsTheTextLineWithoutItsBreak()
     {
@@ -719,6 +827,17 @@ public sealed class TextBoxEditingApiTests
     {
         Press(root, bridge, x, y);
         Release(root, bridge, x, y);
+    }
+
+    // A click with Shift held: Shift goes down in its own frame, then the press and the release come with it held.
+    private static void ShiftClick(UIRoot root, ElementInputBridge bridge, float x, float y)
+    {
+        KeyboardSnapshot shift = KeyboardSnapshot.FromDownKeys([InputKey.LeftShift]);
+        PointerSnapshot up = PointerSnapshot.Empty.WithPosition(x, y);
+        PointerSnapshot down = up.WithButton(InputMouseButton.Left, true);
+        bridge.Dispatch(root, new InputFrame(up, up, KeyboardSnapshot.Empty, shift, []));
+        bridge.Dispatch(root, new InputFrame(up, down, shift, shift, []));
+        bridge.Dispatch(root, new InputFrame(down, up, shift, shift, []));
     }
 
     private static void Press(UIRoot root, ElementInputBridge bridge, float x, float y)
