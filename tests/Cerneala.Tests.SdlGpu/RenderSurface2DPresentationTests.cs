@@ -142,6 +142,108 @@ public sealed class RenderSurface2DPresentationTests
     }
 
     [SdlNativeFact]
+    public void OnDemandSurfaceRedrawsAfterInvalidateFrameCalledInsideItsDrawHandler()
+    {
+        using SdlDrawingFixture fixture = new(useMultisampling: true);
+        RenderSurface2D surface = new()
+        {
+            RedrawMode = RenderSurface2DRedrawMode.OnDemand
+        };
+        int drawCount = 0;
+        surface.Draw += (_, _) =>
+        {
+            drawCount++;
+            // An animation that asks for two more frames, then stops.
+            if (drawCount < 3)
+            {
+                surface.InvalidateFrame();
+            }
+        };
+
+        for (int render = 0; render < 5; render++)
+        {
+            _ = RenderCenterPixel(fixture, surface);
+        }
+
+        Assert.Equal(3, drawCount);
+    }
+
+    [SdlNativeFact]
+    public void OnDemandSurfaceRedrawsAfterInvalidateFrameCalledBetweenRenders()
+    {
+        // Control for the in-Draw invalidation test: the same invalidation made outside Draw.
+        using SdlDrawingFixture fixture = new(useMultisampling: true);
+        RenderSurface2D surface = new()
+        {
+            RedrawMode = RenderSurface2DRedrawMode.OnDemand
+        };
+        int drawCount = 0;
+        surface.Draw += (_, _) => drawCount++;
+
+        _ = RenderCenterPixel(fixture, surface);
+        surface.InvalidateFrame();
+        _ = RenderCenterPixel(fixture, surface);
+        _ = RenderCenterPixel(fixture, surface);
+
+        Assert.Equal(2, drawCount);
+    }
+
+    [SdlNativeFact]
+    public void OnDemandSurfaceRedrawsOnceAfterAPresentationPropertyChangesInsideItsDrawHandler()
+    {
+        using SdlDrawingFixture fixture = new(useMultisampling: true);
+        RenderSurface2D surface = new()
+        {
+            RedrawMode = RenderSurface2DRedrawMode.OnDemand
+        };
+        int drawCount = 0;
+        surface.Draw += (_, _) =>
+        {
+            drawCount++;
+            // Changes the value during the first recording only; later assignments are no-ops.
+            surface.ViewBox = new DrawRect(0, 0, 48, 32);
+        };
+
+        for (int render = 0; render < 5; render++)
+        {
+            _ = RenderCenterPixel(fixture, surface);
+        }
+
+        Assert.Equal(2, drawCount);
+    }
+
+    [SdlNativeFact]
+    public void PrismScopedOnDemandSurfaceRecordsOnceForEachFrameItInvalidatesInsideDraw()
+    {
+        using SdlDrawingFixture fixture = new(useMultisampling: true);
+        using SdlGpuImage image = SdlDrawingFixture.SolidImage(PixelColor.CornflowerBlue);
+        RenderSurface2D surface = new()
+        {
+            RedrawMode = RenderSurface2DRedrawMode.OnDemand
+        };
+        int drawCount = 0;
+        surface.Draw += (_, frame) =>
+        {
+            drawCount++;
+            frame.DrawSprite(image, new DrawRect(24, 16, 16, 16), CernealaColor.White);
+            surface.InvalidateFrame();
+        };
+        PrismInstance instance = new(new PrismClipDefinition(
+            "SurfaceGlow",
+            [new PrismLayerDefinition(
+                new PrismNodeId(1),
+                "Glow",
+                styles: [new PrismStyleDefinition(PrismStyleId.OuterGlow)])]));
+
+        for (int render = 1; render <= 3; render++)
+        {
+            _ = RenderPrismPixels(fixture, surface, instance, visualContentVersion: render);
+        }
+
+        Assert.Equal(3, drawCount);
+    }
+
+    [SdlNativeFact]
     public void MultipleDrawSubscribersComposeInRegistrationOrder()
     {
         using SdlDrawingFixture fixture = new(useMultisampling: true);
