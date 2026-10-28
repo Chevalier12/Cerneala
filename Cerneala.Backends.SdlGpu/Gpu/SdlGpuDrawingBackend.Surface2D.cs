@@ -50,7 +50,10 @@ internal sealed partial class SdlGpuDrawingBackend
         }
 
         SdlGpuCommandBufferToken token = session.ActiveCommandBufferToken;
-        if (surface.GetFrameVersion(token) != source.FrameVersion)
+        // Draw handlers may invalidate the source while it records. The texture
+        // holds the version read before recording, so a newer one draws again.
+        long frameVersion = source.FrameVersion;
+        if (surface.GetFrameVersion(token) != frameVersion)
         {
             // A surface records local pixels, not the hosting window's DIPs.
             // Keep that coordinate contract through text, clips and Prism, then
@@ -62,7 +65,7 @@ internal sealed partial class SdlGpuDrawingBackend
             try
             {
                 RenderSurfaceFrame(source, surface, parentBatches);
-                surface.SetPendingFrameVersion(session, token, source.FrameVersion);
+                surface.SetPendingFrameVersion(session, token, frameVersion);
             }
             finally
             {
