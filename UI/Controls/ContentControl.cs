@@ -14,6 +14,10 @@ public class ContentControl : Control
     // predicate reads state that changed.
     private UIElement? hostedContentElement;
 
+    // Presents Content that is not a UIElement while this control has no template, as the ContentPresenter of the
+    // default WPF ContentControl template does: it shows the content as text unless a template applies to it (#1157).
+    private ContentPresenter? contentPresenter;
+
     // Set when OnPropertyChanged could not host the new Content element, so NotifyPropertyChange restores the old value.
     private bool contentHostingFailed;
 
@@ -64,6 +68,10 @@ public class ContentControl : Control
 
     // True when this control is the direct parent of the given content when that content is a UIElement.
     internal virtual bool HostsContentDirectly(object? content) => ComponentTemplate is null && ComponentTemplateKey is null;
+
+    // False for a control that presents Content that is not a UIElement in its own way, so it gets no generated
+    // presenter where it would host an element directly.
+    internal virtual bool PresentsNonElementContent => true;
 
     // Every write of Content that becomes the effective Content, the setter and SetValue with any value source, and a
     // ClearValue that makes a lower source's element effective, checks the element here, before the store changes,
@@ -151,7 +159,8 @@ public class ContentControl : Control
 
         Thickness insets = Insets;
         LayoutSize available = Deflate(context.AvailableSize, insets);
-        LayoutSize contentSize = ContentElement?.Measure(new MeasureContext(available, context.Rounding)) ?? LayoutSize.Zero;
+        UIElement? content = ContentElement ?? contentPresenter;
+        LayoutSize contentSize = content?.Measure(new MeasureContext(available, context.Rounding)) ?? LayoutSize.Zero;
         return Inflate(contentSize, insets);
     }
 
@@ -164,7 +173,7 @@ public class ContentControl : Control
 
         Thickness insets = Insets;
         LayoutRect inner = Deflate(context.FinalRect, insets);
-        ContentElement?.Arrange(new ArrangeContext(inner, context.Rounding));
+        (ContentElement ?? contentPresenter)?.Arrange(new ArrangeContext(inner, context.Rounding));
         return context.FinalRect;
     }
 
@@ -176,6 +185,11 @@ public class ContentControl : Control
         {
             int change = ++contentChange;
             RemoveContentElement(hostedContentElement);
+            if (change == contentChange)
+            {
+                UpdateContentPresenter();
+            }
+
             if (change == contentChange && HostsContentDirectly(args.NewValue))
             {
                 try
@@ -201,11 +215,14 @@ public class ContentControl : Control
         }
 
         ReleaseContentElementFromOwnedSubtree();
+        RemoveContentPresenter();
         base.OnPropertyChanged(args);
         if (HostsContentDirectly(Content))
         {
             AddContentElement(Content);
         }
+
+        UpdateContentPresenter();
     }
 
     // A subclass calls this after its own state changed what HostsContentDirectly returns for Content. Content that
@@ -213,6 +230,7 @@ public class ContentControl : Control
     // example a template's element in a ContentPresenter child, so it leaves that subtree first.
     internal void UpdateContentHosting()
     {
+        UpdateContentPresenter();
         UIElement? wanted = HostsContentDirectly(Content) ? Content as UIElement : null;
         if (ReferenceEquals(hostedContentElement, wanted))
         {
@@ -382,6 +400,43 @@ public class ContentControl : Control
 
             throw;
         }
+    }
+
+    // The presenter exists only while it has content to show, so a control with null or UIElement Content has no extra
+    // child. It takes the font resources of this control, as a template forwards them to its presenter; FontFamily,
+    // FontSize, and Foreground reach it by inheritance.
+    private void UpdateContentPresenter()
+    {
+        object? content = Content;
+        if (content is null or UIElement || !PresentsNonElementContent || !HostsContentDirectly(content))
+        {
+            RemoveContentPresenter();
+            return;
+        }
+
+        if (contentPresenter is null)
+        {
+            ContentPresenter presenter = new();
+            contentPresenter = presenter;
+            LogicalChildren.Add(presenter);
+            VisualChildren.Add(presenter);
+        }
+
+        contentPresenter.FontResourceId = FontResourceId;
+        contentPresenter.ResourceProvider = ResourceProvider;
+        contentPresenter.Content = content;
+    }
+
+    private void RemoveContentPresenter()
+    {
+        if (contentPresenter is not { } presenter)
+        {
+            return;
+        }
+
+        contentPresenter = null;
+        VisualChildren.Remove(presenter);
+        LogicalChildren.Remove(presenter);
     }
 
     private void RemoveContentElement(object? content)

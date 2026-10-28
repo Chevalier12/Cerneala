@@ -22,6 +22,18 @@ public class Button : ButtonBase
         SetFrameworkDefault(VerticalContentAlignmentProperty, VerticalAlignment.Center);
     }
 
+    // An untemplated Button measures and draws its text content itself, so it gets no generated presenter.
+    internal override bool PresentsNonElementContent => false;
+
+    // As a WPF ContentPresenter without a template: a string as it is, any other value that is not an element as the
+    // text of its ToString() (#1157).
+    private string? TextContent => Content switch
+    {
+        null or UIElement => null,
+        string text => text,
+        object value => value.ToString()
+    };
+
     public TextMeasurer TextMeasurer
     {
         get => textMeasurer;
@@ -104,7 +116,7 @@ public class Button : ButtonBase
 
         Border.RenderBorder(this, context);
 
-        if (Content is string text && !string.IsNullOrEmpty(text))
+        if (TextContent is { Length: > 0 } text)
         {
             LayoutRect contentBounds = ContentControl.Deflate(context.Bounds, Insets);
             TextAspect aspect = CreateTextAspect();
@@ -141,7 +153,7 @@ public class Button : ButtonBase
 
     private LayoutSize MeasureTextContent(LayoutSize availableSize)
     {
-        return Content is string text
+        return TextContent is { } text
             ? TextMeasurer.Measure(text, CreateTextAspect(), availableSize.Width).Size
             : LayoutSize.Zero;
     }

@@ -66,6 +66,9 @@ public class ListBoxItem : ContentControl, ISelectableItemContainer
         UpdateContentPresenter();
     }
 
+    // This item presents Content that is not a UIElement through its own presenter, which also applies the item template.
+    internal override bool PresentsNonElementContent => false;
+
     // Only UIElement content is ever a direct child, so other content skips the template lookup.
     internal override bool HostsContentDirectly(object? content) =>
         base.HostsContentDirectly(content) && !(content is UIElement && HasItemTemplateFor(content));
@@ -143,8 +146,7 @@ public class ListBoxItem : ContentControl, ISelectableItemContainer
             itemTemplate,
             itemTemplateKey,
             itemTemplateRegistry,
-            itemContentIndex,
-            presentsItemText: true);
+            itemContentIndex);
     }
 
     private void RemoveContentPresenter()
