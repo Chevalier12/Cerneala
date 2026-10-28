@@ -135,11 +135,15 @@ internal sealed class SdlTimbreOutput : ITimbreOutput
 
             uint openedDevice = api.GetStreamDevice(opened);
             api.GetDeviceFormat(openedDevice, out deviceFormat, out deviceSampleFrames);
-            // Published before resume: the first device request already signals.
+            // Published before resume: the first device request already signals,
+            // and a removal of the device that arrives while Open still runs is
+            // reported as a loss like one that arrives afterwards.
             Volatile.Write(ref this.client, client);
+            Volatile.Write(ref device, openedDevice);
             if (!api.ResumeStreamDevice(opened))
             {
                 TimbreException error = CreateError("SDL audio device resume");
+                Volatile.Write(ref device, 0u);
                 Volatile.Write(ref this.client, null);
                 api.DestroyStream(opened);
                 api.QuitAudio();
@@ -147,7 +151,6 @@ internal sealed class SdlTimbreOutput : ITimbreOutput
             }
 
             stream = opened;
-            Volatile.Write(ref device, openedDevice);
             openCount++;
         }
     }
