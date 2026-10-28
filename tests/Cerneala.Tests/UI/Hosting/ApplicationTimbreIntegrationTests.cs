@@ -76,17 +76,27 @@ public sealed class ApplicationTimbreIntegrationTests : IDisposable
         }
     }
 
+    // Serves exactly its declared 48 000 frames: a reader that runs past its
+    // declared length is invalid in every loading mode.
     private sealed class SilentReader : TimbreReader
     {
+        private long position;
+
         public override long? LengthFrames => 48000;
 
         public override ValueTask<TimbreReadResult> ReadAsync(Memory<float> destination, CancellationToken cancellationToken)
         {
-            destination.Span.Clear();
-            return ValueTask.FromResult(new TimbreReadResult(destination.Length / 2, endOfSource: false));
+            int frames = (int)Math.Min(destination.Length / 2, 48000 - position);
+            destination.Span[..(frames * 2)].Clear();
+            position += frames;
+            return ValueTask.FromResult(new TimbreReadResult(frames, endOfSource: position >= 48000));
         }
 
-        public override ValueTask SeekAsync(long frame, CancellationToken cancellationToken) => ValueTask.CompletedTask;
+        public override ValueTask SeekAsync(long frame, CancellationToken cancellationToken)
+        {
+            position = frame;
+            return ValueTask.CompletedTask;
+        }
     }
 
     private sealed class FakeWindowPlatform : IWindowPlatform

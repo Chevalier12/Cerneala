@@ -66,17 +66,31 @@ internal sealed class OpusSource : DecodedSource
         decoder = CreateDecoder();
 
         // The first audio page's granule minus its packets' durations is the
-        // granule of the first sample (normally 0).
+        // granule of the first sample (normally 0). RFC 7845 section 4: when
+        // that page is also the end-of-stream page, its granule may be smaller
+        // (end trimming), and the first sample's granule is then 0.
         ogg.Restart(dataStart);
         long duration = 0;
         long firstPageGranule = -1;
-        while (firstPageGranule < 0 && ogg.TryReadPacket(out ReadOnlySpan<byte> audio, out long granule, out _))
+        bool firstPageEndsStream = false;
+        while (firstPageGranule < 0 && ogg.TryReadPacket(out ReadOnlySpan<byte> audio, out long granule, out bool endOfStream))
         {
             duration += PacketSamples(audio);
             firstPageGranule = granule;
+            firstPageEndsStream = endOfStream;
         }
 
         startGranule = firstPageGranule < 0 ? 0 : firstPageGranule - duration;
+        if (startGranule < 0 && firstPageEndsStream)
+        {
+            if (firstPageGranule < preSkip)
+            {
+                throw Invalid(sourceName, "the only Opus page ends before the pre-skip.");
+            }
+
+            startGranule = 0;
+        }
+
         if (startGranule < 0)
         {
             throw Invalid(sourceName, "the first Opus page ends before its packets' duration.");

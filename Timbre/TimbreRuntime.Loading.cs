@@ -7,6 +7,10 @@ public sealed partial class TimbreRuntime
 {
     private const int UnknownLengthStepFrames = 64 * 1024;
 
+    // A preloaded payload is one float[]: the largest decoded size one clip
+    // can have, whatever MaxPreloadBytes allows (8,589,934,360 bytes).
+    private static readonly long MaxPayloadBytes = (long)(Array.MaxLength / TimbreCatalog.ChannelCount) * TimbreCatalog.BytesPerFrame;
+
     private async Task LoadAsync(TimbrePlayback playback, object? key)
     {
         TimbreSound sound = playback.Sound;
@@ -124,6 +128,21 @@ public sealed partial class TimbreRuntime
         }
 
         Interlocked.Increment(ref liveReaders);
+        try
+        {
+            // A negative total violates the reader contract; refused before any
+            // loading decision or allocation is derived from it.
+            if (reader.LengthFrames is long length && length < 0)
+            {
+                throw new TimbreException(TimbreErrorKind.InvalidData, $"Reader for '{source.Name}' reported a negative length of {length} frames.");
+            }
+        }
+        catch
+        {
+            ReleaseReader(reader, budget);
+            throw;
+        }
+
         return (reader, budget);
     }
 
@@ -215,10 +234,16 @@ public sealed partial class TimbreRuntime
             try
             {
                 float[] samples = new float[known * TimbreCatalog.ChannelCount];
-                long read = await ReadIntoAsync(reader, samples, 0, known, sourceName, cancellationToken).ConfigureAwait(false);
+                (long read, bool ended) = await ReadIntoAsync(reader, samples, 0, known, sourceName, cancellationToken).ConfigureAwait(false);
                 if (read != known)
                 {
                     throw new TimbreException(TimbreErrorKind.InvalidData, $"Timbre source '{sourceName}' ended after {read} of its {known} declared frames.");
+                }
+
+                // Same rule as streaming: a source that runs past its declared length is invalid.
+                if (!ended && await HasMoreFramesAsync(reader, sourceName, cancellationToken).ConfigureAwait(false))
+                {
+                    throw new TimbreException(TimbreErrorKind.InvalidData, $"Timbre source '{sourceName}' delivers more than its {known} declared frames.");
                 }
 
                 return cache.Add(cacheKey, samples, known, bytes, pin);
@@ -241,16 +266,22 @@ public sealed partial class TimbreRuntime
                 long stepFrames = Math.Min(UnknownLengthStepFrames, allowance / TimbreCatalog.BytesPerFrame);
                 if (stepFrames <= 0)
                 {
+                    // The limit is reached: the payload fits only when the source has ended.
+                    if (!await HasMoreFramesAsync(reader, sourceName, cancellationToken).ConfigureAwait(false))
+                    {
+                        break;
+                    }
+
                     throw PreloadLimit(sourceName, reserved + TimbreCatalog.BytesPerFrame);
                 }
 
                 Reserve(stepFrames * TimbreCatalog.BytesPerFrame, sourceName);
                 reserved += stepFrames * TimbreCatalog.BytesPerFrame;
                 float[] part = new float[stepFrames * TimbreCatalog.ChannelCount];
-                long frames = await ReadIntoAsync(reader, part, 0, stepFrames, sourceName, cancellationToken).ConfigureAwait(false);
+                (long frames, bool ended) = await ReadIntoAsync(reader, part, 0, stepFrames, sourceName, cancellationToken).ConfigureAwait(false);
                 parts.Add(part);
                 total += frames;
-                if (frames < stepFrames)
+                if (ended)
                 {
                     break;
                 }
@@ -296,8 +327,18 @@ public sealed partial class TimbreRuntime
         TimbreErrorKind.ResourceLimitExceeded,
         $"Preloading '{sourceName}' needs at least {bytes} bytes of decoded PCM; the preload limit is {maxPreloadBytes} bytes.");
 
-    // Reads until `frames` frames or the end of the source; returns frames read.
-    private static async Task<long> ReadIntoAsync(
+    // After a full read: true when the source delivers at least one more frame,
+    // false when it reports its end without one.
+    private static async Task<bool> HasMoreFramesAsync(TimbreReader reader, string sourceName, CancellationToken cancellationToken)
+    {
+        float[] probe = new float[TimbreCatalog.ChannelCount];
+        (long frames, _) = await ReadIntoAsync(reader, probe, 0, 1, sourceName, cancellationToken).ConfigureAwait(false);
+        return frames > 0;
+    }
+
+    // Reads until `frames` frames or the end of the source; returns frames read
+    // and whether the source reported its end.
+    private static async Task<(long Frames, bool Ended)> ReadIntoAsync(
         TimbreReader reader,
         float[] samples,
         long startFrame,
@@ -323,7 +364,7 @@ public sealed partial class TimbreRuntime
             read += result.Frames;
             if (result.EndOfSource)
             {
-                break;
+                return (read, true);
             }
 
             if (result.Frames == 0)
@@ -341,7 +382,7 @@ public sealed partial class TimbreRuntime
             }
         }
 
-        return read;
+        return (read, false);
     }
 
     private static void EnsureFinite(ReadOnlySpan<float> samples, string sourceName)

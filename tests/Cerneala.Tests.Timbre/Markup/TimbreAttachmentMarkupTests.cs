@@ -151,6 +151,95 @@ public sealed class TimbreAttachmentMarkupTests
         Assert.Equal(["audio/other.wav", "audio/tone.wav", "audio/short.wav"], Sources(fixture));
     }
 
+    // #836: a failed AttachTimbre gives the caller nothing to dispose, so it
+    // stops what it started and registers nothing.
+    [Fact]
+    public void AttachTimbreThatFailsDuringAutoPlayStopsTheStartedSoundsAndRegistersNothing()
+    {
+        using MarkupTimbreFixture fixture = new("<Border Width=\"20\" />", configure: options => options.MaxVoices = 1);
+        UIElement target = fixture.Element;
+        TimbreClipDefinition clip = TwoAutoPlaySounds();
+
+        TimbreException error = Assert.Throws<TimbreException>(() => GeneratedMarkup.AttachTimbre(target, clip, null));
+        fixture.Pump();
+
+        Assert.Equal(TimbreErrorKind.VoiceLimitExceeded, error.Kind);
+        TimbrePlayback first = Assert.Single(fixture.Started);
+        Assert.True(
+            first.State is TimbrePlaybackState.Canceled or TimbrePlaybackState.Completed or TimbrePlaybackState.Failed,
+            "The sound started before the failure is still " + first.State + ".");
+    }
+
+    [Fact]
+    public void AttachTimbreThatFailsDuringAutoPlayLeavesNoCurrentAttachment()
+    {
+        using MarkupTimbreFixture fixture = new("<Border Width=\"20\" />", configure: options => options.MaxVoices = 1);
+        UIElement target = fixture.Element;
+
+        Assert.Throws<TimbreException>(() => GeneratedMarkup.AttachTimbre(target, TwoAutoPlaySounds(), null));
+        fixture.Pump();
+
+        Assert.Throws<InvalidOperationException>(() => GeneratedMarkup.PlayTimbre(target, "Click"));
+    }
+
+    [Fact]
+    public void AttachTimbreWithEnoughVoicesStartsEveryAutoPlaySoundAndRegistersTheAttachment()
+    {
+        using MarkupTimbreFixture fixture = new("<Border Width=\"20\" />", configure: options => options.MaxVoices = 2);
+        UIElement target = fixture.Element;
+
+        using IDisposable attachment = GeneratedMarkup.AttachTimbre(target, TwoAutoPlaySounds(), null);
+        fixture.Pump();
+
+        Assert.Equal(2, fixture.Started.Count);
+        Assert.All(fixture.Started, playback => Assert.True(playback.State is TimbrePlaybackState.Pending or TimbrePlaybackState.Playing));
+        Assert.NotNull(GeneratedMarkup.PlayTimbre(target, "Click"));
+    }
+
+    [Theory]
+    [InlineData(1200f)]
+    [InlineData(-5f)]
+    public void AttachTimbreWithAnOutOfRangeArgumentStopsTheStartedSoundsAndRegistersNothing(float cutoff)
+    {
+        using MarkupTimbreFixture fixture = new("<Border Width=\"20\" />");
+        UIElement target = fixture.Element;
+        TimbreParameter<float> cut = new("Cut", 1200f);
+        TimbreClipDefinition clip = new(
+            "Filtered",
+            [
+                new TimbreClipSound("Music", new TimbreSound(TimbreSource.FromFile(MarkupTimbreFixture.ToneSource), loop: true), autoPlay: true),
+                new TimbreClipSound("Hum", new TimbreSound(TimbreSource.FromFile(MarkupTimbreFixture.OtherSource), parameters: [cut], modifiers: [new LowPass(cutoff: cut)]), autoPlay: true)
+            ],
+            [cut]);
+        Dictionary<string, float> arguments = new() { ["Cut"] = cutoff };
+
+        Exception? failure = Record.Exception(() => GeneratedMarkup.AttachTimbre(target, clip, arguments).Dispose());
+        fixture.Pump();
+
+        if (cutoff > 0)
+        {
+            Assert.Null(failure);
+            return;
+        }
+
+        Assert.IsType<ArgumentOutOfRangeException>(failure);
+        TimbrePlayback first = Assert.Single(fixture.Started);
+        TimbrePlaybackState stateAfterFailure = first.State;
+        Exception? afterwards = Record.Exception(() => GeneratedMarkup.PlayTimbre(target, "Music"));
+        Assert.True(
+            stateAfterFailure is TimbrePlaybackState.Canceled or TimbrePlaybackState.Completed or TimbrePlaybackState.Failed &&
+            afterwards is InvalidOperationException,
+            "Music is " + stateAfterFailure + " after the failure; PlayTimbre afterwards threw " + (afterwards?.GetType().Name ?? "nothing") + ".");
+    }
+
+    private static TimbreClipDefinition TwoAutoPlaySounds() => new(
+        "TwoSounds",
+        [
+            new TimbreClipSound("Music", new TimbreSound(TimbreSource.FromFile(MarkupTimbreFixture.ToneSource), loop: true), autoPlay: true),
+            new TimbreClipSound("Click", new TimbreSound(TimbreSource.FromFile(MarkupTimbreFixture.OtherSource)), autoPlay: true)
+        ],
+        []);
+
     private static string Panel(string children) =>
         "<StackPanel><StackPanel.Resources>" + Resources + "</StackPanel.Resources>" + children + "</StackPanel>";
 
