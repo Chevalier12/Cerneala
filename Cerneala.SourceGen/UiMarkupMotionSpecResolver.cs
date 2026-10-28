@@ -390,15 +390,13 @@ public sealed partial class UiMarkupGenerator
                 return false;
             }
 
-            // Mirror the runtime's TimeSpan.FromMilliseconds/FromSeconds(double): ticks = value * scale,
-            // truncated, OverflowException above long.MaxValue. The generated expression must never throw
-            // and must keep a positive duration positive after truncation to whole ticks.
             if (!IsTimeSpanDurationInRange(value, ticksPerUnit, allowZero))
             {
                 return false;
             }
 
             // As TimeSpan does: a value equal to long.MaxValue as a double (2^63) is TimeSpan.MaxValue.
+            double scaledTicks = value * ticksPerUnit;
             ticks = scaledTicks >= long.MaxValue ? long.MaxValue : (long)scaledTicks;
             expression = "global::System.TimeSpan." + unit + "(" + value.ToString("R", CultureInfo.InvariantCulture) + ")";
             return true;

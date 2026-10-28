@@ -383,7 +383,7 @@ internal sealed partial class CernealaSemanticModel : IDisposable
         ILanguageTypeSymbol? owner = ownerName.Length == 0
             ? null
             : ownerName.IndexOf(':') > 0
-                ? ResolveTypeReference(ownerName, aliases)
+                ? ResolveTypeReference(ownerName, AliasesOf(element))
                 : ResolveMarkupType(ownerName);
         if (owner is null)
         {
