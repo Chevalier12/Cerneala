@@ -58,8 +58,24 @@ host.ComponentTemplate = new ComponentTemplate<ContentControl>("ContentHost", co
 });
 ```
 
+An untemplated `ContentControl` shows content that is not an element as text, as the default WPF `ContentControl` template does through its `ContentPresenter`.
+
+```csharp
+using Cerneala.UI.Controls;
+using Cerneala.UI.Elements;
+
+UIRoot root = new(200, 200);
+ContentControl host = new() { Content = 5 };
+root.VisualChildren.Add(host);
+root.ProcessFrame();
+
+// host.VisualChildren holds one ContentPresenter; its PresentedChild is a TextBlock with Text "5".
+```
+
 ## Remarks
 `ContentControl` stores content in the `Content` UI property. The value can be any `object`; when the value is a `UIElement` and the control has neither a `ComponentTemplate` nor a `ComponentTemplateKey`, the element is added to the control's logical and visual child collections.
+
+Content that is neither `null` nor a `UIElement`, for example `"hello"`, `5`, or `DayOfWeek.Monday`, is presented by a `ContentPresenter` that an untemplated control creates as its one logical and visual child, as the `ContentPresenter` of the default WPF `ContentControl` template. The presenter shows the content as a `TextBlock` with the string or the value's `ToString()` (`"hello"`, `"5"`, `"Monday"`), unless a content template of its scope applies to the content (see `ContentPresenter`). It receives `FontFamily`, `FontSize`, and `Foreground` by inheritance, and the control's `FontResourceId` and `ResourceProvider` when `Content` changes. It exists only while there is such content: when `Content` becomes `null` or a `UIElement`, or when `ComponentTemplate` or `ComponentTemplateKey` is set, the presenter is removed, and the template presents the content instead. A `ListBoxItem` presents such content through its own presenter, which also applies the item template. An untemplated `Button` draws such content as text itself, without a child (see `Button`). A `TabItem` never presents its `Content`: the `TabControl` shows it. A `ScrollContentPresenter` scrolls only `UIElement` content and creates no presenter.
 
 The hosted element follows the effective value of `ContentProperty`, whatever wrote it: the `Content` setter, or `SetValue` and `ClearValue` with any `UiPropertyValueSource`. For example, on an untemplated `host`, `host.SetValue(ContentControl.ContentProperty, (object?)child)` makes `child.LogicalParent` and `child.VisualParent` equal to `host`. A later `SetValue` with another element, or `host.ClearValue(ContentControl.ContentProperty)`, removes `child` from both collections again. When clearing one value source makes the element of a lower value source the effective `Content`, that element becomes the hosted child.
 
@@ -100,7 +116,7 @@ Without a template child, layout measures the hosted content inside `Padding` pl
 ## Properties
 | Name | Type | Description |
 | --- | --- | --- |
-| `Content` | `object?` | Gets or sets the stored content value. `UIElement` values may become direct logical and visual children when the control is untemplated. |
+| `Content` | `object?` | Gets or sets the stored content value. When the control is untemplated, a `UIElement` value becomes the direct logical and visual child, and any other non-`null` value is shown as text by a generated `ContentPresenter`. |
 | `FontResourceId` | `ResourceId<FontResource>?` | Gets or sets the optional font resource identifier used by templates that forward text rendering resources to presenters. |
 | `ResourceProvider` | `IResourceProvider?` | Gets or sets the optional resource provider used by templates that forward content rendering resources to presenters. |
 

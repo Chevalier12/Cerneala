@@ -78,7 +78,8 @@ public sealed class ContentTemplateRegistryTests
     {
         ContentPresenter presenter = new() { Content = new UserCard("Ada"), ContentTemplateKey = "card" };
         presenter.Measure(new MeasureContext(new LayoutSize(100, 100)));
-        Assert.Null(presenter.PresentedChild);
+        // Without a template the content is shown as the text of its ToString(), as in WPF (#1157).
+        Assert.IsType<TextBlock>(presenter.PresentedChild);
 
         ContentTemplateRegistry registry = new();
         registry.Register(Template<UserCard>("card", key: "card"));

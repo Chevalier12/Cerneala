@@ -165,7 +165,7 @@ The selected tab lets go of its content only for the template to take it. When n
 
 The content area owns the element only when it shows it. When the template of the content area (`SelectedContentTemplate`, or an aspect content template for the content) builds an element that does not contain the selected tab's `UIElement` content, the selected `TabItem` keeps that content as its logical child after layout. For example, with `tabs.ContentTemplate = new ContentTemplate("page", typeof(Border), null, 0, _ => new Border { Width = 10, Height = 10 })`, `first.Content = border` and `SelectedIndex = 0`, the content area shows the new 10 x 10 `Border`; `border.LogicalParent` is `first` and `border.VisualParent` is `null`, so adding `border` to another parent, or making it the `Content` of another tab, throws `InvalidOperationException`. After `tabs.ContentTemplate = null` and the next layout pass, the content area shows `border` itself.
 
-The content area resolves templates like a `ContentPresenter` with no local registry: `SelectedContentTemplate` first, then the aspect content templates for the content. A string without a template is shown as a `TextBlock`. Other content without a template, for example an `int`, shows nothing.
+The content area resolves templates like a `ContentPresenter` with no local registry: `SelectedContentTemplate` first, then the aspect content templates for the content. Content without a template that is not a `UIElement` is shown as a `TextBlock` with the string or the value's `ToString()`, for example `"1"` for an `int` and `"Monday"` for `DayOfWeek.Monday`, as in WPF.
 
 ### Generated tabs
 
