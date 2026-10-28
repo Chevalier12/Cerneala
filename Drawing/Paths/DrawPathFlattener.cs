@@ -1,5 +1,9 @@
 namespace Cerneala.Drawing.Paths;
 
+// Tolerance: a Bezier segment becomes a line once its control points are within
+// tolerance of the chord segment. The curve lies in its control points' hull, so every
+// curve point is then within tolerance of the polyline and every polyline point within
+// tolerance of the curve. Segments still curved after 12 subdivisions are cut anyway.
 internal static class DrawPathFlattener
 {
     public static IReadOnlyList<DrawPoint[]> Flatten(DrawPath path, float tolerance)
@@ -79,8 +83,8 @@ internal static class DrawPathFlattener
         int depth)
     {
         if (depth >= 12 ||
-            (DistanceToLineSquared(control1, first, end) <= tolerance * tolerance &&
-             DistanceToLineSquared(control2, first, end) <= tolerance * tolerance))
+            (DistanceToSegmentSquared(control1, first, end) <= tolerance * tolerance &&
+             DistanceToSegmentSquared(control2, first, end) <= tolerance * tolerance))
         {
             AddPoint(points, end);
             return;
@@ -105,7 +109,7 @@ internal static class DrawPathFlattener
         int depth)
     {
         if (depth >= 12 ||
-            DistanceToLineSquared(control, first, end) <= tolerance * tolerance)
+            DistanceToSegmentSquared(control, first, end) <= tolerance * tolerance)
         {
             AddPoint(points, end);
             return;
@@ -170,7 +174,9 @@ internal static class DrawPathFlattener
     private static DrawPoint Midpoint(DrawPoint first, DrawPoint second) =>
         new((first.X + second.X) / 2, (first.Y + second.Y) / 2);
 
-    private static float DistanceToLineSquared(
+    // Distance to the chord segment, not to the chord's infinite line: a control point
+    // near that line but beyond an end point (a hairpin, #797) would otherwise pass.
+    private static float DistanceToSegmentSquared(
         DrawPoint point,
         DrawPoint start,
         DrawPoint end)
@@ -178,16 +184,15 @@ internal static class DrawPathFlattener
         float dx = end.X - start.X;
         float dy = end.Y - start.Y;
         float lengthSquared = (dx * dx) + (dy * dy);
-        if (lengthSquared <= float.Epsilon)
-        {
-            float x = point.X - start.X;
-            float y = point.Y - start.Y;
-            return (x * x) + (y * y);
-        }
-
-        float cross = ((point.X - start.X) * dy) -
-            ((point.Y - start.Y) * dx);
-        return cross * cross / lengthSquared;
+        float t = lengthSquared <= float.Epsilon
+            ? 0
+            : Math.Clamp(
+                (((point.X - start.X) * dx) + ((point.Y - start.Y) * dy)) / lengthSquared,
+                0,
+                1);
+        float x = point.X - (start.X + (t * dx));
+        float y = point.Y - (start.Y + (t * dy));
+        return (x * x) + (y * y);
     }
 }
 
