@@ -160,6 +160,77 @@ public sealed class PreviewHostTests
     }
 
     [Fact]
+    public void PreviewSessionCanBeCreatedTwiceInARow()
+    {
+        // Control: two good creations in a row, the first retired before the second starts.
+        PreviewCompilation good = CompilationOf(typeof(PreviewGoodRoot));
+
+        try
+        {
+            int[] frameSizes = RunOnStaThread(() => Enumerable.Range(0, 2)
+                .Select(_ =>
+                {
+                    using PreviewRenderSession session = PreviewRenderSession.Create(good, 320, 180);
+                    return session.Capture().Image.Length;
+                })
+                .ToArray());
+
+            Assert.All(frameSizes, size => Assert.True(size > 0));
+        }
+        finally
+        {
+            ResetApplicationState();
+        }
+    }
+
+    [Fact]
+    public void PreviewSessionCanBeCreatedAfterAFailedCreation()
+    {
+        PreviewCompilation throwing = CompilationOf(typeof(PreviewThrowingRoot));
+        PreviewCompilation good = CompilationOf(typeof(PreviewGoodRoot));
+
+        try
+        {
+            (bool createThrew, bool currentCleared, string? secondFailure) = RunOnStaThread(() =>
+            {
+                bool threw = false;
+                try
+                {
+                    using PreviewRenderSession failed = PreviewRenderSession.Create(throwing, 320, 180);
+                }
+                catch (Exception)
+                {
+                    // Activator wraps the root's exception in a TargetInvocationException.
+                    threw = true;
+                }
+
+                bool cleared = Cerneala.UI.Application.Current is null;
+                string? failure = null;
+                try
+                {
+                    using PreviewRenderSession next = PreviewRenderSession.Create(good, 320, 180);
+                    _ = next.Capture();
+                }
+                catch (Exception exception)
+                {
+                    failure = exception.GetType().Name + ": " + exception.Message;
+                }
+
+                return (threw, cleared, failure);
+            });
+
+            Assert.True(createThrew, "The throwing root did not make Create throw.");
+            Assert.True(
+                currentCleared && secondFailure is null,
+                $"After the failed creation Application.Current cleared: {currentCleared}; next Create failed with: {secondFailure ?? "nothing"}.");
+        }
+        finally
+        {
+            ResetApplicationState();
+        }
+    }
+
+    [Fact]
     public async Task HostProcessRendersThroughTheBinaryProtocol()
     {
         string executable = Path.Combine(AppContext.BaseDirectory, "Cerneala.PreviewHost.exe");
@@ -911,6 +982,26 @@ public sealed class PreviewHostTests
         return result!;
     }
 
+    private static PreviewCompilation CompilationOf(Type root) => new(
+        File.ReadAllBytes(typeof(PreviewHostTests).Assembly.Location),
+        typeof(PreviewHostTests).Assembly.GetName().Name!,
+        root.FullName!,
+        AppContext.BaseDirectory,
+        new Dictionary<string, string>(),
+        TimeSpan.Zero);
+
+    private static void ResetApplicationState()
+    {
+        // Test cleanup only: a leftover Application would break every later test of this collection.
+        RunOnStaThread(() =>
+        {
+            typeof(Cerneala.UI.Application)
+                .GetMethod("ResetForTesting", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public)?
+                .Invoke(null, null);
+            return 0;
+        });
+    }
+
     private static string OpeningViewPath() => Path.Combine(
         RepositoryRoot(),
         "CernealaPresentation",
@@ -932,4 +1023,17 @@ public sealed class PreviewHostTests
         return directory?.FullName
             ?? throw new DirectoryNotFoundException("Could not locate the Cerneala repository root.");
     }
+}
+
+// Preview roots loaded from this test assembly's image by CompilationOf.
+public sealed class PreviewThrowingRoot : Cerneala.UI.Elements.UIElement
+{
+    public PreviewThrowingRoot()
+    {
+        throw new InvalidOperationException("The preview root constructor failed.");
+    }
+}
+
+public sealed class PreviewGoodRoot : Cerneala.UI.Elements.UIElement
+{
 }
