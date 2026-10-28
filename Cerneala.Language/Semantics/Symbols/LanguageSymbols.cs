@@ -63,6 +63,9 @@ internal interface ILanguageCompilationSymbols
     // honors [InternalsVisibleTo]; any other markup file reaches public members and the non-public ones of this assembly.
     bool IsAccessibleFromGeneratedCode(ILanguageMemberSymbol member, ILanguageTypeSymbol? pairType);
 
+    // True when the generated code can assign this property: its setter is not init-only and is accessible as above.
+    bool IsWritableFromGeneratedCode(ILanguageMemberSymbol member, ILanguageTypeSymbol? pairType);
+
     ILanguageTypeSymbol? FindType(string metadataName);
 
     IReadOnlyList<ILanguageTypeSymbol> FindTypes(string simpleName);

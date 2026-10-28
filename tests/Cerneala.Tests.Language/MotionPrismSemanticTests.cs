@@ -209,6 +209,106 @@ public sealed class MotionPrismSemanticTests
             $"Body '{body}': editor [{string.Join(", ", semantic)}], build [{string.Join(", ", sourceGenerator)}] (expected only CERNEALAUI006 in both).");
     }
 
+    // Issue #1109: @when and a second top-level body inside a MotionClip are reported like the build, with the same
+    // id, message and span.
+    [Theory]
+    [InlineData("@when IsEnabled { @animate { @to { Opacity = 1; } } }")]
+    [InlineData("@animate { @to { Opacity = 1; } } @animate { @to { Scale = 1; } }")]
+    public void MotionClipBodyShapeErrorsAreReportedByTheEditor(string body)
+    {
+        string markup = $$"""
+            <Border>
+              <Border.Resources>
+                <MotionClip Name="Invalid" TargetType="Border">{{body}}</MotionClip>
+              </Border.Resources>
+            </Border>
+            """;
+        LanguagePipelineResult result = LanguagePipelineHarness.Analyze("MotionClipBodyShape.crn", markup);
+
+        HarnessDiagnostic[] semantic = result.SemanticDiagnostics
+            .Where(diagnostic => diagnostic.Severity == nameof(DiagnosticSeverity.Error))
+            .ToArray();
+        HarnessDiagnostic[] sourceGenerator = result.SourceGeneratorDiagnostics
+            .Where(diagnostic => diagnostic.Severity == nameof(DiagnosticSeverity.Error))
+            .ToArray();
+        Assert.NotEmpty(sourceGenerator);
+        Assert.Equal(sourceGenerator, semantic);
+    }
+
+    // Issue #828: a property the generated code cannot assign is reported by the editor like the build.
+    [Theory]
+    [InlineData("<Border Opacity=\"0.5\" />", false)]
+    [InlineData("<Border IsMouseOver=\"true\" />", true)]
+    [InlineData("<Border><Border.Resources><Aspect Name=\"A\" TargetType=\"Border\">@default { IsMouseOver = true; }</Aspect></Border.Resources></Border>", true)]
+    [InlineData("<Border Aspect=\"$A\"><Border.Resources><Aspect Name=\"A\" TargetType=\"Border\">@on Loaded { @set { IsMouseOver = true; } }</Aspect></Border.Resources></Border>", true)]
+    [InlineData("<Border><Border.Resources><MotionClip Name=\"C\" TargetType=\"Border\">@set { IsMouseOver = true; }</MotionClip></Border.Resources></Border>", true)]
+    public void NonAssignablePropertiesAreReportedLikeTheSourceGenerator(string markup, bool invalid)
+    {
+        LanguagePipelineResult result = LanguagePipelineHarness.Analyze("NonAssignable.crn", markup);
+
+        Assert.Equal(invalid, result.SourceGeneratorDiagnostics.Count > 0);
+        AssertSameDiagnostics(result);
+    }
+
+    // Issue #828: a private setter is not writable from the generated code, so TwoWay to it is an error in both.
+    [Theory]
+    [InlineData("Value:OneWay", false)]
+    [InlineData("Value:TwoWay", true)]
+    public void TwoWayBindingToAPrivateSetterIsReportedLikeTheSourceGenerator(string binding, bool invalid)
+    {
+        const string source = """
+            using System.ComponentModel;
+
+            namespace Demo;
+
+            public sealed class PrivateSetterViewModel : INotifyPropertyChanged
+            {
+                public event PropertyChangedEventHandler? PropertyChanged;
+
+                public float Value { get; private set; }
+            }
+            """;
+        string markup = "<Border DataType=\"Demo.PrivateSetterViewModel\" Opacity=\"$DataContext." + binding + "\" />";
+
+        LanguagePipelineResult result = LanguagePipelineHarness.Analyze("PrivateSetter.crn", markup, "PrivateSetter.cs", source);
+
+        Assert.Equal(invalid, result.SourceGeneratorDiagnostics.Count > 0);
+        AssertSameDiagnostics(result);
+    }
+
+    // Issue #829: Motion @set literals follow the build's rule: enum members are case-sensitive, strings need quotes.
+    [Theory]
+    [InlineData("Visibility = Collapsed;", false)]
+    [InlineData("Visibility = collapsed;", true)]
+    public void MotionSetEnumLiteralsAreCheckedLikeTheSourceGenerator(string assignment, bool invalid)
+    {
+        LanguagePipelineResult result = LanguagePipelineHarness.Analyze(
+            "MotionSetLiteral.crn",
+            MotionAspectMarkup("@on Loaded { @set { " + assignment + " } }"));
+
+        Assert.Equal(invalid, result.SourceGeneratorDiagnostics.Count > 0);
+        AssertSameDiagnostics(result);
+    }
+
+    [Theory]
+    [InlineData("Text = \"Hello\";", false)]
+    [InlineData("Text = Hello;", true)]
+    public void MotionSetStringLiteralsAreCheckedLikeTheSourceGenerator(string assignment, bool invalid)
+    {
+        string markup = $$"""
+            <TextBlock Aspect="$Motion">
+              <TextBlock.Resources>
+                <Aspect Name="Motion" TargetType="TextBlock">@on Loaded { @set { {{assignment}} } }</Aspect>
+              </TextBlock.Resources>
+            </TextBlock>
+            """;
+
+        LanguagePipelineResult result = LanguagePipelineHarness.Analyze("MotionSetString.crn", markup);
+
+        Assert.Equal(invalid, result.SourceGeneratorDiagnostics.Count > 0);
+        AssertSameDiagnostics(result);
+    }
+
     [Fact]
     public void PrismCatalogParametersNodesOperationsValuesAndApplicationsAreBound()
     {
@@ -565,6 +665,17 @@ public sealed class MotionPrismSemanticTests
                 .Select(symbol => (symbol.Name, symbol.ValueType, symbol.Value)));
     }
 
+    // The editor and the build report the same diagnostics: id, severity, message and span.
+    private static void AssertSameDiagnostics(LanguagePipelineResult result)
+    {
+        static HarnessDiagnostic[] Ordered(IEnumerable<HarnessDiagnostic> diagnostics) => diagnostics
+            .OrderBy(diagnostic => diagnostic.StartLine)
+            .ThenBy(diagnostic => diagnostic.StartCharacter)
+            .ThenBy(diagnostic => diagnostic.Id, StringComparer.Ordinal)
+            .ToArray();
+
+        Assert.Equal(Ordered(result.SourceGeneratorDiagnostics), Ordered(result.SemanticDiagnostics));
+    }
     private static string MotionAspectMarkup(string body) => $$"""
         <Border Aspect="$Motion">
           <Border.Resources>

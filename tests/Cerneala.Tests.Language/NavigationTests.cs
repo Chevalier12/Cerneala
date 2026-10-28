@@ -563,6 +563,73 @@ public sealed class NavigationTests
         Assert.Equal([opening, closing], highlights);
     }
 
+    // Issue #825: a framework type or member is declared in metadata, so its declaration cannot be renamed.
+    [Theory]
+    [InlineData("<Window><Button Content=\"x\" /></Window>", "Button")]
+    [InlineData("<Window><Border Width=\"5\" /></Window>", "Width")]
+    [InlineData("<Window><Button Content=\"x\" /></Window>", "Content")]
+    public void PrepareRenameAndRenameRejectFrameworkTypesAndMembers(string markup, string token)
+    {
+        using NavigationFixture fixture = NavigationFixture.Create(markup);
+        CernealaNavigationService service = new();
+
+        CernealaPrepareRenameResult prepared = service.PrepareRename(fixture.Model, [fixture.Model], OffsetOf(markup, token));
+
+        Assert.False(prepared.CanRename, "PrepareRename offered a range for the framework symbol '" + token + "'.");
+    }
+
+    [Theory]
+    [InlineData("<Window><Button Content=\"x\" /></Window>", "Button")]
+    [InlineData("<Window><Border Width=\"5\" /></Window>", "Width")]
+    [InlineData("<Window><Button Content=\"x\" /></Window>", "Content")]
+    public void RenameRejectsFrameworkTypesAndMembers(string markup, string token)
+    {
+        using NavigationFixture fixture = NavigationFixture.Create(markup);
+        CernealaNavigationService service = new();
+
+        CernealaRenameResult rename = service.Rename(fixture.Model, [fixture.Model], OffsetOf(markup, token), "Renamed" + token);
+
+        Assert.False(rename.Succeeded, "Rename produced " + rename.Edits.Count + " edit(s) for the framework symbol '" + token + "'.");
+    }
+
+    [Theory]
+    [InlineData("<Window><Window.Resources><SolidColorBrush Name=\"Accent\" /></Window.Resources><TextBlock Text=\"$Accent\" /></Window>", "Accent")]
+    [InlineData("<Window DataType=\"Test.ViewModel\"><TextBlock Text=\"$DataContext.Title\" /></Window>", "Title")]
+    public void PrepareRenameAcceptsDeclarationsOfTheProject(string markup, string token)
+    {
+        using NavigationFixture fixture = NavigationFixture.Create(markup);
+        CernealaNavigationService service = new();
+
+        CernealaPrepareRenameResult prepared = service.PrepareRename(fixture.Model, [fixture.Model], OffsetOf(markup, token));
+
+        Assert.True(prepared.CanRename, prepared.Error);
+    }
+
+    // Rename must not rewrite C# references of a framework type; the control renames a project type and must edit its
+    // C# references.
+    [Theory]
+    [InlineData("<Window><Button Content=\"x\" /></Window>", "Button", true)]
+    [InlineData("<Window xmlns:t=\"clr-namespace:Shared;assembly=Alpha\"><t:Card /></Window>", "Card", false)]
+    public void RenameDoesNotRewriteCSharpReferencesOfAFrameworkType(string markup, string token, bool framework)
+    {
+        const string alphaPath = FixtureRoot + "/Alpha.cs";
+        const string markupPath = FixtureRoot + "/Alpha.crn";
+        const string code = "namespace Shared; public sealed class Card : Cerneala.UI.Controls.Border { } " +
+            "public sealed class User { public Cerneala.UI.Controls.Button Field = null!; public Card Other = null!; }";
+        CSharpCompilation project = CreateCompilation("Alpha", code, alphaPath, CreateReferences());
+        CernealaDocument document = CreateDocument(markupPath, markup);
+        using CernealaCompilation language = new(new RoslynCompilationSymbols(project), [document]);
+        CernealaSemanticModel model = language.GetSemanticModel(markupPath);
+        CernealaNavigationService service = new();
+
+        CernealaRenameResult rename = service.Rename(model, [model], OffsetOf(markup, token), "Renamed" + token);
+
+        int codeEdits = rename.Edits.Count(edit => Normalize(edit.Path) == Normalize(alphaPath));
+        Assert.True(
+            framework ? codeEdits == 0 : codeEdits > 0,
+            $"token={token}: succeeded={rename.Succeeded}, {rename.Edits.Count} edit(s) in total, {codeEdits} in the C# file ({string.Join(", ", rename.Edits.Select(edit => Normalize(edit.Path) + "@" + edit.Span.Start))}).");
+    }
+
     private static int OffsetOf(string text, string value) =>
         text.LastIndexOf(value, StringComparison.Ordinal) + Math.Min(1, value.Length - 1);
 

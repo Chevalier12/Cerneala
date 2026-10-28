@@ -325,10 +325,10 @@ internal sealed partial class CernealaSemanticModel
                 currentType,
                 member,
                 definitionLocation: member.Locations.FirstOrDefault(),
-                isWritable: member.CanWrite));
+                isWritable: IsWritableFromGeneratedCode(member)));
         }
 
-        return new BindingResolution(currentType, finalMember, finalMember?.CanWrite == true);
+        return new BindingResolution(currentType, finalMember, finalMember is not null && IsWritableFromGeneratedCode(finalMember));
     }
 
     private BindingResolution? ResolveTemplatePartPath(ElementSyntax source, BindingPathSyntax path)
@@ -399,10 +399,10 @@ internal sealed partial class CernealaSemanticModel
                 currentType,
                 member,
                 definitionLocation: member.Locations.FirstOrDefault(),
-                isWritable: member.CanWrite));
+                isWritable: IsWritableFromGeneratedCode(member)));
         }
 
-        return new BindingResolution(currentType, finalMember, finalMember?.CanWrite == true);
+        return new BindingResolution(currentType, finalMember, finalMember is not null && IsWritableFromGeneratedCode(finalMember));
     }
 
     private void ValidateBindingCompatibility(
@@ -413,7 +413,7 @@ internal sealed partial class CernealaSemanticModel
         ILanguageTypeSymbol ownerType,
         ElementSyntax element)
     {
-        if (!target.CanWrite && target.Kind == LanguageMemberKind.Property)
+        if (!IsWritableFromGeneratedCode(target) && target.Kind == LanguageMemberKind.Property)
         {
             AddBindingSemanticDiagnostic(element, expression, path.Span, "The target UI property is read-only.");
             return;
@@ -622,7 +622,7 @@ internal sealed partial class CernealaSemanticModel
                 continue;
             }
             ILanguageMemberSymbol? member = FindProperty(aspect.TargetType, propertyName);
-            if (member is null)
+            if (member is null || !IsWritableFromGeneratedCode(member))
             {
                 AddDiagnostic("CERNEALAUI003", assignment.NameSpan, aspect.TargetType.Name, propertyName);
                 continue;
@@ -718,7 +718,7 @@ internal sealed partial class CernealaSemanticModel
                 member.ValueType,
                 member,
                 rawValue,
-                isWritable: member.CanWrite));
+                isWritable: IsWritableFromGeneratedCode(member)));
         }
     }
 
@@ -779,7 +779,7 @@ internal sealed partial class CernealaSemanticModel
                 member.ValueType,
                 member,
                 definitionLocation: member.Locations.FirstOrDefault(),
-                isWritable: member.CanWrite));
+                isWritable: IsWritableFromGeneratedCode(member)));
         }
 
         foreach ((string expression, int offset) in ExtractBindingExpressions(text, relativeStart, end, absoluteOffset))

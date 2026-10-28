@@ -32,7 +32,17 @@ internal sealed class RoslynCompilationSymbols : ILanguageCompilationSymbols
             return member.Accessibility == LanguageAccessibility.Public;
         }
 
-        ISymbol symbol = roslynMember.Symbol;
+        return IsAccessibleFromGeneratedCode(roslynMember.Symbol, pairType);
+    }
+
+    // Mirrors the generator's assignable property rule (UiMarkupPropertyResolver and
+    // UiMarkupBindingResolver.IsWritablePathProperty): a setter that is not init-only and that the generated code can call.
+    public bool IsWritableFromGeneratedCode(ILanguageMemberSymbol member, ILanguageTypeSymbol? pairType) =>
+        member is RoslynMemberSymbol { Symbol: IPropertySymbol { SetMethod: { IsInitOnly: false } setter } } &&
+        IsAccessibleFromGeneratedCode(setter, pairType);
+
+    private bool IsAccessibleFromGeneratedCode(ISymbol symbol, ILanguageTypeSymbol? pairType)
+    {
         if (pairType is RoslynTypeSymbol roslynPair)
         {
             return compilation.IsSymbolAccessibleWithin(symbol, roslynPair.Symbol);
@@ -391,7 +401,9 @@ internal sealed class RoslynCompilationSymbols : ILanguageCompilationSymbols
 
         public bool CanRead => symbol is not IPropertySymbol property || property.GetMethod is not null;
 
-        public bool CanWrite => symbol is IPropertySymbol property && property.SetMethod is { IsInitOnly: false };
+        // Writable from generated code that is not paired with a C# class; a paired markup file asks
+        // ILanguageCompilationSymbols.IsWritableFromGeneratedCode with its pair type.
+        public bool CanWrite => owner.IsWritableFromGeneratedCode(this, pairType: null);
 
         public string ValueTypeMetadataName => GetValueType(symbol) is ITypeSymbol type
             ? owner.WrapType(type).MetadataName

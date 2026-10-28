@@ -175,7 +175,7 @@ internal sealed class CernealaNavigationService
     {
         CernealaSemanticSymbol? symbol = model.GetSymbolAt(offset);
         SymbolIdentity? identity = symbol is null ? null : CreateIdentity(model, symbol);
-        if (symbol is null || identity is null || !IsRenameable(identity, workspaceModels))
+        if (symbol is null || identity is null || !IsRenameable(symbol, identity, workspaceModels))
         {
             return new CernealaPrepareRenameResult(null, null, "The symbol cannot be renamed safely.");
         }
@@ -197,7 +197,7 @@ internal sealed class CernealaNavigationService
     {
         CernealaSemanticSymbol? symbol = model.GetSymbolAt(offset);
         SymbolIdentity? identity = symbol is null ? null : CreateIdentity(model, symbol);
-        if (symbol is null || identity is null || !IsRenameable(identity, workspaceModels))
+        if (symbol is null || identity is null || !IsRenameable(symbol, identity, workspaceModels))
         {
             return Failure("The symbol cannot be renamed safely.");
         }
@@ -396,13 +396,21 @@ internal sealed class CernealaNavigationService
         CernealaSemanticSymbolKind.RootType or CernealaSemanticSymbolKind.Element or
         CernealaSemanticSymbolKind.TypeReference;
 
+    // A rename changes the declaration together with every reference. A type or member declared only in metadata (a
+    // framework type such as Button) or only in generated code has no authored declaration to change, so it cannot be
+    // renamed.
     private static bool IsRenameable(
+        CernealaSemanticSymbol symbol,
         SymbolIdentity identity,
         IReadOnlyList<CernealaSemanticModel> workspaceModels)
     {
         if (identity.Kind is IdentityKind.Type or IdentityKind.Member)
         {
-            return true;
+            IReadOnlyList<LanguageSourceLocation> declarations = identity.Kind == IdentityKind.Member
+                ? symbol.MemberSymbol!.Locations
+                : symbol.TypeSymbol!.Locations;
+            return declarations.Any(location =>
+                !string.IsNullOrWhiteSpace(location.Path) && !IsGeneratedPath(location.Path));
         }
 
         return identity.Definition is not null && workspaceModels.Any(model => model.Symbols.Any(symbol =>

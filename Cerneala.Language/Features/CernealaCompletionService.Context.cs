@@ -438,8 +438,11 @@ internal sealed partial class CernealaCompletionService
             return false;
         }
 
-        int separator = trimmed.LastIndexOf(" as ", StringComparison.Ordinal);
-        return separator >= 0 && trimmed.Substring(separator + 4).All(IsIdentifierCharacter);
+        // The handle follows an "as" outside quoted strings and argument parentheses: in
+        // @run $Pulse(Label = "save as |") the caret is inside a string, not after the handle separator.
+        int separator = CernealaSemanticModel.FindTopLevelKeyword(trimmed, "as");
+        return separator >= 0 && separator + "as".Length < trimmed.Length &&
+            trimmed.Substring(separator + "as".Length).TrimStart().All(IsIdentifierCharacter);
     }
 
     private static bool TryGetReactiveExpressionOperandContext(

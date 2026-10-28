@@ -362,7 +362,7 @@ internal sealed partial class CernealaSemanticModel : IDisposable
             element.NameToken.Span,
             member.ValueType ?? parentType,
             member,
-            isWritable: member.CanWrite));
+            isWritable: IsWritableFromGeneratedCode(member)));
         return member;
     }
 
@@ -444,8 +444,15 @@ internal sealed partial class CernealaSemanticModel : IDisposable
                 member.ValueType ?? type,
                 member,
                 value,
-                isWritable: member.CanWrite));
+                isWritable: IsWritableFromGeneratedCode(member)));
             return resultType;
+        }
+
+        // A literal needs a setter the generated code can call; the build reports the property as unsupported otherwise.
+        if (!IsWritableFromGeneratedCode(member))
+        {
+            AddDiagnostic("CERNEALAUI003", attribute.NameToken.Span, type.Name, name);
+            return null;
         }
 
         if (!TryConvertLiteral(value, member, out object? converted))
@@ -462,7 +469,7 @@ internal sealed partial class CernealaSemanticModel : IDisposable
             member.ValueType ?? type,
             member,
             converted,
-            isWritable: member.CanWrite));
+            isWritable: IsWritableFromGeneratedCode(member)));
         return null;
     }
 
@@ -545,6 +552,10 @@ internal sealed partial class CernealaSemanticModel : IDisposable
     // The editor must accept exactly the members the build resolver lets generated code call.
     private bool IsCallableFromGeneratedCode(ILanguageMemberSymbol member) =>
         compilation.IsAccessibleFromGeneratedCode(member, markupPairType);
+
+    // The editor must report exactly the assignments the build resolver rejects as read-only or inaccessible.
+    private bool IsWritableFromGeneratedCode(ILanguageMemberSymbol member) =>
+        compilation.IsWritableFromGeneratedCode(member, markupPairType);
 
     // True when the owner declares a public static XProperty field of type UiProperty<T>.
     private static bool HasAttachedUiProperty(ILanguageTypeSymbol owner, string propertyName) =>
