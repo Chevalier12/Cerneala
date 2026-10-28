@@ -1,4 +1,6 @@
 using Cerneala.Drawing;
+using Cerneala.UI.Elements;
+using Cerneala.UI.Layout;
 using Cerneala.UI.Media;
 
 namespace Cerneala.Tests.UI.Media;
@@ -155,5 +157,107 @@ public sealed class BrushTests
     public void PenRejectsInvalidThickness(float thickness)
     {
         Assert.Throws<ArgumentOutOfRangeException>(() => new Pen(new SolidColorBrush(Color.Black), thickness));
+    }
+
+    private static readonly Color CaptureRed = new(255, 0, 0);
+    private static readonly Color CaptureBlue = new(0, 0, 255);
+
+    [Theory]
+    [InlineData(Visibility.Visible, true)]
+    [InlineData(Visibility.Hidden, false)]
+    [InlineData(Visibility.Collapsed, false)]
+    public void VisualBrushCaptureSkipsChildrenThatDoNotParticipateInRendering(Visibility blueVisibility, bool blueExpected)
+    {
+        (UIElement panel, Cerneala.UI.Controls.Shapes.Rectangle blue) = CreateCapturePanel();
+        blue.Visibility = blueVisibility;
+
+        DrawCommand[] commands = CaptureVisualBrush(panel);
+
+        Assert.Equal(blueExpected, commands.Any(command => IsFill(command, CaptureBlue)));
+        Assert.Contains(commands, command => IsFill(command, CaptureRed));
+    }
+
+    [Fact]
+    public void VisualBrushCaptureAppliesChildOpacity()
+    {
+        (UIElement panel, Cerneala.UI.Controls.Shapes.Rectangle blue) = CreateCapturePanel();
+        blue.Opacity = 0.5f;
+
+        DrawCommand[] commands = CaptureVisualBrush(panel);
+
+        DrawCommand blueFill = Assert.Single(commands, command => IsFill(command, CaptureBlue));
+        Assert.Equal(0.5f, EffectiveOpacity(blueFill), 3);
+        DrawCommand redFill = Assert.Single(commands, command => IsFill(command, CaptureRed));
+        Assert.Equal(1f, EffectiveOpacity(redFill), 3);
+    }
+
+    [Fact]
+    public void VisualBrushCaptureAppliesChildRenderTransform()
+    {
+        (UIElement panel, Cerneala.UI.Controls.Shapes.Rectangle blue) = CreateCapturePanel();
+        blue.RenderTransform = new Transform(Matrix3x2.CreateRotation(0.5f));
+        Matrix3x2 expected = Cerneala.UI.Elements.ElementVisualTransform.GetElementTransform(blue);
+
+        DrawCommand[] commands = CaptureVisualBrush(panel);
+
+        int blueIndex = Array.FindIndex(commands, command => IsFill(command, CaptureBlue));
+        Assert.True(blueIndex > 0);
+        DrawCommand push = commands[blueIndex - 1];
+        Assert.Equal(DrawCommandKind.PushTransform, push.Kind);
+        Assert.Equal(
+            new System.Numerics.Matrix3x2(expected.M11, expected.M12, expected.M21, expected.M22, expected.M31, expected.M32),
+            push.Transform);
+        Assert.Equal(DrawCommandKind.PopTransform, commands[blueIndex + 1].Kind);
+        Assert.DoesNotContain(commands[..Array.FindIndex(commands, command => IsFill(command, CaptureRed))],
+            command => command.Kind == DrawCommandKind.PushTransform);
+    }
+
+    [Fact]
+    public void VisualBrushCaptureAppliesChildClip()
+    {
+        (UIElement panel, Cerneala.UI.Controls.Shapes.Rectangle blue) = CreateCapturePanel();
+        blue.ClipToBounds = true;
+        blue.Arrange(new ArrangeContext(new LayoutRect(4, 4, 8, 8)));
+
+        DrawCommand[] commands = CaptureVisualBrush(panel);
+
+        int blueIndex = Array.FindIndex(commands, command => IsFill(command, CaptureBlue));
+        Assert.True(blueIndex > 0);
+        DrawCommand push = commands[blueIndex - 1];
+        Assert.Equal(DrawCommandKind.PushClip, push.Kind);
+        Assert.Equal(new DrawRect(4, 4, 8, 8), push.Rect);
+        Assert.Equal(DrawCommandKind.PopClip, commands[blueIndex + 1].Kind);
+    }
+
+    private static (UIElement Panel, Cerneala.UI.Controls.Shapes.Rectangle Blue) CreateCapturePanel()
+    {
+        UIElement panel = new();
+        Cerneala.UI.Controls.Shapes.Rectangle red = new() { Fill = new SolidColorBrush(CaptureRed) };
+        Cerneala.UI.Controls.Shapes.Rectangle blue = new() { Fill = new SolidColorBrush(CaptureBlue) };
+        panel.VisualChildren.Add(red);
+        panel.VisualChildren.Add(blue);
+        panel.Arrange(new ArrangeContext(new LayoutRect(0, 0, 16, 16)));
+        red.Arrange(new ArrangeContext(new LayoutRect(0, 0, 16, 16)));
+        blue.Arrange(new ArrangeContext(new LayoutRect(0, 0, 16, 16)));
+        return (panel, blue);
+    }
+
+    private static DrawCommand[] CaptureVisualBrush(UIElement visual)
+    {
+        VisualDrawBrushDescriptor descriptor = Assert.IsType<VisualDrawBrushDescriptor>(
+            ((IDrawBrush)new VisualBrush(visual)).CreateDescriptor());
+        return descriptor.Commands.ToArray();
+    }
+
+    private static bool IsFill(DrawCommand command, Color color)
+    {
+        return command.Kind == DrawCommandKind.FillRectangle &&
+            (command.Brush is SolidColorBrush brush ? brush.SolidColor == color : command.Color.R == color.R &&
+                command.Color.G == color.G && command.Color.B == color.B);
+    }
+
+    private static float EffectiveOpacity(DrawCommand command)
+    {
+        return command.Brush is not null ? command.BrushOpacity : command.Color.A / 255f;
     }
 }

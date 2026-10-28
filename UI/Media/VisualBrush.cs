@@ -64,19 +64,69 @@ public sealed record VisualBrush : TileBrush
         }
     }
 
-    private static void Capture(UIElement element, DrawCommandList destination)
+    // The source keeps its own placement, opacity and visibility out of the capture;
+    // the brush applies its own Opacity and maps the source bounds onto the painted area.
+    private static void Capture(UIElement visual, DrawCommandList destination)
+    {
+        AppendRender(visual, destination, 1);
+        AppendChildren(visual, destination, 1);
+    }
+
+    // Descendants are captured the way DrawCommandListBuilder composes them on screen.
+    private static void CaptureDescendant(UIElement element, DrawCommandList destination, float ancestorOpacity)
+    {
+        if (!UIElementVisibility.ParticipatesInRendering(element))
+        {
+            return;
+        }
+
+        float opacity = ancestorOpacity * element.Opacity * element.PresenceOpacity;
+        if (opacity <= 0)
+        {
+            return;
+        }
+
+        Matrix3x2 transform = ElementVisualTransform.GetElementTransform(element);
+        bool hasTransform = transform != Matrix3x2.Identity;
+        if (hasTransform)
+        {
+            destination.Add(DrawCommand.PushTransform(DrawCommandListBuilder.ToNumerics(transform)));
+        }
+        bool hasClip = DrawCommandListBuilder.TryGetClip(element, out LayoutRect clip);
+        if (hasClip)
+        {
+            destination.Add(DrawCommand.PushClip(DrawCommandListBuilder.ToDrawRect(clip)));
+        }
+
+        AppendRender(element, destination, opacity);
+        AppendChildren(element, destination, opacity);
+
+        if (hasClip)
+        {
+            destination.Add(DrawCommand.PopClip());
+        }
+        if (hasTransform)
+        {
+            destination.Add(DrawCommand.PopTransform());
+        }
+    }
+
+    private static void AppendRender(UIElement element, DrawCommandList destination, float opacity)
     {
         DrawCommandList local = new();
         DrawingContext context = new(local);
         element.Render(new RenderContext(element, context, element.ArrangedBounds, RenderLayer.Default, new RenderCounters()));
         foreach (DrawCommand command in local)
         {
-            destination.Add(command);
+            destination.Add(DrawCommandTransform.ApplyOpacity(command, opacity));
         }
+    }
 
+    private static void AppendChildren(UIElement element, DrawCommandList destination, float opacity)
+    {
         for (int index = 0; index < element.VisualChildren.Count; index++)
         {
-            Capture(element.GetVisualChildInZOrder(index), destination);
+            CaptureDescendant(element.GetVisualChildInZOrder(index), destination, opacity);
         }
     }
 }
