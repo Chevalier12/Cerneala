@@ -570,7 +570,7 @@ public sealed class DrawCommandListBuilder
         }
     }
 
-    private static NumericsMatrix3x2 ToNumerics(Matrix3x2 matrix)
+    internal static NumericsMatrix3x2 ToNumerics(Matrix3x2 matrix)
     {
         return new NumericsMatrix3x2(
             matrix.M11,
@@ -591,7 +591,7 @@ public sealed class DrawCommandListBuilder
         }
     }
 
-    private static bool TryGetClip(UIElement element, out LayoutRect bounds)
+    internal static bool TryGetClip(UIElement element, out LayoutRect bounds)
     {
         if (ClipNode.TryGetClip(element, out ClipNode clip))
         {
@@ -609,7 +609,7 @@ public sealed class DrawCommandListBuilder
         return false;
     }
 
-    private static DrawRect ToDrawRect(LayoutRect rect)
+    internal static DrawRect ToDrawRect(LayoutRect rect)
     {
         return new DrawRect(rect.X, rect.Y, rect.Width, rect.Height);
     }
