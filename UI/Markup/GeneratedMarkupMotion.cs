@@ -528,8 +528,9 @@ public static partial class GeneratedMarkup
                         "A Prism Motion property id was reused with an incompatible value type.");
                 }
 
-                if (ReferenceEquals(typed.Instance, instance))
+                if (typed.Targets(instance))
                 {
+                    typed.SyncIdleState();
                     return typed;
                 }
 
@@ -972,16 +973,19 @@ public static partial class GeneratedMarkup
         private readonly MotionSystem motion;
         private readonly UIElement target;
         private readonly PrismNodeId? scope;
+        private readonly Func<PrismInstance, T> getValue;
         private readonly Action<PrismInstance, T> setValue;
-        private readonly T baseValue;
+        private readonly PrismStructuralVersion structuralVersion;
         private readonly MotionValue<T> value;
         private readonly BindingNode node;
         private readonly IDisposable valueSubscription;
+        private T baseValue;
         private MotionHandle? activeHandle;
         private T pendingSample = default!;
         private bool hasPendingSample;
         private bool holdOnComplete;
         private bool completedNaturally;
+        private bool registered;
         private bool disposed;
 
         public PrismMotionBinding(
@@ -997,7 +1001,9 @@ public static partial class GeneratedMarkup
             this.target = target;
             Instance = instance;
             this.scope = scope;
+            this.getValue = getValue;
             this.setValue = setValue;
+            structuralVersion = instance.StructuralVersion;
             baseValue = getValue(instance);
             value = motion.Graph.CreateValue(baseValue, mixer);
             node = new BindingNode(this);
@@ -1007,6 +1013,31 @@ public static partial class GeneratedMarkup
         public PrismInstance Instance { get; }
 
         public T Current => value.Current;
+
+        // The generated accessors address nodes, filter and style indexes, and masks of one
+        // topology, so a ReplaceDefinition that changes it replaces the target like a new instance.
+        public bool Targets(PrismInstance instance)
+        {
+            return ReferenceEquals(Instance, instance) &&
+                instance.StructuralVersion == structuralVersion;
+        }
+
+        // Between animations the application, or a canceled or holding animation, may have
+        // changed the Prism value. A start on an idle binding therefore begins from the value
+        // the instance holds and, without HoldOnComplete, returns to it. A start that
+        // interrupts a running animation keeps the base from before that animation.
+        public void SyncIdleState()
+        {
+            ThrowIfDisposed();
+            if (registered)
+            {
+                return;
+            }
+
+            baseValue = getValue(Instance);
+            value.JumpTo(baseValue);
+            hasPendingSample = false;
+        }
 
         public IDisposable Subscribe(Action<T> listener)
         {
@@ -1051,6 +1082,7 @@ public static partial class GeneratedMarkup
 
             StageCurrent();
             motion.Graph.Register(node);
+            registered = true;
             return handle;
         }
 
@@ -1078,10 +1110,11 @@ public static partial class GeneratedMarkup
             completedNaturally = false;
             hasPendingSample = false;
             motion.Graph.Unregister(node);
+            registered = false;
             if (restoreBase &&
                 target.IsAttached &&
                 UIElementVisibility.IsEffectivelyVisible(target) &&
-                IsCurrentInstance())
+                IsCurrentTarget())
             {
                 setValue(Instance, baseValue);
             }
@@ -1116,6 +1149,7 @@ public static partial class GeneratedMarkup
                 completedNaturally ||
                 activeHandle is null ||
                 !activeHandle.IsActive;
+            registered = !finished;
             return new MotionNodeTickResult(
                 PropertyWrites: writes,
                 Completed: finished,
@@ -1153,21 +1187,22 @@ public static partial class GeneratedMarkup
         }
 
         // The motion may write only while its element is attached and renderable and still owns
-        // this Prism instance. Visible=false on the Prism node of the property cancels only an
-        // active motion: one that reached its end (its handle already reports completion) still
-        // writes its end value, whichever binding hid the node earlier in the same frame.
+        // this Prism instance with the topology the binding was created for. Visible=false on the
+        // Prism node of the property cancels only an active motion: one that reached its end (its
+        // handle already reports completion) still writes its end value, whichever binding hid
+        // the node earlier in the same frame.
         private bool CanWrite(bool reachedEnd)
         {
             return target.IsAttached &&
                 UIElementVisibility.IsEffectivelyVisible(target) &&
-                IsCurrentInstance() &&
+                IsCurrentTarget() &&
                 (reachedEnd || scope is not { } scopeId || Instance.IsNodeEffectivelyVisible(scopeId));
         }
 
-        private bool IsCurrentInstance()
+        private bool IsCurrentTarget()
         {
             return TryGetPrismInstance(target, out PrismInstance? current) &&
-                ReferenceEquals(current, Instance);
+                Targets(current!);
         }
 
         private void StageCurrent()

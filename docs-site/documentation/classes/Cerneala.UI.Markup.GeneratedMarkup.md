@@ -332,7 +332,20 @@ sounds.Dispose(); // the Aspect is replaced: every sound it started stops
 and cancellation. Numbers and colors interpolate continuously; generated Boolean,
 integer, and enum targets use the discrete flag. A hidden, collapsed, invisible,
 detached, or replaced target is canceled without restoring a value into an inert
-Prism instance.
+Prism instance. A `PrismInstance.ReplaceDefinition` that changes the topology
+(`StructuralVersion`) replaces the target too: the generated accessors address
+nodes, filter and style indexes, and masks of the old topology, so a running
+animation is canceled once in the next Motion frame and writes nothing, also when
+the new definition still has the animated node. A later start of the property
+animates the new definition. A replacement with the same topology keeps the
+animation running.
+
+A start that does not interrupt a running animation of the same property begins
+from the value the Prism instance holds, and without `HoldOnComplete` the animation
+returns to that value when it completes. A start that interrupts a running
+animation returns to the value from before the interrupted animation. Example:
+`Glow.Opacity` is `0`; a fade to `0.8` completes and returns to `0`; the application
+sets `Glow.Opacity = 0.3`; the next fade to `0.8` starts at `0.3` and returns to `0.3`.
 
 `scope` is the Prism layer or group that owns the animated property. While the
 animation runs, and when it starts, the binding checks that node and every group
