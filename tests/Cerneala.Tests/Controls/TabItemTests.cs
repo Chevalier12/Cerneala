@@ -3,6 +3,7 @@ using Cerneala.UI;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Templates;
 using Cerneala.UI.Elements;
+using Cerneala.UI.Input;
 using Cerneala.UI.Media;
 using Cerneala.UI.Motion.Presence;
 using Cerneala.UI.Rendering;
@@ -327,6 +328,137 @@ public sealed class TabItemTests
         Assert.Null(tab.Header);
         Assert.Equal(PresenceState.Present, root.Motion.Presence.GetState(header));
         Assert.Empty(root.Motion.Presence.GetExitingVisualChildren(tab));
+    }
+
+    // Issue #1190: a Header change made by a handler while a header element replacement runs wins; the tab keeps exactly
+    // that header element. The replacement runs through the setter or through SetValue.
+    [Theory]
+    [InlineData(false, HeaderChangeDuringReplacement.None)]
+    [InlineData(false, HeaderChangeDuringReplacement.OldHeaderUnloaded)]
+    [InlineData(false, HeaderChangeDuringReplacement.NewHeaderLoaded)]
+    [InlineData(true, HeaderChangeDuringReplacement.None)]
+    [InlineData(true, HeaderChangeDuringReplacement.OldHeaderUnloaded)]
+    [InlineData(true, HeaderChangeDuringReplacement.NewHeaderLoaded)]
+    public void ReplacingHeaderKeepsExactlyOneHeaderElementWhenAHandlerSetsHeaderDuringTheReplacement(
+        bool throughSetValue,
+        HeaderChangeDuringReplacement change)
+    {
+        UIRoot root = new(200, 200);
+        TabItem tab = new();
+        Border old = new();
+        Border other = new();
+        Border value = new();
+        tab.Header = old;
+        root.VisualChildren.Add(tab);
+        root.ProcessFrame();
+        bool done = false;
+        void SetOther(object? sender, RoutedEventArgs args)
+        {
+            if (!done)
+            {
+                done = true;
+                tab.Header = other;
+            }
+        }
+
+        if (change == HeaderChangeDuringReplacement.OldHeaderUnloaded)
+        {
+            old.Unloaded += SetOther;
+        }
+        else if (change == HeaderChangeDuringReplacement.NewHeaderLoaded)
+        {
+            value.Loaded += SetOther;
+        }
+
+        Exception? failure = Record.Exception(() =>
+        {
+            if (throughSetValue)
+            {
+                tab.SetValue(TabItem.HeaderProperty, value);
+            }
+            else
+            {
+                tab.Header = value;
+            }
+        });
+        root.ProcessFrame();
+
+        string Name(object? element) =>
+            element is null ? "null" : ReferenceEquals(element, old) ? "old" : ReferenceEquals(element, other) ? "other" : ReferenceEquals(element, value) ? "value" : element.GetType().Name;
+        UIElement expected = change == HeaderChangeDuringReplacement.None ? value : other;
+        UIElement leftOut = ReferenceEquals(expected, value) ? other : value;
+        bool ok = failure is null &&
+            done == (change != HeaderChangeDuringReplacement.None) &&
+            ReferenceEquals(tab.Header, expected) &&
+            tab.VisualChildren.Count == 1 && ReferenceEquals(tab.VisualChildren[0], expected) &&
+            tab.LogicalChildren.Count == 1 && ReferenceEquals(tab.LogicalChildren[0], expected) &&
+            ReferenceEquals(expected.VisualParent, tab) && ReferenceEquals(expected.LogicalParent, tab) &&
+            leftOut.VisualParent is null && leftOut.LogicalParent is null &&
+            old.VisualParent is null && old.LogicalParent is null;
+        Assert.True(
+            ok,
+            $"{(throughSetValue ? "SetValue" : "setter")} {change}: threw {failure?.GetType().Name ?? "nothing"}; handler ran={done}; " +
+            $"Header={Name(tab.Header)}; VisualChildren=[{string.Join(",", tab.VisualChildren.Select(Name))}]; " +
+            $"LogicalChildren=[{string.Join(",", tab.LogicalChildren.Select(Name))}]; " +
+            $"{Name(leftOut)}.VisualParent={Name(leftOut.VisualParent)}, LogicalParent={Name(leftOut.LogicalParent)}.");
+    }
+
+    // Issue #1190: the rollback of a rejected header element raises that element's Unloaded; a Header change made there
+    // wins too, so the rollback does not put the old header element back over it.
+    [Fact]
+    public void RollbackOfARejectedHeaderKeepsTheHeaderThatItsUnloadedHandlerSets()
+    {
+        UIRoot root = new(200, 200);
+        TabItem tab = new();
+        Border old = new();
+        Border other = new();
+        Border value = new();
+        tab.Header = old;
+        root.VisualChildren.Add(tab);
+        root.ProcessFrame();
+        bool thrown = false;
+        bool done = false;
+        value.Loaded += (_, _) =>
+        {
+            if (!thrown)
+            {
+                thrown = true;
+                throw new InvalidOperationException("loaded failed");
+            }
+        };
+        value.Unloaded += (_, _) =>
+        {
+            if (!done)
+            {
+                done = true;
+                tab.Header = other;
+            }
+        };
+
+        Exception? failure = Record.Exception(() => tab.Header = value);
+        root.ProcessFrame();
+
+        string Name(object? element) =>
+            element is null ? "null" : ReferenceEquals(element, old) ? "old" : ReferenceEquals(element, other) ? "other" : ReferenceEquals(element, value) ? "value" : element.GetType().Name;
+        bool ok = failure?.Message == "loaded failed" &&
+            done &&
+            ReferenceEquals(tab.Header, other) &&
+            tab.VisualChildren.Count == 1 && ReferenceEquals(tab.VisualChildren[0], other) &&
+            tab.LogicalChildren.Count == 1 && ReferenceEquals(tab.LogicalChildren[0], other) &&
+            old.VisualParent is null && old.LogicalParent is null &&
+            value.VisualParent is null && value.LogicalParent is null;
+        Assert.True(
+            ok,
+            $"threw {failure?.Message ?? "nothing"}; Unloaded handler ran={done}; Header={Name(tab.Header)}; " +
+            $"VisualChildren=[{string.Join(",", tab.VisualChildren.Select(Name))}]; " +
+            $"LogicalChildren=[{string.Join(",", tab.LogicalChildren.Select(Name))}].");
+    }
+
+    public enum HeaderChangeDuringReplacement
+    {
+        None,
+        OldHeaderUnloaded,
+        NewHeaderLoaded
     }
 
     private static PresenceOptions CreatePresence()

@@ -42,6 +42,8 @@ public class TabItem : ContentControl, ISelectableItemContainer
 
     // The header element this TabItem hosts as its own child, when Header is a UIElement that has no template.
     private UIElement? hostedHeader;
+    // Counts header element changes, so a change can tell that a handler changed Header while it ran.
+    private int headerChange;
 
     // Presents every other header: text, and any header with a HeaderTemplate or HeaderTemplateKey.
     private ContentPresenter? headerPresenter;
@@ -84,17 +86,39 @@ public class TabItem : ContentControl, ISelectableItemContainer
             ValidateCanOwnChild(this, value as UIElement);
             if (HostsHeaderElement)
             {
-                RemoveHeaderElement(oldHeader);
+                // The removal raises Unloaded and the addition raises Loaded at once. hostedHeader always names the
+                // element that is in the trees, so a Header change that a handler makes then replaces the right element
+                // and wins: this change stops when it sees that a nested change ran (#1190).
+                int change = ++headerChange;
+                RemoveHeaderElement(hostedHeader);
+                if (change != headerChange)
+                {
+                    return;
+                }
+
                 try
                 {
-                    AddHeaderElement(value);
+                    AddHeaderElement(value, change);
+                    if (change != headerChange)
+                    {
+                        return;
+                    }
+
                     SetValue(HeaderProperty, value);
                 }
                 catch
                 {
-                    RemoveHeaderElement(value);
-                    AddHeaderElement(oldHeader);
-                    SetValue(HeaderProperty, oldHeader);
+                    if (change == headerChange)
+                    {
+                        RemoveHeaderElement(value);
+                        // The removal raises the rejected element's Unloaded; a Header change made there wins over the restore.
+                        if (change == headerChange)
+                        {
+                            AddHeaderElement(oldHeader, change);
+                            SetValue(HeaderProperty, oldHeader);
+                        }
+                    }
+
                     throw;
                 }
 
@@ -254,6 +278,9 @@ public class TabItem : ContentControl, ISelectableItemContainer
     // by the header presenter. The element leaves one host before it joins the other.
     private void UpdateHeaderHosting()
     {
+        // The removal and the addition below raise Unloaded and Loaded at once. A Header change that a handler makes
+        // then hosts the current Header itself, so this update stops when it sees that a nested change ran (#1190).
+        int change = ++headerChange;
         UIElement? wanted = HostsHeaderElement ? Header as UIElement : null;
         if (hostedHeader is not null && !ReferenceEquals(hostedHeader, wanted))
         {
@@ -261,12 +288,17 @@ public class TabItem : ContentControl, ISelectableItemContainer
             // presence exit, so the presenter or its template can take it. An element that is no longer the Header exits.
             if (ReferenceEquals(hostedHeader, Header))
             {
-                ReleaseHeaderElementFromOwnedSubtree();
                 hostedHeader = null;
+                ReleaseHeaderElementFromOwnedSubtree();
             }
             else
             {
                 RemoveHeaderElement(hostedHeader);
+            }
+
+            if (change != headerChange)
+            {
+                return;
             }
         }
 
@@ -279,7 +311,11 @@ public class TabItem : ContentControl, ISelectableItemContainer
 
         if (wanted is not null && hostedHeader is null)
         {
-            AddHeaderElement(wanted);
+            AddHeaderElement(wanted, change);
+            if (change != headerChange)
+            {
+                return;
+            }
         }
 
         if (!needsPresenter)
@@ -316,16 +352,22 @@ public class TabItem : ContentControl, ISelectableItemContainer
         headerPresenter = null;
     }
 
-    private void AddHeaderElement(object? header)
+    // The element is the hosted one before it attaches: the logical addition raises Loaded at once when the tab is
+    // loaded, and a Loaded handler that changes Header then removes the element again through the nested change, so the
+    // visual addition is skipped.
+    private void AddHeaderElement(object? header, int change)
     {
         if (header is not UIElement element)
         {
             return;
         }
 
-        LogicalChildren.Add(element);
-        VisualChildren.Add(element);
         hostedHeader = element;
+        LogicalChildren.Add(element);
+        if (change == headerChange)
+        {
+            VisualChildren.Add(element);
+        }
     }
 
     private void RemoveHeaderElement(object? header)
@@ -335,14 +377,17 @@ public class TabItem : ContentControl, ISelectableItemContainer
             return;
         }
 
-        // Logical first: the element stays attached through its visual parent, so the visual removal can start a
-        // presence exit. In the other order the logical removal detaches the element and cancels that exit.
-        LogicalChildren.Remove(element);
-        VisualChildren.Remove(element);
+        // The element stops being the hosted one before its removal raises Unloaded, so a Header change made there does
+        // not remove it again.
         if (ReferenceEquals(hostedHeader, element))
         {
             hostedHeader = null;
         }
+
+        // Logical first: the element stays attached through its visual parent, so the visual removal can start a
+        // presence exit. In the other order the logical removal detaches the element and cancels that exit.
+        LogicalChildren.Remove(element);
+        VisualChildren.Remove(element);
     }
 
     // Another owner takes the header element that this tab hosts directly: the element leaves at once, without a
