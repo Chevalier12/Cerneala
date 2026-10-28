@@ -53,6 +53,9 @@ public class ComboBox : Selector
     private bool transactionTextMatchesPreview;
     private bool suppressAutocompleteForCurrentEdit;
 
+    // True when Text was last set from a SelectedIndex whose item did not exist yet (#776).
+    private bool textSetForMissingSelectedItem;
+
     public ComboBox()
     {
         SetFrameworkDefault(FocusableProperty, true);
@@ -80,10 +83,15 @@ public class ComboBox : Selector
         RoutingStrategy.Bubble,
         typeof(RoutedEventArgs));
 
+    // A disabled ComboBox has no open drop-down: disabling closes it, and opening it while disabled leaves it closed,
+    // so IsDropDownOpen, AspectState.Expanded, and the overlay always agree (#841).
     public static readonly UiProperty<bool> IsDropDownOpenProperty = UiProperty<bool>.Register(
         nameof(IsDropDownOpen),
         typeof(ComboBox),
-        new UiPropertyMetadata<bool>(false, UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual | UiPropertyOptions.AffectsAspect));
+        new UiPropertyMetadata<bool>(
+            false,
+            UiPropertyOptions.AffectsRender | UiPropertyOptions.AffectsInputVisual | UiPropertyOptions.AffectsAspect,
+            coerceValue: (owner, value) => value && ((UIElement)owner).IsEnabled));
 
     public static readonly UiProperty<bool> IsEditableProperty = UiProperty<bool>.Register(
         nameof(IsEditable),
@@ -330,6 +338,14 @@ public class ComboBox : Selector
             (previewSelectedIndex >= 0 && !IsSourceIndexVisible(previewSelectedIndex)))
         {
             MovePreviewToFirstVisibleItem();
+        }
+
+        // A SelectedIndex set before its item exists keeps its value when the item arrives, so no SelectedIndex
+        // change sets Text; Text and the selection box follow the item it now refers to (#776).
+        if (textSetForMissingSelectedItem && SelectedIndex >= 0 && SelectedIndex < ItemCount)
+        {
+            SetCurrentTextFromSelection();
+            SynchronizeSelectionPresenter();
         }
 
         ResetDropDownVirtualization();
@@ -699,6 +715,7 @@ public class ComboBox : Selector
 
     private void SetCurrentTextFromSelection()
     {
+        textSetForMissingSelectedItem = SelectedIndex >= ItemCount;
         string value = SelectedIndex >= 0 ? GetItemText(SelectedItem) : string.Empty;
         if (string.Equals(Text, value, StringComparison.Ordinal))
         {
@@ -754,11 +771,12 @@ public class ComboBox : Selector
             transactionTextMatchesPreview = false;
             // Previewing the first filtered result is automatic matching, so with text search off typing previews
             // no item and a commit keeps the typed text (#942).
+            // Without the filter there is no filtered result, so unmatched text previews no item (#840).
             int previewIndex = enteredText.Length == 0 || !IsTextSearchEnabled
                 ? -1
                 : matchIndex >= 0
                 ? matchIndex
-                : ViewItemCount > 0 ? GetSourceIndexForViewIndex(0) : -1;
+                : filteredSourceIndices is { Count: > 0 } ? filteredSourceIndices[0] : -1;
             UpdatePreviewSelection(previewIndex, updateEditor: false);
             if (matchIndex >= 0)
             {

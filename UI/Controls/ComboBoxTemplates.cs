@@ -2,6 +2,7 @@ using Cerneala.UI.Controls.Items;
 using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Controls.Templates;
 using Cerneala.UI.Core;
+using Cerneala.UI.Elements;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Layout.Panels;
 using DirectionPath = Cerneala.UI.Controls.Shapes.Path;
@@ -81,6 +82,10 @@ internal static class ComboBoxTemplates
         context.Bind(Control.BackgroundProperty, fieldBorder, Control.BackgroundProperty, OwnerBindingSource);
         context.Bind(Control.BorderBrushProperty, fieldBorder, Control.BorderBrushProperty, OwnerBindingSource);
         context.Bind(Control.BorderThicknessProperty, fieldBorder, Control.BorderThicknessProperty, OwnerBindingSource);
+        // As in the WPF default template, Padding is the margin of the selection box and of the editor, so it insets
+        // the field content but not the drop-down toggle.
+        context.Bind(Control.PaddingProperty, selectionPresenter, UIElement.MarginProperty, OwnerBindingSource);
+        context.Bind(Control.PaddingProperty, editableTextBox, UIElement.MarginProperty, OwnerBindingSource);
         context.Bind(Control.BackgroundProperty, editableTextBox, Control.BackgroundProperty, OwnerBindingSource);
         context.Bind(Control.ForegroundProperty, editableTextBox, Control.ForegroundProperty, OwnerBindingSource);
         context.Bind(
