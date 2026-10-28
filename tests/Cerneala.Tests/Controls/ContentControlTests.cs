@@ -1,3 +1,4 @@
+using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Templates;
 using Cerneala.UI.Core;
@@ -697,6 +698,104 @@ public sealed class ContentControlTests
         Assert.Null(old.LogicalParent);
     }
 
+    // Issue #1191: removing the old element raises its Unloaded at once, and a handler that throws fails the write. The
+    // previous content ownership is then restored whatever wrote the value, as for a new element whose attach throws.
+    [Theory]
+    [InlineData("Setter")]
+    [InlineData("SetValue")]
+    [InlineData("ClearValue")]
+    public void ReplacementWhoseOldElementUnloadedHandlerThrowsRestoresThePreviousOwnership(string write)
+    {
+        UIRoot root = new(200, 200);
+        ContentControl host = new();
+        Border old = new();
+        Border value = new();
+        root.VisualChildren.Add(host);
+        host.Content = old;
+        if (write == "ClearValue")
+        {
+            host.SetValue(ContentControl.ContentProperty, (object?)value, UiPropertyValueSource.MarkupConditional);
+        }
+
+        root.ProcessFrame();
+        bool armed = true;
+        old.Unloaded += (_, _) =>
+        {
+            if (armed)
+            {
+                armed = false;
+                throw new InvalidOperationException("unloaded failed");
+            }
+        };
+
+        InvalidOperationException failure = Assert.Throws<InvalidOperationException>(() =>
+        {
+            switch (write)
+            {
+                case "Setter":
+                    host.Content = value;
+                    break;
+                case "SetValue":
+                    host.SetValue(ContentControl.ContentProperty, (object?)value);
+                    break;
+                default:
+                    host.ClearValue(ContentControl.ContentProperty);
+                    break;
+            }
+        });
+
+        Assert.Equal("unloaded failed", failure.Message);
+        AssertPreviousOwnershipRestored(host, old, value);
+        Assert.Equal(UiPropertyValueSource.Local, host.GetValueSource(ContentControl.ContentProperty));
+    }
+
+    // Issues #1191 and #1157 together: a replacement by text content whose old element's Unloaded throws restores the
+    // old element, and the presenter that the text content would get is not left beside it.
+    [Fact]
+    public void ReplacementByTextWhoseOldElementUnloadedHandlerThrowsRestoresTheOldElementWithoutAPresenter()
+    {
+        UIRoot root = new(200, 200);
+        ContentControl host = new();
+        Border old = new();
+        root.VisualChildren.Add(host);
+        host.Content = old;
+        root.ProcessFrame();
+        bool armed = true;
+        old.Unloaded += (_, _) =>
+        {
+            if (armed)
+            {
+                armed = false;
+                throw new InvalidOperationException("unloaded failed");
+            }
+        };
+
+        InvalidOperationException failure = Assert.Throws<InvalidOperationException>(() =>
+            host.SetValue(ContentControl.ContentProperty, (object?)"text"));
+        root.ProcessFrame();
+
+        Assert.Equal("unloaded failed", failure.Message);
+        Assert.Same(old, host.Content);
+        Assert.Equal([old], host.LogicalChildren);
+        Assert.Equal([old], host.VisualChildren);
+    }
+
+    // Issues #794 and #1157 together: while a ComponentTemplateKey does not resolve, text content gets no generated
+    // presenter, so layout reserves only the insets.
+    [Fact]
+    public void TextContentOfAnUnresolvedComponentTemplateKeyIsNotPresentedOrMeasured()
+    {
+        UIRoot root = new(100, 100);
+        ContentControl control = new() { Content = "text", ComponentTemplateKey = "missing", Padding = new Thickness(2) };
+        root.VisualChildren.Add(control);
+
+        root.ProcessFrame();
+
+        Assert.Empty(control.VisualChildren);
+        Assert.Empty(control.LogicalChildren);
+        Assert.Equal(new LayoutSize(4, 4), control.DesiredSize);
+    }
+
     private static PresenceOptions CreatePresence()
     {
         return PresenceOptions.FadeAndScale(
@@ -734,11 +833,89 @@ public sealed class ContentControlTests
         Assert.Equal(new LayoutRect(3, 3, 24, 14), child.ArrangedBounds);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ContentThatTheControlDoesNotHostIsNotMeasured(bool withUnresolvedTemplateKey)
+    {
+        UIRoot root = new(100, 100);
+        FixedElement content = new(new LayoutSize(20, 10));
+        ContentControl control = new() { Content = content };
+        if (withUnresolvedTemplateKey)
+        {
+            control.ComponentTemplateKey = "missing";
+        }
+
+        root.VisualChildren.Add(control);
+        root.ProcessFrame();
+
+        if (withUnresolvedTemplateKey)
+        {
+            Assert.Null(content.VisualParent);
+            Assert.Equal(LayoutSize.Zero, control.DesiredSize);
+        }
+        else
+        {
+            Assert.Same(control, content.VisualParent);
+            Assert.Equal(new LayoutSize(20, 10), control.DesiredSize);
+        }
+    }
+
+    // Issue #794: with an unresolved ComponentTemplateKey the control does not host its element Content, so layout
+    // neither measures nor arranges it and reserves only the insets. When the key resolves, the template child is measured.
+    [Fact]
+    public void ContentOfAnUnresolvedComponentTemplateKeyIsNotLaidOutUntilTheTemplateResolves()
+    {
+        UIRoot root = new(100, 100);
+        CountingElement content = new(new LayoutSize(20, 10));
+        ContentControl control = new() { Content = content, ComponentTemplateKey = "App.Content", Padding = new Thickness(2) };
+        root.VisualChildren.Add(control);
+        root.ProcessFrame();
+
+        Assert.Null(content.VisualParent);
+        Assert.Equal(new LayoutSize(4, 4), control.DesiredSize);
+        Assert.Equal(0, content.MeasureCount);
+        Assert.Equal(0, content.ArrangeCount);
+
+        FixedElement? templateChild = null;
+        ComponentTemplate<ContentControl> template = new("App.Content", _ => templateChild = new FixedElement(new LayoutSize(30, 15)));
+        root.AspectRegistry.Register(AspectPackage.Create("App")
+            .Components(components => components.AddTemplate(
+                new ComponentTemplateDefinition("App.Content", typeof(ContentControl), template))));
+        root.AspectProcessor.Process(control);
+        root.ProcessFrame();
+
+        Assert.NotNull(control.ComponentTemplateInstance);
+        Assert.NotNull(templateChild);
+        Assert.Equal(new LayoutSize(30, 15), templateChild.DesiredSize);
+        Assert.Equal(0, content.MeasureCount);
+        Assert.Equal(0, content.ArrangeCount);
+    }
+
     private sealed class FixedElement(LayoutSize size) : UIElement
     {
         protected override LayoutSize MeasureCore(MeasureContext context)
         {
             return size;
+        }
+    }
+
+    private sealed class CountingElement(LayoutSize size) : UIElement
+    {
+        public int MeasureCount { get; private set; }
+
+        public int ArrangeCount { get; private set; }
+
+        protected override LayoutSize MeasureCore(MeasureContext context)
+        {
+            MeasureCount++;
+            return size;
+        }
+
+        protected override LayoutRect ArrangeCore(ArrangeContext context)
+        {
+            ArrangeCount++;
+            return base.ArrangeCore(context);
         }
     }
 

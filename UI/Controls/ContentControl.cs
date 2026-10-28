@@ -14,6 +14,10 @@ public class ContentControl : Control
     // predicate reads state that changed.
     private UIElement? hostedContentElement;
 
+    // Presents Content that is not a UIElement while this control has no template, as the ContentPresenter of the
+    // default WPF ContentControl template does: it shows the content as text unless a template applies to it (#1157).
+    private ContentPresenter? contentPresenter;
+
     // Set when OnPropertyChanged could not host the new Content element, so NotifyPropertyChange restores the old value.
     private bool contentHostingFailed;
 
@@ -65,6 +69,10 @@ public class ContentControl : Control
     // True when this control is the direct parent of the given content when that content is a UIElement.
     internal virtual bool HostsContentDirectly(object? content) => ComponentTemplate is null && ComponentTemplateKey is null;
 
+    // False for a control that presents Content that is not a UIElement in its own way, so it gets no generated
+    // presenter where it would host an element directly.
+    internal virtual bool PresentsNonElementContent => true;
+
     // Every write of Content that becomes the effective Content, the setter and SetValue with any value source, and a
     // ClearValue that makes a lower source's element effective, checks the element here, before the store changes,
     // whether this control hosts it (OnPropertyChanged) or another owner takes it later (a ContentPresenter, or the
@@ -81,9 +89,9 @@ public class ContentControl : Control
         }
     }
 
-    // A change of the effective Content whose new element could not be hosted, for example because its attach threw,
-    // restores the previous value at the value source that changed, which hosts the previous element again, and then
-    // rethrows. So a failed replacement restores the previous content ownership whatever wrote it: the setter,
+    // A change of the effective Content whose new element could not be hosted, for example because its attach threw, or
+    // whose old element could not be removed, for example because its Unloaded handler threw, restores the previous
+    // value at the value source that changed, which hosts the previous element again, and then rethrows. So a failed replacement restores the previous content ownership whatever wrote it: the setter,
     // SetValue and ClearValue with any value source, or SetFrameworkDefault.
     internal override void NotifyPropertyChange(in UiPropertyChange change)
     {
@@ -149,9 +157,12 @@ public class ContentControl : Control
             return base.MeasureCore(context);
         }
 
+        // Only the element this control hosts takes part in its layout. Element Content that it does not host, for
+        // example while a ComponentTemplateKey does not resolve yet, is neither measured nor arranged.
         Thickness insets = Insets;
         LayoutSize available = Deflate(context.AvailableSize, insets);
-        LayoutSize contentSize = ContentElement?.Measure(new MeasureContext(available, context.Rounding)) ?? LayoutSize.Zero;
+        UIElement? content = hostedContentElement ?? contentPresenter;
+        LayoutSize contentSize = content?.Measure(new MeasureContext(available, context.Rounding)) ?? LayoutSize.Zero;
         return Inflate(contentSize, insets);
     }
 
@@ -164,7 +175,7 @@ public class ContentControl : Control
 
         Thickness insets = Insets;
         LayoutRect inner = Deflate(context.FinalRect, insets);
-        ContentElement?.Arrange(new ArrangeContext(inner, context.Rounding));
+        (hostedContentElement ?? contentPresenter)?.Arrange(new ArrangeContext(inner, context.Rounding));
         return context.FinalRect;
     }
 
@@ -174,19 +185,26 @@ public class ContentControl : Control
         // so the hosted element follows it, as WPF's ContentControl.OnContentChanged moves the logical child.
         if (ReferenceEquals(args.Property, ContentProperty))
         {
+            // The removal of the old element fails the replacement too, for example when its Unloaded handler throws:
+            // NotifyPropertyChange then restores the old value, which hosts the old element again.
             int change = ++contentChange;
-            RemoveContentElement(hostedContentElement);
-            if (change == contentChange && HostsContentDirectly(args.NewValue))
+            try
             {
-                try
+                RemoveContentElement(hostedContentElement);
+                if (change == contentChange)
+                {
+                    UpdateContentPresenter();
+                }
+
+                if (change == contentChange && HostsContentDirectly(args.NewValue))
                 {
                     AddContentElement(args.NewValue);
                 }
-                catch
-                {
-                    contentHostingFailed = true;
-                    throw;
-                }
+            }
+            catch
+            {
+                contentHostingFailed = true;
+                throw;
             }
 
             base.OnPropertyChanged(args);
@@ -201,11 +219,14 @@ public class ContentControl : Control
         }
 
         ReleaseContentElementFromOwnedSubtree();
+        RemoveContentPresenter();
         base.OnPropertyChanged(args);
         if (HostsContentDirectly(Content))
         {
             AddContentElement(Content);
         }
+
+        UpdateContentPresenter();
     }
 
     // A subclass calls this after its own state changed what HostsContentDirectly returns for Content. Content that
@@ -213,6 +234,7 @@ public class ContentControl : Control
     // example a template's element in a ContentPresenter child, so it leaves that subtree first.
     internal void UpdateContentHosting()
     {
+        UpdateContentPresenter();
         UIElement? wanted = HostsContentDirectly(Content) ? Content as UIElement : null;
         if (ReferenceEquals(hostedContentElement, wanted))
         {
@@ -382,6 +404,43 @@ public class ContentControl : Control
 
             throw;
         }
+    }
+
+    // The presenter exists only while it has content to show, so a control with null or UIElement Content has no extra
+    // child. It takes the font resources of this control, as a template forwards them to its presenter; FontFamily,
+    // FontSize, and Foreground reach it by inheritance.
+    private void UpdateContentPresenter()
+    {
+        object? content = Content;
+        if (content is null or UIElement || !PresentsNonElementContent || !HostsContentDirectly(content))
+        {
+            RemoveContentPresenter();
+            return;
+        }
+
+        if (contentPresenter is null)
+        {
+            ContentPresenter presenter = new();
+            contentPresenter = presenter;
+            LogicalChildren.Add(presenter);
+            VisualChildren.Add(presenter);
+        }
+
+        contentPresenter.FontResourceId = FontResourceId;
+        contentPresenter.ResourceProvider = ResourceProvider;
+        contentPresenter.Content = content;
+    }
+
+    private void RemoveContentPresenter()
+    {
+        if (contentPresenter is not { } presenter)
+        {
+            return;
+        }
+
+        contentPresenter = null;
+        VisualChildren.Remove(presenter);
+        LogicalChildren.Remove(presenter);
     }
 
     private void RemoveContentElement(object? content)

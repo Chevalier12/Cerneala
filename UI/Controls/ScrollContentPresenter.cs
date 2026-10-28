@@ -53,6 +53,9 @@ public class ScrollContentPresenter : ContentControl, IScrollInfo
     private LayoutPoint arrangedContentOrigin;
     private float contentArrangedViewportWidth = float.NaN;
 
+    // Measure and arrange scroll only UIElement content, so content that is not an element gets no generated presenter.
+    internal override bool PresentsNonElementContent => false;
+
     public float HorizontalOffset
     {
         get => GetValue(HorizontalOffsetProperty);

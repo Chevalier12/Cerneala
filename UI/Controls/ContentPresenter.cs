@@ -16,9 +16,6 @@ public class ContentPresenter : Control
     private UIElement? contentReleasableByTemplate;
     private bool presentationDirty = true;
     private bool generatedTextChild;
-    // Set for a presenter that presents an item: content that is neither an element nor a string, and that no template
-    // handles, is presented as the text of its ToString(), as WPF shows an item without an ItemTemplate (#903).
-    private bool presentsItemText;
     private bool deferPresentationRefresh;
     private int contentIndex = -1;
     // Counts refreshes, so a refresh can tell that a nested refresh replaced the presentation while it ran.
@@ -113,8 +110,7 @@ public class ContentPresenter : Control
         ContentTemplate? contentTemplate,
         string? contentTemplateKey,
         ContentTemplateRegistry? templateRegistry,
-        int index,
-        bool presentsItemText = false)
+        int index)
     {
         deferPresentationRefresh = true;
         try
@@ -124,7 +120,6 @@ public class ContentPresenter : Control
             ContentTemplateKey = contentTemplateKey;
             LocalTemplateRegistry = templateRegistry;
             ContentIndex = index;
-            SetPresentsItemText(presentsItemText);
         }
         finally
         {
@@ -158,20 +153,10 @@ public class ContentPresenter : Control
 
             LocalTemplateRegistry = templateRegistry;
             ContentIndex = index;
-            SetPresentsItemText(true);
         }
         finally
         {
             deferPresentationRefresh = false;
-        }
-    }
-
-    private void SetPresentsItemText(bool value)
-    {
-        if (presentsItemText != value)
-        {
-            presentsItemText = value;
-            presentationDirty = true;
         }
     }
 
@@ -476,14 +461,11 @@ public class ContentPresenter : Control
             return element;
         }
 
-        string? text = content switch
+        // As in WPF, content that is neither an element nor handled by a template is shown as text: a string as it is,
+        // any other value as the text of its ToString() (#903, #1157).
+        if (content is not null)
         {
-            string value => value,
-            not null when presentsItemText => content.ToString() ?? string.Empty,
-            _ => null
-        };
-        if (text is not null)
-        {
+            string text = content as string ?? content.ToString() ?? string.Empty;
             if (generatedTextChild && presentedChild is TextBlock textBlock)
             {
                 textBlock.Text = text;
