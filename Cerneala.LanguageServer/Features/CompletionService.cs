@@ -68,7 +68,7 @@ internal sealed class CompletionService(CernealaWorkspace workspace)
                 .Select(group => group.First())
                 .OrderBy(item => item.SortText, StringComparer.Ordinal)
                 .ThenBy(item => item.Label, StringComparer.Ordinal)
-                .Select(item => ToLsp(snapshot.Document.Text, uri, snapshot.Version, item))
+                .Select(item => ToLsp(snapshot.Document.Text, uri, item))
                 .ToArray()
         };
     }
@@ -79,11 +79,7 @@ internal sealed class CompletionService(CernealaWorkspace workspace)
         CompletionItemData data,
         CancellationToken cancellationToken)
     {
-        if (snapshot.Version != data.Version)
-        {
-            throw new OperationCanceledException("The completion item belongs to an older document version.");
-        }
-
+        // The data names a type and a member, not text, so it resolves against the current document version too.
         CernealaResolvedCompletion? resolved = snapshot.GetSemanticModels(cancellationToken)
             .Select(model => service.Resolve(model, data.TypeMetadataName, data.MemberName))
             .FirstOrDefault(candidate => candidate is not null);
@@ -123,7 +119,6 @@ internal sealed class CompletionService(CernealaWorkspace workspace)
     private static LspCompletionItem ToLsp(
         SourceText source,
         string uri,
-        long version,
         CernealaCompletionItem item) => new()
         {
             Label = item.Label,
@@ -141,7 +136,6 @@ internal sealed class CompletionService(CernealaWorkspace workspace)
                 : new CompletionItemData
                 {
                     Uri = uri,
-                    Version = version,
                     TypeMetadataName = item.TypeMetadataName,
                     MemberName = item.MemberName
                 }
