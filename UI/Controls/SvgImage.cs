@@ -42,11 +42,20 @@ public class SvgImage : Image, IElementLifecycleBehavior
     protected override void OnPropertyChanged(UiPropertyChangedEventArgs args)
     {
         base.OnPropertyChanged(args);
-        if (ReferenceEquals(args.Property, SourcePathProperty) &&
-            Root is not null &&
-            UIElementVisibility.IsEffectivelyVisible(this))
+        if (!ReferenceEquals(args.Property, SourcePathProperty) || Root is null)
+        {
+            return;
+        }
+
+        if (UIElementVisibility.IsEffectivelyVisible(this))
         {
             ReloadSource();
+        }
+        else
+        {
+            // The loaded image belongs to the previous path. Releasing it defers the load of the new path to
+            // OnRenderabilityChanged, which reloads when no image is loaded.
+            ReleaseLoadedImage();
         }
     }
 
