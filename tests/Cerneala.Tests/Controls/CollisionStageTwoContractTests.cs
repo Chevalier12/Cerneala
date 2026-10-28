@@ -144,6 +144,94 @@ public sealed class CollisionStageTwoContractTests
         Assert.InRange(hits![0].Distance, 99f, 101f);
     }
 
+    [Theory]
+    [InlineData(1_000_000f)]
+    [InlineData(1e12f)]
+    [InlineData(float.MaxValue)]
+    public void MoveAndCollideWithAHugeFiniteDisplacementReturnsTheCollisionInsteadOfThrowing(float distance)
+    {
+        // A 10x10 actor at (0, 0) moves along +X through a 10x10 wall at (100, 0), so it stops after 90 units.
+        BoxCollider2D actor = new() { Width = 10, Height = 10 };
+        BoxCollider2D wall = new() { Width = 10, Height = 10 };
+        Scene2D scene = new();
+        scene.Children.Add(new Sprite2D { Collider = actor });
+        scene.Children.Add(new Sprite2D { X = 100, Collider = wall });
+        MoveCollisionResult2D? result = null;
+
+        Exception? failure = Record.Exception(() =>
+            result = scene.CollisionWorld.MoveAndCollide(actor, new Vector2(distance, 0)));
+
+        Assert.True(
+            failure is null && ReferenceEquals(result?.Collision?.Collider, wall),
+            $"distance={distance}: " + (failure is null
+                ? $"collision={result?.Collision?.Collider?.GetType().Name ?? "null"}"
+                : $"threw {failure.GetType().Name}: {failure.Message}"));
+        Assert.InRange(result!.Collision!.Distance, 89.9f, 90.1f);
+        Assert.InRange(result.Travel.X, 89.9f, 90.1f);
+    }
+
+    [Theory]
+    [InlineData(-1f, 0f)]
+    [InlineData(0f, 1f)]
+    [InlineData(0f, -1f)]
+    [InlineData(1f, 1f)]
+    [InlineData(-1f, -1f)]
+    public void MoveAndCollideWithAHugeDisplacementInAnyDirectionStopsAtTheWall(float directionX, float directionY)
+    {
+        // The wall's near side is 90 units from the actor on each moving axis, so the actor stops after 90 units per axis.
+        BoxCollider2D actor = new() { Width = 10, Height = 10 };
+        BoxCollider2D wall = new() { Width = 10, Height = 10 };
+        Scene2D scene = new();
+        scene.Children.Add(new Sprite2D { Collider = actor });
+        scene.Children.Add(new Sprite2D { X = 100 * directionX, Y = 100 * directionY, Collider = wall });
+
+        foreach (float distance in new[] { 1e12f, float.MaxValue })
+        {
+            MoveCollisionResult2D result = scene.CollisionWorld.MoveAndCollide(
+                actor, new Vector2(directionX * distance, directionY * distance));
+
+            Assert.Same(wall, result.Collision?.Collider);
+            Assert.True(float.IsFinite(result.Collision!.Distance), $"Distance={result.Collision.Distance}.");
+            Assert.InRange(result.Travel.X * directionX, 89.9f * MathF.Abs(directionX), 90.1f * MathF.Abs(directionX));
+            Assert.InRange(result.Travel.Y * directionY, 89.9f * MathF.Abs(directionY), 90.1f * MathF.Abs(directionY));
+        }
+    }
+
+    [Fact]
+    public void MoveAndCollideAcrossMoreThanOneDrawRectOfSceneStopsAtAFarWall()
+    {
+        // The actor and the wall are 3.8e9 scene units apart, wider than one DrawRect (2e9), so even the
+        // part of the move inside the scene's coordinate range needs more than one query rectangle.
+        BoxCollider2D actor = new() { Width = 1024, Height = 1024 };
+        BoxCollider2D wall = new() { Width = 1024, Height = 1024 };
+        Scene2D scene = new();
+        scene.Children.Add(new Sprite2D { X = -1_900_000_000f, Collider = actor });
+        scene.Children.Add(new Sprite2D { X = 1_900_000_000f, Collider = wall });
+
+        MoveCollisionResult2D result = scene.CollisionWorld.MoveAndCollide(actor, new Vector2(1e12f, 0));
+
+        Assert.Same(wall, result.Collision?.Collider);
+        Assert.InRange(result.Collision!.Distance, 3.7999e9f, 3.8001e9f);
+    }
+
+    [Fact]
+    public void MoveAndCollideHitsAWallAtTheEdgeOfTheSceneCoordinateRange()
+    {
+        // The wall's right side is the largest scene coordinate (2e9). The actor moves 1:12.5 diagonally and touches
+        // the wall after 48 % of the move, when its right side is already past 2e9.
+        BoxCollider2D actor = new() { Width = 4096, Height = 4096 };
+        BoxCollider2D wall = new() { Width = 4096, Height = 4096 };
+        Scene2D scene = new();
+        scene.Children.Add(new Sprite2D { X = 1_999_990_016f, Y = -102_400f, Collider = actor });
+        scene.Children.Add(new Sprite2D { X = 1_999_995_904f, Collider = wall });
+
+        MoveCollisionResult2D result = scene.CollisionWorld.MoveAndCollide(actor, new Vector2(16_384f, 204_800f));
+
+        Assert.Same(wall, result.Collision?.Collider);
+        Assert.InRange(result.Collision!.Fraction, 0.4799f, 0.4801f);
+        Assert.InRange(result.Travel.Y, 98_303f, 98_305f);
+    }
+
     [Fact]
     public void RaycastAcrossMoreThanOneDrawRectOfSceneFindsBoxesAtBothEnds()
     {
