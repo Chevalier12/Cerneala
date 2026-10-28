@@ -20,6 +20,14 @@ internal enum LanguageMemberKind
     Field
 }
 
+// Mirrors Cerneala.UI.Markup.MarkupValueConstraint, read from [MarkupValueConstraint] on a property.
+internal enum LanguageValueConstraint
+{
+    None,
+    NonNegative,
+    Positive
+}
+
 internal readonly struct LanguageSourceLocation
 {
     public LanguageSourceLocation(string path, TextSpan span)
@@ -141,6 +149,9 @@ internal interface ILanguageMemberSymbol
 
     // True when the value type is an enum marked [Flags]: a markup value may then list several names separated by commas.
     bool IsFlagsEnum { get; }
+
+    // The [MarkupValueConstraint] of a property, for example NonNegative on UIElement.Width; None for other members.
+    LanguageValueConstraint ValueConstraint { get; }
 
     string DeclaringTypeMetadataName { get; }
 

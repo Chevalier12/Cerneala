@@ -705,7 +705,7 @@ internal sealed partial class CernealaSemanticModel
                     }
                 }
             }
-            else if (!TryConvertLiteral(Unquote(rawValue), member, out _))
+            else if (!TryConvertMarkupLiteral(Unquote(rawValue), member, out _))
             {
                 AddDiagnostic("CERNEALAUI004", valueSpan, aspect.TargetType.Name, propertyName, rawValue);
             }

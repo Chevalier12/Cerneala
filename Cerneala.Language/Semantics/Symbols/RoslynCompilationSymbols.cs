@@ -415,6 +415,19 @@ internal sealed class RoslynCompilationSymbols : ILanguageCompilationSymbols
         public bool IsFlagsEnum => GetValueType(symbol) is { TypeKind: TypeKind.Enum } type &&
             type.GetAttributes().Any(attribute => attribute.AttributeClass?.ToDisplayString() == "System.FlagsAttribute");
 
+        // Mirrors the constraint read by UiMarkupPropertyResolver.GetMarkupValueKind in Cerneala.SourceGen.
+        public LanguageValueConstraint ValueConstraint => symbol is IPropertySymbol &&
+            symbol.GetAttributes().FirstOrDefault(attribute =>
+                attribute.AttributeClass?.ToDisplayString() == "Cerneala.UI.Markup.MarkupValueConstraintAttribute")?
+                .ConstructorArguments.FirstOrDefault().Value is int constraint
+            ? constraint switch
+            {
+                1 => LanguageValueConstraint.NonNegative,
+                2 => LanguageValueConstraint.Positive,
+                _ => LanguageValueConstraint.None
+            }
+            : LanguageValueConstraint.None;
+
         public string DeclaringTypeMetadataName =>
             symbol.ContainingType is ITypeSymbol type ? owner.WrapType(type).MetadataName : string.Empty;
 
