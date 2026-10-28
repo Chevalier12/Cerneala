@@ -78,6 +78,25 @@ public sealed class MotionPropertyStore
         }
     }
 
+    internal Core.MotionHandle? GetActiveHandle(UiObject target, UiProperty property)
+    {
+        return bindings.TryGetValue(new MotionPropertyKey(target, property), out MotionPropertyBinding? binding)
+            ? binding.ActiveHandle
+            : null;
+    }
+
+    // Stops the animation of the property and restores its base value, only while handle is still that animation:
+    // an animation that replaced it, for example an explicit one, keeps running.
+    internal void ClearAnimation(UiObject target, UiProperty property, Core.MotionHandle handle)
+    {
+        ArgumentNullException.ThrowIfNull(handle);
+        if (bindings.TryGetValue(new MotionPropertyKey(target, property), out MotionPropertyBinding? binding) &&
+            ReferenceEquals(binding.ActiveHandle, handle))
+        {
+            binding.Clear();
+        }
+    }
+
     internal void RemoveBinding(MotionPropertyBinding binding)
     {
         ArgumentNullException.ThrowIfNull(binding);

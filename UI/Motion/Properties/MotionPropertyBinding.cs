@@ -9,6 +9,9 @@ public abstract class MotionPropertyBinding : IDisposable
 
     internal abstract bool IsActive { get; }
 
+    // The handle of the animation that writes the property now, or null when none runs.
+    internal abstract MotionHandle? ActiveHandle { get; }
+
     // True while the binding holds a value written by a Motion @set, not an animation.
     internal virtual bool HoldsSetValue => false;
 

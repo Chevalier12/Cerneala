@@ -462,6 +462,83 @@ public sealed class AspectTemplateCatalogIntegrationTests
         void SetState(bool active) => button.SetValue(property, state == AspectState.Disabled ? !active : active);
     }
 
+    // #786: a variant change is an owner change like a state change, so the slot parts whose rules read that variant
+    // are evaluated again, without a template rebuild; a part whose rules read no variant is not.
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void SlotRuleFollowsOwnerVariantChangedAfterInitialFrames(bool variantBeforeFirstFrame)
+    {
+        AspectSlot<Button, Border> slot = AspectSlot.For<Button, Border>("Chrome");
+        AspectSlot<Button, Border> plainSlot = AspectSlot.For<Button, Border>("Plain");
+        SolidColorBrush accent = new(new Color(77, 240, 255));
+        Border chrome = new();
+        Border plain = new();
+        int templateCreations = 0;
+        ComponentTemplate<Button> template = new("App.Button", context =>
+        {
+            templateCreations++;
+            context.RegisterSlot(slot, chrome);
+            context.RegisterSlot(plainSlot, plain);
+            chrome.Child = plain;
+            return chrome;
+        });
+        AspectRuleSet slotRule = new AspectRuleSetBuilder(
+            "button.primary.chrome",
+            AspectLayer.App,
+            new AspectTarget(typeof(Border), slot, [AspectCondition.Variant(ButtonVariants.Kind, ButtonKind.Primary)]),
+            declarationOrder: 0)
+            .Set(Control.BackgroundProperty, AspectValue<Brush?>.Literal(accent))
+            .Build();
+        int plainResolutions = 0;
+        AspectRuleSet plainRule = new AspectRuleSetBuilder(
+            "button.plain",
+            AspectLayer.App,
+            new AspectTarget(typeof(Border), plainSlot),
+            declarationOrder: 1)
+            .Set(UIElement.OpacityProperty, AspectValue<float>.Computed(_ =>
+            {
+                plainResolutions++;
+                return 0.5f;
+            }, []))
+            .Build();
+        Button button = new() { ComponentTemplateKey = "App.Button" };
+        if (variantBeforeFirstFrame)
+        {
+            button.SetAspectVariant(ButtonVariants.Kind, ButtonKind.Primary);
+        }
+
+        UIRoot root = RootWith(button);
+        root.AspectRegistry.Register(AspectPackage.Create("App").Components(components =>
+        {
+            components.AddTemplate(new ComponentTemplateDefinition("App.Button", typeof(Button), template));
+            components.AddRule(slotRule);
+            components.AddRule(plainRule);
+        }));
+        root.ProcessFrame();
+        root.ProcessFrame();
+        Assert.Same(variantBeforeFirstFrame ? accent : null, chrome.Background);
+        Assert.Equal(0.5f, plain.Opacity);
+        int plainResolutionsBeforeVariantChanges = plainResolutions;
+
+        if (!variantBeforeFirstFrame)
+        {
+            button.SetAspectVariant(ButtonVariants.Kind, ButtonKind.Primary);
+            root.ProcessFrame();
+            root.ProcessFrame();
+            Assert.Same(accent, chrome.Background);
+        }
+
+        button.SetAspectVariant(ButtonVariants.Kind, ButtonKind.Neutral);
+        root.ProcessFrame();
+        root.ProcessFrame();
+
+        Assert.Null(chrome.Background);
+        Assert.Equal(plainResolutionsBeforeVariantChanges, plainResolutions);
+        Assert.Equal(1, templateCreations);
+        Assert.False(root.ProcessFrame().HasWork);
+    }
+
     [Fact]
     public async Task SlotRuleFollowsOwnerHoverThroughServoInput()
     {

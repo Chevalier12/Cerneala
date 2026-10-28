@@ -597,6 +597,61 @@ public sealed class ElementAspectTests
         Assert.Equal(["create other 1", "dispose other 1"], events);
     }
 
+    // #849: an entry created from an AspectValue is an assignment like any other; SetValue compares with its value.
+    [Theory]
+    [InlineData("plainLiteral")]
+    [InlineData("opacityAspectValue")]
+    [InlineData("backgroundAspectValueToNull")]
+    public void SetValueReplacesAnAssignmentThatWasCreatedFromAnAspectValue(string scenario)
+    {
+        SolidColorBrush initialBrush = new(Color.White);
+        ElementAspectValue initial = scenario switch
+        {
+            "backgroundAspectValueToNull" => new ElementAspectValue(Control.BackgroundProperty, AspectValue<Brush?>.Literal(initialBrush)),
+            "opacityAspectValue" => new ElementAspectValue(UIElement.OpacityProperty, AspectValue<float>.Literal(0.5f)),
+            _ => new ElementAspectValue(UIElement.OpacityProperty, 0.5f)
+        };
+        Button button = new();
+        UIRoot root = new();
+        root.VisualChildren.Add(button);
+        ElementAspect aspect = new([initial]);
+        button.Aspect = aspect;
+        root.ProcessFrame();
+
+        bool changed = false;
+        Exception? failure = Record.Exception(() => changed = scenario == "backgroundAspectValueToNull"
+            ? aspect.SetValue(Control.BackgroundProperty, null)
+            : aspect.SetValue(UIElement.OpacityProperty, 0.6f));
+
+        Assert.Null(failure);
+        Assert.True(changed);
+        root.ProcessFrame();
+        if (scenario == "backgroundAspectValueToNull")
+        {
+            Assert.Null(button.Background);
+        }
+        else
+        {
+            Assert.Equal(0.6f, button.Opacity);
+        }
+    }
+
+    // #849: a value equal to the literal of an AspectValue entry is unchanged.
+    [Fact]
+    public void SetValueWithTheLiteralOfAnAspectValueEntryIsANoOp()
+    {
+        SolidColorBrush brush = new(Color.White);
+        ElementAspect aspect = new(
+        [
+            new ElementAspectValue(UIElement.OpacityProperty, AspectValue<float>.Literal(0.5f)),
+            new ElementAspectValue(Control.BackgroundProperty, AspectValue<Brush?>.Literal(brush))
+        ]);
+
+        Assert.False(aspect.SetValue(UIElement.OpacityProperty, 0.5f));
+        Assert.False(aspect.SetValue(Control.BackgroundProperty, brush));
+        Assert.Equal(0, aspect.Version);
+    }
+
     [Fact]
     public void AspectAssignedByALifetimeDisposedOnDetachGetsNoLifetimeUntilTheElementIsAttachedAgain()
     {

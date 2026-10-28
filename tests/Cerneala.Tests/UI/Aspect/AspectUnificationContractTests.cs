@@ -1232,6 +1232,59 @@ public sealed class AspectUnificationContractTests
         return new AspectRegistry().Register(package).BuildCatalog();
     }
 
+    // #850: the Resources of an Overlay are a scope of its content, which the open overlay projects into the root's
+    // overlay layer, so adding, replacing or removing a package there reaches the content on the next frame.
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void ScopedPackageOnAnOverlayReachesItsProjectedContent(bool resourcesBeforeFirstFrame)
+    {
+        UIRoot root = new(100, 100);
+        Border target = new() { Width = 20, Height = 10 };
+        Button button = new() { Width = 30, Height = 15 };
+        Overlay overlay = new()
+        {
+            PlacementTarget = target,
+            Content = button,
+            IsOpen = true
+        };
+        SolidColorBrush brush = new(new Color(9, 8, 7));
+        SolidColorBrush replacement = new(new Color(1, 2, 3));
+        if (resourcesBeforeFirstFrame)
+        {
+            overlay.Resources["Scoped"] = Package("Scoped", brush);
+        }
+
+        Cerneala.UI.Layout.Panels.Canvas canvas = new();
+        canvas.VisualChildren.Add(target);
+        canvas.VisualChildren.Add(overlay);
+        root.VisualChildren.Add(canvas);
+        root.ProcessFrame();
+        Brush? unscoped = resourcesBeforeFirstFrame ? null : button.Background;
+        if (!resourcesBeforeFirstFrame)
+        {
+            overlay.Resources["Scoped"] = Package("Scoped", brush);
+            root.ProcessFrame();
+        }
+
+        root.ProcessFrame();
+
+        Assert.NotSame(canvas, button.VisualParent?.VisualParent);
+        Assert.Same(brush, button.Background);
+
+        overlay.Resources["Scoped"] = Package("Scoped", replacement);
+        root.ProcessFrame();
+        Assert.Same(replacement, button.Background);
+
+        overlay.Resources.Remove("Scoped");
+        root.ProcessFrame();
+        Assert.NotSame(replacement, button.Background);
+        if (unscoped is not null)
+        {
+            Assert.Equal(unscoped, button.Background);
+        }
+    }
+
     private static AspectPackage Package(string packageName, Brush brush)
     {
         return AspectPackage.Create(packageName)

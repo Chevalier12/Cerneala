@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using Cerneala.Drawing;
 using Cerneala.UI.Aspect;
 using Cerneala.UI.Controls;
@@ -173,6 +174,94 @@ public sealed class AspectRuntimeMigrationTests
         Assert.Equal(0.75f, border.Opacity);
     }
 
+    // #787: a data condition is evaluated again when the data context raises PropertyChanged for a declared dependency.
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void DataConditionFollowsDeclaredPropertyDependency(bool replaceDataContext)
+    {
+        UIRoot root = new(200, 200);
+        MutableStatus status = new();
+        Border border = new() { DataContext = status };
+        root.LogicalChildren.Add(border);
+        root.VisualChildren.Add(border);
+        root.AspectRegistry.Register(ActiveOpacityPackage(() => { }));
+        root.ProcessFrame();
+        Assert.Equal(1f, border.Opacity);
+
+        if (replaceDataContext)
+        {
+            border.DataContext = new MutableStatus { IsActive = true };
+        }
+        else
+        {
+            status.IsActive = true;
+        }
+
+        root.ProcessFrame();
+
+        Assert.Equal(0.5f, border.Opacity);
+    }
+
+    // #787: only a declared property re-evaluates the condition, and the subscription follows the data context and the tree.
+    [Fact]
+    public void DataConditionSubscriptionFollowsTheDataContextAndTheTree()
+    {
+        UIRoot root = new(200, 200);
+        MutableStatus first = new();
+        MutableStatus second = new();
+        Border border = new() { DataContext = first };
+        root.LogicalChildren.Add(border);
+        root.VisualChildren.Add(border);
+        int evaluations = 0;
+        root.AspectRegistry.Register(ActiveOpacityPackage(() => evaluations++));
+        root.ProcessFrame();
+        Assert.Equal(1, first.SubscriberCount);
+        int evaluationsBefore = evaluations;
+
+        first.Other = 3;
+        Assert.False(root.ProcessFrame().HasWork);
+        Assert.Equal(evaluationsBefore, evaluations);
+
+        border.DataContext = second;
+        root.ProcessFrame();
+        Assert.Equal(0, first.SubscriberCount);
+        Assert.Equal(1, second.SubscriberCount);
+        first.IsActive = true;
+        Assert.False(root.ProcessFrame().HasWork);
+        Assert.Equal(1f, border.Opacity);
+
+        second.IsActive = true;
+        root.ProcessFrame();
+        Assert.Equal(0.5f, border.Opacity);
+
+        root.VisualChildren.Remove(border);
+        root.LogicalChildren.Remove(border);
+        root.ProcessFrame();
+        Assert.Equal(0, second.SubscriberCount);
+    }
+
+    private static AspectPackage ActiveOpacityPackage(Action evaluated)
+    {
+        return AspectPackage.Create("Data runtime")
+            .Components(components => components.AddRule(new AspectRuleSet(
+                "active",
+                AspectLayer.App,
+                new AspectTarget(typeof(Border), conditions:
+                [
+                    AspectCondition.Data<MutableStatus>(
+                        "active",
+                        data =>
+                        {
+                            evaluated();
+                            return data.IsActive;
+                        },
+                        AspectDataDependency.Property<MutableStatus, bool>(nameof(MutableStatus.IsActive)))
+                ]),
+                [new AspectDeclaration(UIElement.OpacityProperty, AspectValue<float>.Literal(0.5f))],
+                declarationOrder: 0)));
+    }
+
     private static Theme CreateTheme(Color surface)
     {
         return DefaultTheme.Create()
@@ -180,4 +269,47 @@ public sealed class AspectRuntimeMigrationTests
     }
 
     private sealed record Status(bool IsActive);
+
+    private sealed class MutableStatus : INotifyPropertyChanged
+    {
+        private bool isActive;
+        private int other;
+        private PropertyChangedEventHandler? propertyChanged;
+
+        public event PropertyChangedEventHandler? PropertyChanged
+        {
+            add
+            {
+                propertyChanged += value;
+                SubscriberCount++;
+            }
+            remove
+            {
+                propertyChanged -= value;
+                SubscriberCount--;
+            }
+        }
+
+        public int SubscriberCount { get; private set; }
+
+        public bool IsActive
+        {
+            get => isActive;
+            set
+            {
+                isActive = value;
+                propertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsActive)));
+            }
+        }
+
+        public int Other
+        {
+            get => other;
+            set
+            {
+                other = value;
+                propertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Other)));
+            }
+        }
+    }
 }

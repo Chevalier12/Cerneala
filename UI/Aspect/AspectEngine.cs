@@ -4,6 +4,7 @@ using Cerneala.UI.Detective;
 using Cerneala.UI.Elements;
 using Cerneala.UI.Motion.States;
 using Cerneala.UI.Motion.Core;
+using Cerneala.UI.Motion.Properties;
 using Cerneala.UI.Motion.Specs;
 using Cerneala.UI.Motion.Transactions;
 using Cerneala.UI.Relay;
@@ -383,6 +384,8 @@ public sealed class AspectEngine
         {
             ApplyMutation(
                 element,
+                state,
+                property,
                 resolvedValue,
                 state.LastThemeProvider,
                 () => element.ClearValueUntyped(property, UiPropertyValueSource.AspectBase));
@@ -418,6 +421,8 @@ public sealed class AspectEngine
                 ResolvedAspectValue previousValue = previous!.Values[property];
                 ApplyMutation(
                     element,
+                    state,
+                    property,
                     previousValue,
                     themeProvider,
                     () => element.ClearValueUntyped(property, UiPropertyValueSource.AspectBase));
@@ -440,6 +445,8 @@ public sealed class AspectEngine
                 ResolvedAspectValue? motionValue = GetMotionValue(resolvedValue, previousValue);
                 ApplyMutation(
                     element,
+                    state,
+                    property,
                     motionValue,
                     themeProvider,
                     () => element.SetValueUntyped(property, resolvedValue.Value, UiPropertyValueSource.AspectBase));
@@ -495,6 +502,8 @@ public sealed class AspectEngine
 
     private static void ApplyMutation(
         UIElement element,
+        AspectEngineElementState state,
+        UiProperty property,
         ResolvedAspectValue? motionValue,
         ThemeProvider? themeProvider,
         Action mutation)
@@ -507,6 +516,13 @@ public sealed class AspectEngine
             !HasApplicableMotion(motionValue) ||
             !TryResolveThemeMotion(themeProvider, motion.TokenName, out MotionSpec spec))
         {
+            // A transition that this engine started earlier would otherwise keep the Animation value above the new
+            // AspectBase value and move on toward its old target (#1188); an explicit animation that replaced it stays.
+            if (state.Animations.Remove(property, out MotionHandle? started) && element.Root is { } root)
+            {
+                root.Motion.Properties.ClearAnimation(element, property, started);
+            }
+
             mutation();
             return;
         }
@@ -514,9 +530,17 @@ public sealed class AspectEngine
         MotionPriority priority = (motionValue.MotionSource & AspectMotionSource.State) != 0
             ? MotionPriority.Interactive
             : MotionPriority.Normal;
+        MotionPropertyStore properties = element.Root.Motion.Properties;
+        MotionHandle? previous = properties.GetActiveHandle(element, property);
         using (element.Root.Motion.BeginTransaction(new MotionTransactionOptions(spec, priority: priority)))
         {
             mutation();
+        }
+
+        MotionHandle? current = properties.GetActiveHandle(element, property);
+        if (current is not null && !ReferenceEquals(current, previous))
+        {
+            state.Animations[property] = current;
         }
     }
 

@@ -53,6 +53,10 @@ internal sealed record UserCard(bool IsImportant);
 
 `Named` creates a dependency with only a logical `Name`. Use it when a condition depends on a data object, data source, or external data-context concept rather than a single known property.
 
+In a `UIRoot`, a property dependency also re-evaluates the element's rules when the data object changes, as a WPF `DataTrigger` follows its binding source. When the element's `DataContext` implements `INotifyPropertyChanged` and is an instance of `OwnerType`, the root's Aspect processor listens to its `PropertyChanged` event. A `PropertyChanged` whose `PropertyName` equals the dependency's `PropertyName` queues the element for Aspect work, and its rules are evaluated again in the next frame. A `PropertyName` that is `null` or empty counts as a change of every property. A `PropertyChanged` for another property does not re-evaluate the rules. An event raised on another thread is posted to the root's UI thread. For example, with the condition above and a `UserCard` that raises `PropertyChanged` for `IsImportant`, setting `card.IsImportant = true` applies the rule's values on the next frame, without replacing `DataContext`.
+
+The processor stops listening when the element's `DataContext` changes, when the element's rules no longer declare a property dependency, and when the element leaves the root. A `Named` dependency, and a data object that does not implement `INotifyPropertyChanged`, are evaluated again only when `DataContext` changes or another input of the element's rules changes. The standalone `AspectInvalidation` helper does not listen to data objects.
+
 Both factory methods reject `null`, empty, or whitespace-only names by throwing `ArgumentException`. The primary record constructor does not perform that validation, so callers that want the built-in guard should use the factory methods.
 
 ## Constructors

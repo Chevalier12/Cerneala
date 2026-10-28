@@ -68,4 +68,10 @@ public sealed class AspectValue<T> : AspectValue
 
         return literal;
     }
+
+    internal override bool TryGetLiteral(out object? value)
+    {
+        value = literal;
+        return compute is null && token is null;
+    }
 }
