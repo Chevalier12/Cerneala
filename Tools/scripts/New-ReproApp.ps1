@@ -14,6 +14,9 @@ fix. This script writes the mechanical part of that app, so that the agent only 
                        sticky BUG state, invariant check from FrameRendered, check mode (--check <report>
                        [--frames <folder>]) with Servo, screenshots, report file, exit codes
                        0 = OK, 1 = BUG, 2 = NOT REACHED, 3 = ERROR, 4 = PARTIAL (group app: only some bugs reproduce).
+                       ERROR is any exception from the scenario (setup, change detector, invariant, on the first check
+                       or on a later frame) or from a check-mode step; without --check the window shows it and stays open.
+                       See New-ReproApp.Tests.ps1.
                        With -AlsoIssues the app is a group app: one app checks several issues, one verdict per issue.
                        With -Change the app is a demo app of an enhancement or another non-bug change: the verdict says
                        "OK: #<N> works so far." or "FAIL: #<N> does not work." (exit code 1), and no text talks about a bug.
@@ -205,7 +208,10 @@ public sealed class ReproHarness
     private readonly Dictionary<int, string> totals = [];
     private readonly Dictionary<int, string> nows = [];
     private string? notReachedText;
+    private Exception? error;
+    private string? reportFile;
     private bool started;
+    private bool finished;
 
     public ReproHarness(Window window, IReproScenario scenario, ReproView view)
     {
@@ -287,19 +293,34 @@ public sealed class ReproHarness
             "after" => $"{name}: after the fix",
             _ => $"{name}: dev build"
         };
-        scenario.ReproSetUp();
-        SetText(view.UserSteps, scenario.ReproUserSteps);
-        SetText(view.Expected, scenario.ReproExpected);
-        window.FrameRendered += (_, _) => Evaluate(force: false);
-        Evaluate(force: true);
 
         string[] args = Environment.GetCommandLineArgs();
         int check = Array.IndexOf(args, "--check");
+        string? framesFolder = null;
         if (check >= 0 && check + 1 < args.Length)
         {
+            reportFile = args[check + 1];
             int frames = Array.IndexOf(args, "--frames");
-            string? framesFolder = frames >= 0 && frames + 1 < args.Length ? args[frames + 1] : null;
-            _ = RunCheckAsync(args[check + 1], framesFolder);
+            framesFolder = frames >= 0 && frames + 1 < args.Length ? args[frames + 1] : null;
+        }
+
+        try
+        {
+            scenario.ReproSetUp();
+            SetText(view.UserSteps, scenario.ReproUserSteps);
+            SetText(view.Expected, scenario.ReproExpected);
+        }
+        catch (Exception exception)
+        {
+            Fail(exception);
+            return;
+        }
+
+        window.FrameRendered += (_, _) => Evaluate(force: false);
+        Evaluate(force: true);
+        if (reportFile is not null && error is null)
+        {
+            _ = RunCheckAsync(framesFolder);
         }
     }
 
@@ -328,36 +349,81 @@ public sealed class ReproHarness
 
     private void Evaluate(bool force)
     {
-        if (!force && !scenario.ReproCheckedStateChanged())
+        if (error is not null)
         {
             return;
         }
 
-        foreach (int issue in Issues)
+        try
         {
-            ReproCheckResult result = scenario.ReproCheckInvariant(issue);
-            if (!result.Passed)
+            if (!force && !scenario.ReproCheckedStateChanged())
             {
-                firstFailures.TryAdd(issue, result.Failure ?? "The invariant failed.");
+                return;
             }
 
-            totals[issue] = result.Totals;
-            nows[issue] = result.Now;
+            foreach (int issue in Issues)
+            {
+                ReproCheckResult result = scenario.ReproCheckInvariant(issue);
+                if (!result.Passed)
+                {
+                    firstFailures.TryAdd(issue, result.Failure ?? "The invariant failed.");
+                }
+
+                totals[issue] = result.Totals;
+                nows[issue] = result.Now;
+            }
+        }
+        catch (Exception exception)
+        {
+            Fail(exception);
+            return;
         }
 
         UpdateView();
     }
 
+    /// <summary>
+    /// An exception from the scenario or from a check-mode step is the ERROR verdict, not a crash: the verdict shows it
+    /// and stays, the scenario is not called again, and check mode ends with exit code 3 and "ERROR: exception" in the
+    /// report. Only the first exception counts.
+    /// </summary>
+    private void Fail(Exception exception)
+    {
+        if (error is not null || finished)
+        {
+            return;
+        }
+
+        error = exception;
+        UpdateView();
+        Finish(3, "ERROR: " + exception);
+    }
+
+    /// <summary>Check mode only: writes the report, sets the exit code and closes the window, once.</summary>
+    private void Finish(int exitCode, string report)
+    {
+        if (reportFile is null || finished)
+        {
+            return;
+        }
+
+        finished = true;
+        File.WriteAllText(reportFile, report);
+        Environment.ExitCode = exitCode;
+        window.Close();
+    }
+
     private void UpdateView()
     {
-        SetText(view.Verdict, notReachedText ?? VerdictFirstLine);
-        Brush brush = firstFailures.Count > 0 ? BugBrush : notReachedText is not null ? WaitBrush : OkBrush;
+        string? errorLine = error is null ? null : ("ERROR: " + error).Split('\n')[0].TrimEnd('\r');
+        SetText(view.Verdict, errorLine ?? notReachedText ?? VerdictFirstLine);
+        Brush brush = error is not null || firstFailures.Count > 0 ? BugBrush : notReachedText is not null ? WaitBrush : OkBrush;
         if (!ReferenceEquals(view.Verdict.Foreground, brush))
         {
             view.Verdict.Foreground = brush;
         }
 
-        SetText(view.FirstFailure, string.Join("\n", FirstFailureLines));
+        SetText(view.FirstFailure, error?.ToString() ?? string.Join("\n", FirstFailureLines));
         SetText(view.Totals, string.Join("\n", TotalsLines));
         SetText(view.Now, string.Join("\n", NowLines));
         SetText(view.Scale, $"Display scale: {window.Root?.Scale ?? 1:0.##}");
@@ -371,7 +437,7 @@ public sealed class ReproHarness
         }
     }
 
-    private async Task RunCheckAsync(string reportFile, string? framesFolder)
+    private async Task RunCheckAsync(string? framesFolder)
     {
         int exitCode;
         string report;
@@ -428,6 +494,12 @@ public sealed class ReproHarness
             }
 
             Evaluate(force: true);
+            if (error is not null)
+            {
+                // Fail has already ended check mode with ERROR.
+                return;
+            }
+
             exitCode = firstFailures.Count == Issues.Count ? 1
                 : firstFailures.Count > 0 ? 4
                 : notReachedText is not null ? 2
@@ -442,13 +514,11 @@ public sealed class ReproHarness
         }
         catch (Exception exception)
         {
-            exitCode = 3;
-            report = "ERROR: " + exception;
+            Fail(exception);
+            return;
         }
 
-        File.WriteAllText(reportFile, report);
-        Environment.ExitCode = exitCode;
-        window.Close();
+        Finish(exitCode, report);
     }
 }
 '@
