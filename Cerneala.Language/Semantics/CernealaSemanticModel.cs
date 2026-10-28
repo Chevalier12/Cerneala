@@ -448,7 +448,7 @@ internal sealed partial class CernealaSemanticModel : IDisposable
             return resultType;
         }
 
-        if (!TryConvertLiteral(value, member, out object? converted))
+        if (!TryConvertMarkupLiteral(value, member, out object? converted))
         {
             AddDiagnostic("CERNEALAUI004", attribute.ValueToken.Span, type.Name, name, value);
             return null;
@@ -512,7 +512,7 @@ internal sealed partial class CernealaSemanticModel : IDisposable
             return;
         }
 
-        if (!TryConvertLiteral(value, member, out object? converted) ||
+        if (!TryConvertMarkupLiteral(value, member, out object? converted) ||
             converted is int placement && !IsValidGridPlacement(member.DeclaringTypeMetadataName, member.Name, placement))
         {
             AddDiagnostic("CERNEALAUI004", attribute.ValueToken.Span, ownerName, propertyName, value);
@@ -948,6 +948,12 @@ internal sealed partial class CernealaSemanticModel : IDisposable
         converted = value;
         return true;
     }
+
+    // An attribute, attached-property or Aspect literal: the build parses it with ParseLiteralValue, which also checks
+    // the value types and [MarkupValueConstraint] rules of MarkupLiteralRules. Motion values follow other build rules.
+    private static bool TryConvertMarkupLiteral(string value, ILanguageMemberSymbol member, out object? converted) =>
+        TryConvertLiteral(value, member, out converted) &&
+        MarkupLiteralRules.IsValid(value, member.ValueTypeMetadataName.TrimEnd('?'), member.ValueConstraint);
 
     private void AddDiagnostic(string id, TextSpan span, params object[] arguments) =>
         diagnostics.Add(new LanguageDiagnostic(CernealaDiagnosticCatalog.Get(id), span, mode, arguments));
