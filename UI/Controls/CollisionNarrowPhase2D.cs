@@ -337,15 +337,6 @@ internal static class CollisionNarrowPhase2D
         return false;
     }
 
-    internal static DrawRect GetSweptBounds(DrawRect bounds, Vector2 displacement)
-    {
-        float left = MathF.Min(bounds.X, bounds.X + displacement.X);
-        float top = MathF.Min(bounds.Y, bounds.Y + displacement.Y);
-        float right = MathF.Max(bounds.Right, bounds.Right + displacement.X);
-        float bottom = MathF.Max(bounds.Bottom, bounds.Bottom + displacement.Y);
-        return new DrawRect(left, top, right - left, bottom - top);
-    }
-
     private static bool TryFastContact(
         ColliderGeometry2D first,
         ColliderGeometry2D second,
@@ -1300,15 +1291,14 @@ internal static class CollisionNarrowPhase2D
         return t >= -Epsilon && t <= 1 + Epsilon && u >= -Epsilon && u <= 1 + Epsilon;
     }
 
-    private static ColliderGeometry2D Translate(ColliderGeometry2D geometry, Vector2 translation)
-    {
-        DrawRect bounds = geometry.SceneBounds;
-        return geometry with
+    // A cast position only feeds GetDistance and TryFastContact, which read the transform, never SceneBounds. Near the
+    // edge of the DrawRect coordinate range a cast position's bounds can leave that range, so SceneBounds keeps the
+    // bounds at the start of the cast instead of building a DrawRect that cannot hold them.
+    private static ColliderGeometry2D Translate(ColliderGeometry2D geometry, Vector2 translation) =>
+        geometry with
         {
-            ShapeToSceneTransform = geometry.ShapeToSceneTransform * Matrix3x2.CreateTranslation(translation),
-            SceneBounds = new DrawRect(bounds.X + translation.X, bounds.Y + translation.Y, bounds.Width, bounds.Height)
+            ShapeToSceneTransform = geometry.ShapeToSceneTransform * Matrix3x2.CreateTranslation(translation)
         };
-    }
 
     private static Vector2 TransformNormalFromLocal(Vector2 local, Matrix3x2 inverse)
     {
