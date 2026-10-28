@@ -1,3 +1,4 @@
+using Cerneala.UI.Controls;
 using Cerneala.UI.Controls.Primitives;
 using Cerneala.UI.Core;
 using Cerneala.UI.Elements;
@@ -20,6 +21,45 @@ public sealed class RangeBaseTests
         Assert.Equal(20, range.Value);
         range.Value = 5;
         Assert.Equal(10, range.Value);
+    }
+
+    [Theory]
+    [InlineData(float.NaN)]
+    [InlineData(float.PositiveInfinity)]
+    [InlineData(float.NegativeInfinity)]
+    public void NonFiniteValueIsRejectedAndKeepsPreviousValue(float nonFinite)
+    {
+        RangeBase range = new() { Minimum = 10, Maximum = 20, Value = 15 };
+
+        Assert.Throws<ArgumentException>(() => range.Value = nonFinite);
+
+        Assert.Equal(15, range.Value);
+    }
+
+    [Theory]
+    [InlineData(nameof(Slider), float.PositiveInfinity)]
+    [InlineData(nameof(Slider), float.NegativeInfinity)]
+    [InlineData(nameof(ScrollBar), float.PositiveInfinity)]
+    [InlineData(nameof(ScrollBar), float.NegativeInfinity)]
+    [InlineData(nameof(ProgressBar), float.PositiveInfinity)]
+    [InlineData(nameof(ProgressBar), float.NegativeInfinity)]
+    public void InfiniteValueIsRejectedByEveryRangeControl(string control, float infinite)
+    {
+        RangeBase range = control switch
+        {
+            nameof(Slider) => new Slider(),
+            nameof(ScrollBar) => new ScrollBar(),
+            _ => new ProgressBar()
+        };
+        range.Minimum = 10;
+        range.Maximum = 20;
+        range.Value = 15;
+
+        Assert.Throws<ArgumentException>(() => range.Value = infinite);
+
+        Assert.Equal(15, range.Value);
+        range.Value = 25;
+        Assert.Equal(20, range.Value);
     }
 
     [Fact]

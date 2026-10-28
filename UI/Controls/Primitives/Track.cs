@@ -397,10 +397,11 @@ public class Track : Control
         }
     }
 
+    // A value that is not finite stays as it is, so the validation rejects it, as WPF validates before it coerces (#770).
     private static float CoerceValue(UiObject owner, float value)
     {
         Track track = (Track)owner;
-        return RangeBase.Clamp(value, track.Minimum, track.Maximum);
+        return float.IsFinite(value) ? RangeBase.Clamp(value, track.Minimum, track.Maximum) : value;
     }
 
     private static bool IsValidNonNegativeFloat(float value)
