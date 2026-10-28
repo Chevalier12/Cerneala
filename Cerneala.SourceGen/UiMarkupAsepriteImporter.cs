@@ -341,9 +341,11 @@ public sealed partial class UiMarkupGenerator
                 return false;
             }
 
-            if (duration <= 0)
+            // The emitter writes TimeSpan.FromMilliseconds(duration), so the frame needs the markup Duration rule.
+            if (!IsTimeSpanDurationInRange(duration, TimeSpan.TicksPerMillisecond, allowZero: false))
             {
-                error = label + " needs a positive duration (milliseconds).";
+                error = label + " needs a positive duration (milliseconds) of at least one 100 ns tick, " +
+                    "no longer than TimeSpan.MaxValue.";
                 return false;
             }
 

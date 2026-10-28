@@ -182,12 +182,15 @@ public sealed partial class UiMarkupGenerator
         private INamedTypeSymbol? ResolveAspectTargetTypeSymbol(string targetName, MarkupElement? source = null)
         {
             string reference = targetName.Trim();
-            if (resolvedElementTypes.TryGetValue(reference, out INamedTypeSymbol? resolved))
+            // A prefixed name means the xmlns declaration in scope at the source, and an inner element can declare
+            // the prefix again (#1164), so the raw "prefix:Name" text is not a cache key: resolve it lexically.
+            bool prefixed = reference.Contains(':');
+            if (!prefixed && resolvedElementTypes.TryGetValue(reference, out INamedTypeSymbol? resolved))
             {
                 return resolved;
             }
 
-            INamedTypeSymbol? type = reference.Contains(':')
+            INamedTypeSymbol? type = prefixed
                 ? ResolveMarkupTypeReference(reference, source)
                 : ResolveBuiltInElementTypeSymbol(reference);
 
@@ -195,7 +198,11 @@ public sealed partial class UiMarkupGenerator
             if (type is not null && type.TypeKind == TypeKind.Class &&
                 uiElementType is not null && IsOrDerivesFrom(type, uiElementType))
             {
-                resolvedElementTypes[reference] = type;
+                if (!prefixed)
+                {
+                    resolvedElementTypes[reference] = type;
+                }
+
                 resolvedElementTypes[type.Name] = type;
                 return type;
             }

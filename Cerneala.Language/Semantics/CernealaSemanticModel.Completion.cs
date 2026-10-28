@@ -55,7 +55,7 @@ internal sealed partial class CernealaSemanticModel
             }
 
             AttributeSyntax? declaredDataType = FindAttribute(current, "DataType");
-            if (declaredDataType is not null && ResolveTypeReference(declaredDataType) is ILanguageTypeSymbol declaredType)
+            if (declaredDataType is not null && ResolveTypeReference(current, declaredDataType) is ILanguageTypeSymbol declaredType)
             {
                 return declaredType;
             }
@@ -207,7 +207,11 @@ internal sealed partial class CernealaSemanticModel
             .ToArray();
     }
 
-    internal IReadOnlyList<CompletionNamespaceAlias> GetCompletionAliases() => aliases
+    // The xmlns prefixes in scope at the element (its own declarations and its ancestors'), or at the root.
+    internal IReadOnlyList<CompletionNamespaceAlias> GetCompletionAliases(ElementSyntax? scope) =>
+        (scope ?? root) is ElementSyntax element ? CompletionAliases(AliasesOf(element)) : [];
+
+    private static IReadOnlyList<CompletionNamespaceAlias> CompletionAliases(Dictionary<string, NamespaceAlias> aliases) => aliases
         .Select(pair => new CompletionNamespaceAlias(pair.Key, pair.Value.Namespace, pair.Value.Assembly))
         .OrderBy(alias => alias.Prefix, StringComparer.Ordinal)
         .ToArray();

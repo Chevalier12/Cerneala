@@ -63,7 +63,7 @@ Declare the set inside the consuming element's resource property element. This i
 
 This fragment defines animation, not the image or destination: supply those through the sprite's existing image/destination APIs. `Name` is the resource key on the set and the state name on a clip. Frame `SourceX`/`SourceY`/`SourceWidth`/`SourceHeight` and `Duration` are immutable constructor inputs. A frame `Duration` must convert to at least one 100 ns `TimeSpan` tick and fit in `TimeSpan`: `0.0001ms` (one tick) builds, while `0ms`, `0.00001ms` (zero ticks), `1e20ms`, and `1e20s` produce `CERNEALAUI016`. No mutable frame collection, FPS setting, or automatic transition from `Attack` to `Idle` is implied.
 
-For binding, declare the actual application data type on the markup root and use `AnimationState="$DataContext.AnimationState:OneWay"`; the application owns that notifying string property. Static unknown states and invalid definitions produce `CERNEALAUI016`; an unresolved runtime-bound state uses the target's static visual fallback.
+For binding, declare the actual application data type on the markup root and use `AnimationState="$DataContext.AnimationState:OneWay"`; the application owns that notifying string property. Static unknown states and invalid definitions produce `CERNEALAUI016`, with `Animations="$HeroAnimations"` and `Animations="$HeroAnimations:OneWay"` alike, because both reference the same resource; an unresolved runtime-bound state uses the target's static visual fallback.
 
 The same immutable resource can be shared by multiple sprites; each sprite keeps independent playback. Select and style the sprite with normal Aspect, Motion, and Prism syntax. Static `Tile` data has no animation state, and the resource set itself is not an animated UI target.
 
@@ -151,7 +151,7 @@ The set `Version` still applies. These are `CERNEALAUI016` build errors, each na
 - no `AdditionalFiles` item matches, or more than one matches (use a longer `Source` path);
 - the file is not valid JSON, has no `frames`, or has no `meta.frameTags` or no tags;
 - a tag without a name, a duplicated tag name, a tag outside the frame list, or an unknown direction;
-- a frame used by a tag that is rotated, has a missing or non-positive size or duration, or is trimmed and does not fit inside `sourceSize`.
+- a frame used by a tag that is rotated, has a missing or non-positive size or duration, or is trimmed and does not fit inside `sourceSize`. The `duration` follows the same rule as a markup frame `Duration`: it must convert to at least one 100 ns `TimeSpan` tick and fit in `TimeSpan`, so `0.0001` (one tick) builds, while `0.00001` (zero ticks) and `1e20` produce `CERNEALAUI016`.
 
 ## Constructors
 

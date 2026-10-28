@@ -704,6 +704,58 @@ public sealed class SemanticScopesTests
         }
     }
 
+    // #1164: an inner xmlns:prefix replaces the outer declaration for its subtree, for every prefixed type reference.
+    [Fact]
+    public void InnerXmlnsDeclarationShadowsTheRootForElementsTargetTypesAndDataTypes()
+    {
+        const string source = """
+            using Cerneala.UI.Controls;
+            namespace A { public sealed class Foo : Border { } public sealed class Row { } }
+            namespace B { public sealed class Foo : Border { } public sealed class Row { } }
+            """;
+        const string markup = """
+            <StackPanel xmlns:rows="clr-namespace:A">
+              <StackPanel.Resources>
+                <Aspect TargetType="rows:Foo">@default { Width = 37; }</Aspect>
+              </StackPanel.Resources>
+              <StackPanel xmlns:rows="clr-namespace:B">
+                <StackPanel.Resources>
+                  <Aspect TargetType="rows:Foo">@default { Height = 41; }</Aspect>
+                </StackPanel.Resources>
+                <rows:Foo />
+                <ItemsControl><ItemsControl.ItemTemplate><ContentTemplate DataType="rows:Row"><Border /></ContentTemplate></ItemsControl.ItemTemplate></ItemsControl>
+              </StackPanel>
+              <rows:Foo />
+              <ItemsControl><ItemsControl.ItemTemplate><ContentTemplate DataType="rows:Row"><Border /></ContentTemplate></ItemsControl.ItemTemplate></ItemsControl>
+            </StackPanel>
+            """;
+        CernealaSemanticModel model = Model("XmlnsScope.crn", markup, source);
+
+        Assert.Empty(model.Diagnostics);
+        int innerScope = markup.IndexOf("xmlns:rows=\"clr-namespace:B\"", StringComparison.Ordinal);
+        Assert.Equal("A.Foo", SymbolAtOccurrence(model, markup, "rows:Foo\">@default", before: innerScope).ValueType);
+        Assert.Equal("B.Foo", SymbolAtOccurrence(model, markup, "rows:Foo\">@default", after: innerScope).ValueType);
+        Assert.Equal("B.Foo", SymbolAtOccurrence(model, markup, "rows:Foo />", after: innerScope, first: true).ValueType);
+        Assert.Equal("A.Foo", SymbolAtOccurrence(model, markup, "rows:Foo />", after: innerScope, first: false).ValueType);
+        Assert.Equal("B.Row", SymbolAtOccurrence(model, markup, "rows:Row", after: innerScope, first: true).ValueType);
+        Assert.Equal("A.Row", SymbolAtOccurrence(model, markup, "rows:Row", after: innerScope, first: false).ValueType);
+    }
+
+    private static CernealaSemanticSymbol SymbolAtOccurrence(
+        CernealaSemanticModel model,
+        string markup,
+        string needle,
+        int before = int.MaxValue,
+        int after = -1,
+        bool first = true)
+    {
+        int offset = first
+            ? markup.IndexOf(needle, after + 1, StringComparison.Ordinal)
+            : markup.LastIndexOf(needle, StringComparison.Ordinal);
+        Assert.True(offset > after && offset < before, "Needle not found in range: " + needle);
+        return Assert.IsType<CernealaSemanticSymbol>(model.GetSymbolAt(offset));
+    }
+
     private static CernealaSemanticSymbol SymbolAt(CernealaSemanticModel model, string markup, string needle)
     {
         int offset = markup.IndexOf(needle, StringComparison.Ordinal);

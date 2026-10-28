@@ -333,11 +333,7 @@ public sealed partial class UiMarkupGenerator
                 return false;
             }
 
-            // Mirror the runtime's TimeSpan.FromMilliseconds/FromSeconds(double): ticks = value * scale,
-            // truncated, OverflowException above long.MaxValue. The generated expression must never throw
-            // and must keep a positive duration positive after truncation to whole ticks.
-            double ticks = value * ticksPerUnit;
-            if (ticks > long.MaxValue || (allowZero ? ticks < 0 : ticks < 1))
+            if (!IsTimeSpanDurationInRange(value, ticksPerUnit, allowZero))
             {
                 return false;
             }
@@ -385,5 +381,14 @@ public sealed partial class UiMarkupGenerator
                 propertyCode.EndsWith(".SkewXProperty", StringComparison.Ordinal) ||
                 propertyCode.EndsWith(".SkewYProperty", StringComparison.Ordinal);
         }
+    }
+
+    // Mirrors the runtime's TimeSpan.FromMilliseconds/FromSeconds(double): ticks = value * scale, truncated,
+    // OverflowException above long.MaxValue. A duration that passes must never throw in generated code and,
+    // unless zero is allowed, must keep at least one 100 ns tick. Markup durations and Aseprite imports share it.
+    private static bool IsTimeSpanDurationInRange(double value, double ticksPerUnit, bool allowZero)
+    {
+        double ticks = value * ticksPerUnit;
+        return ticks <= long.MaxValue && (allowZero ? ticks >= 0 : ticks >= 1);
     }
 }

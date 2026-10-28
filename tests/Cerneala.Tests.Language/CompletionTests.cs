@@ -95,6 +95,8 @@ public sealed class CompletionTests
     [InlineData("<Wi|caret| />", "Window", null)]
     [InlineData("<Window><StackPanel><Bu|caret| /></StackPanel></Window>", "Button", "Application")]
     [InlineData("<Window xmlns:custom=\"clr-namespace:Custom;assembly=CompletionCorpus\"><custom:Fan|caret| /></Window>", "custom:FancyControl", null)]
+    // #1164: the prefixes in scope at the caret include an inner declaration that replaces the root's.
+    [InlineData("<Window xmlns:custom=\"clr-namespace:Other\"><StackPanel xmlns:custom=\"clr-namespace:Custom;assembly=CompletionCorpus\"><custom:Fan|caret| /></StackPanel></Window>", "custom:FancyControl", null)]
     [InlineData("<Window><Button.Con|caret| /></Window>", "Button.Content", null)]
     public void ElementAndPropertyElementCompletionProducesValidMarkup(
         string markup,

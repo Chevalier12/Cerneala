@@ -115,7 +115,7 @@ internal sealed partial class CernealaSemanticModel
                 ResourceDefinition definition = CreateResourceDefinition(
                     resourceElement,
                     document.Path,
-                    aliases,
+                    AliasesOf(resourceElement),
                     isApplication: root?.Name == "Application");
                 resourceElements[resourceElement] = definition;
                 if (definition.Kind == ResourceKind.Aspect && definition.Name is null && definition.TargetType is not null)
@@ -162,8 +162,8 @@ internal sealed partial class CernealaSemanticModel
                 continue;
             }
 
-            Dictionary<string, NamespaceAlias> applicationAliases = new(StringComparer.Ordinal);
-            ReadAliases(applicationRoot, applicationAliases);
+            Dictionary<ElementSyntax, Dictionary<string, NamespaceAlias>> applicationAliases = new();
+            ReadAliasScopes(applicationRoot, NoAliases, applicationAliases);
             foreach (ElementSyntax property in candidate.Syntax.DescendantElements().Where(IsResourcePropertyElement))
             {
                 foreach (ElementSyntax resource in property.Children.OfType<ElementSyntax>())
@@ -171,7 +171,7 @@ internal sealed partial class CernealaSemanticModel
                     ResourceDefinition definition = CreateResourceDefinition(
                         resource,
                         candidate.Path,
-                        applicationAliases,
+                        applicationAliases[resource],
                         isApplication: true);
                     if (definition.Kind == ResourceKind.Aspect && definition.Name is null && definition.TargetType is not null)
                     {
@@ -281,7 +281,7 @@ internal sealed partial class CernealaSemanticModel
         foreach (ElementSyntax templateElement in elements.Where(element => element.Name == "ContentTemplate"))
         {
             ILanguageTypeSymbol? dataType = FindAttribute(templateElement, "DataType") is AttributeSyntax attribute
-                ? ResolveTypeReference(attribute)
+                ? ResolveTypeReference(templateElement, attribute)
                 : null;
             ElementSyntax? owner = FindNearestElementOwner(templateElement);
             SemanticTemplateContext context = new(
@@ -423,7 +423,7 @@ internal sealed partial class CernealaSemanticModel
         CancellationToken cancellationToken)
     {
         AttributeSyntax? dataTypeAttribute = FindAttribute(template, "DataType");
-        ILanguageTypeSymbol? dataType = dataTypeAttribute is null ? null : ResolveTypeReference(dataTypeAttribute);
+        ILanguageTypeSymbol? dataType = dataTypeAttribute is null ? null : ResolveTypeReference(template, dataTypeAttribute);
         ElementSyntax? owner = FindNearestElementOwner(template);
         if (dataType is null && owner is not null && itemsSourceTypes.TryGetValue(owner, out ILanguageTypeSymbol? inferred))
         {

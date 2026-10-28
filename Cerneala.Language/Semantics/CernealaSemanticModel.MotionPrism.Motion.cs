@@ -124,7 +124,7 @@ internal sealed partial class CernealaSemanticModel
         AttributeSyntax? targetAttribute = FindAttribute(element, "TargetType");
         ILanguageTypeSymbol? targetType = targetAttribute is null
             ? null
-            : ResolveTargetTypeReference(targetAttribute);
+            : ResolveTargetTypeReference(element, targetAttribute);
         if (targetType is null)
         {
             AddMotionDiagnostic(
