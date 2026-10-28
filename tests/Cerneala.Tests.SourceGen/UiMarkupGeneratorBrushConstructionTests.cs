@@ -108,4 +108,22 @@ public sealed partial class UiMarkupGeneratorTests
 
         AssertDiagnostic(result, "CERNEALAUI004", "InvalidBrushColor.crn");
     }
+
+    [Theory]
+    [InlineData("<ImageBrush Name=\"P\" Source=\"a.png\" Viewport=\"0,0,10,10\" />", false)]
+    [InlineData("<ImageBrush Name=\"P\" Source=\"a.png\" Viewport=\"0,0,0,0\" />", true)]
+    [InlineData("<ImageBrush Name=\"P\" Source=\"a.png\" Viewbox=\"0,0,10,-1\" />", true)]
+    [InlineData("<DrawingBrush Name=\"P\" ContentBounds=\"0,0,10,10\"><FillRectangle Rect=\"0,0,10,10\" Color=\"White\" /></DrawingBrush>", false)]
+    [InlineData("<DrawingBrush Name=\"P\" ContentBounds=\"0,0,0,10\"><FillRectangle Rect=\"0,0,10,10\" Color=\"White\" /></DrawingBrush>", true)]
+    public void NonPositiveTileBrushRectanglesAreReportedAtBuildTime(string brush, bool invalid)
+    {
+        string markup = "<StackPanel><StackPanel.Resources>" + brush + "</StackPanel.Resources></StackPanel>";
+
+        GeneratorRunResult result = RunGenerator("BrushTileRect.crn", markup, out _);
+
+        bool reported = result.Diagnostics.Any(diagnostic => diagnostic.Id == "CERNEALAUI004" && diagnostic.Severity == DiagnosticSeverity.Error);
+        Assert.True(
+            reported == invalid,
+            "CERNEALAUI004 reported: " + reported + ". Diagnostics: " + string.Join(" | ", result.Diagnostics));
+    }
 }
