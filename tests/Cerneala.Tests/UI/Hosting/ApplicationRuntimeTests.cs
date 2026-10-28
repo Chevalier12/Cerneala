@@ -560,6 +560,35 @@ public sealed class ApplicationRuntimeTests : IDisposable
         return eventInfo;
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void LastWindowCloseStillExitsTheApplicationWhenItsClosedHandlerThrows(bool handlerThrows)
+    {
+        (Application app, WindowApplicationRuntime runtime) = Install(ApplicationShutdownMode.OnLastWindowClose);
+        Window window = new();
+        int exitCount = 0;
+        app.Exit += (_, _) => exitCount++;
+        if (handlerThrows)
+        {
+            window.Closed += (_, _) => throw new InvalidOperationException("Closed failed");
+        }
+
+        window.Show();
+        if (handlerThrows)
+        {
+            Assert.Throws<InvalidOperationException>(window.Close);
+        }
+        else
+        {
+            window.Close();
+        }
+
+        Assert.True(window.IsClosed);
+        Assert.Empty(runtime.Windows);
+        Assert.Equal(1, exitCount);
+    }
+
     private static void AssertProtectedVirtual(Type owner, string name)
     {
         MethodInfo method = owner.GetMethod(name, BindingFlags.Instance | BindingFlags.NonPublic)!;

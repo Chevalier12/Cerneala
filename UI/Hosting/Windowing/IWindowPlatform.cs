@@ -119,7 +119,9 @@ internal interface IWindowPlatformCallbacks
 
     void ActivationChanged(bool active);
 
-    void BoundsChanged(UiViewport viewport, float left, float top, WindowState state);
+    // left, top, width and height are the window's normal bounds in logical units: while the window is maximized or
+    // minimized they stay the bounds it is restored to, as Window.Left, Top, Width and Height do.
+    void BoundsChanged(UiViewport viewport, float left, float top, float width, float height, WindowState state);
 
     void RenderRequested();
 

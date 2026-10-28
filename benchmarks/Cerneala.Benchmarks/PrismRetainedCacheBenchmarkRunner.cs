@@ -915,6 +915,8 @@ internal static class PrismRetainedCacheBenchmarkRunner
             UiViewport viewport,
             float left,
             float top,
+            float width,
+            float height,
             WindowState state)
         {
         }

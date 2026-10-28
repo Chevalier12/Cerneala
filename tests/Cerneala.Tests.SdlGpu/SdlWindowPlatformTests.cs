@@ -1,5 +1,6 @@
 using Cerneala.Platforms.Sdl3;
 using Cerneala.UI.Controls;
+using Cerneala.UI.Hosting.Windowing;
 using Cerneala.UI.Input;
 using Cerneala.UI.Platform;
 
@@ -105,6 +106,127 @@ public sealed class SdlWindowPlatformTests
             limits == (minimumWidth, minimumHeight, maximumWidth, 0),
             $"After {(SdlEventKind)eventKind} from scale {createdScale} to {newScale}, the native minimum/maximum size " +
             $"is {limits} instead of {(minimumWidth, minimumHeight, maximumWidth, 0)}.");
+    }
+
+    [Theory]
+    [InlineData(nameof(Window.Title))]
+    [InlineData(nameof(Window.Topmost))]
+    [InlineData(nameof(Window.ShowInTaskbar))]
+    public void TitleChangeKeepsTheSizeTheUserResizedTheNativeWindowTo(string property)
+    {
+        FakeSdlApi api = new() { WindowPixelDensity = 1, WindowDisplayScale = 1 };
+        RecordingGraphicsFactory graphics = new();
+        using WindowApplicationRuntime runtime = new(new SdlWindowPlatform(api, graphics));
+        Window model = new() { Width = 640, Height = 480 };
+        runtime.StartMainWindow(model);
+        FakeSdlApi.FakeWindow native = Assert.Single(api.Windows.Values);
+        native.Width = 900;
+        native.Height = 700;
+        api.Enqueue(new SdlEvent(SdlEventKind.WindowResized, native.Id));
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        Assert.Equal((900, 700), (native.Width, native.Height));
+
+        switch (property)
+        {
+            case nameof(Window.Title):
+                model.Title = "x";
+                break;
+            case nameof(Window.Topmost):
+                model.Topmost = true;
+                break;
+            default:
+                model.ShowInTaskbar = false;
+                break;
+        }
+
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+
+        Assert.Equal((900, 700), (native.Width, native.Height));
+    }
+
+    [Fact]
+    public void TitleChangeKeepsThePositionTheUserMovedTheNativeWindowTo()
+    {
+        // Control for the resize test: Left/Top are written back from the platform, so they survive.
+        FakeSdlApi api = new() { WindowPixelDensity = 1, WindowDisplayScale = 1 };
+        RecordingGraphicsFactory graphics = new();
+        using WindowApplicationRuntime runtime = new(new SdlWindowPlatform(api, graphics));
+        Window model = new() { Width = 640, Height = 480 };
+        runtime.StartMainWindow(model);
+        FakeSdlApi.FakeWindow native = Assert.Single(api.Windows.Values);
+
+        native.X = 321;
+        native.Y = 123;
+        api.Enqueue(new SdlEvent(SdlEventKind.WindowMoved, native.Id));
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        Assert.Equal((321f, 123f), (model.Left, model.Top));
+
+        model.Title = "x";
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+
+        Assert.Equal("x", native.Title);
+        Assert.Equal((321, 123), (native.X, native.Y));
+    }
+
+    [Fact]
+    public void UserResizeIsWrittenBackToWidthAndHeightInLogicalUnits()
+    {
+        FakeSdlApi api = new() { WindowPixelDensity = 1, WindowDisplayScale = 1.25f };
+        RecordingGraphicsFactory graphics = new();
+        using WindowApplicationRuntime runtime = new(new SdlWindowPlatform(api, graphics));
+        Window model = new() { Width = 640, Height = 480 };
+        runtime.StartMainWindow(model);
+        FakeSdlApi.FakeWindow native = Assert.Single(api.Windows.Values);
+        Assert.Equal((800, 600), (native.Width, native.Height));
+        Assert.Equal((640f, 480f), (model.Width, model.Height));
+
+        native.Width = 1000;
+        native.Height = 750;
+        api.Enqueue(new SdlEvent(SdlEventKind.WindowResized, native.Id));
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+
+        Assert.Equal((800f, 600f), (model.Width, model.Height));
+        Assert.Equal((1000, 750), (native.Width, native.Height));
+    }
+
+    [Fact]
+    public void WidthAndHeightSetFromCodeAfterAUserResizeStillResizeTheNativeWindow()
+    {
+        FakeSdlApi api = new() { WindowPixelDensity = 1, WindowDisplayScale = 1 };
+        RecordingGraphicsFactory graphics = new();
+        using WindowApplicationRuntime runtime = new(new SdlWindowPlatform(api, graphics));
+        Window model = new() { Width = 640, Height = 480 };
+        runtime.StartMainWindow(model);
+        FakeSdlApi.FakeWindow native = Assert.Single(api.Windows.Values);
+        native.Width = 900;
+        native.Height = 700;
+        api.Enqueue(new SdlEvent(SdlEventKind.WindowResized, native.Id));
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+
+        model.Width = 640;
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+
+        Assert.Equal((640, 700), (native.Width, native.Height));
+        Assert.Equal((640f, 700f), (model.Width, model.Height));
+    }
+
+    [Fact]
+    public void MaximizedWindowKeepsItsNormalWidthAndHeight()
+    {
+        FakeSdlApi api = new() { WindowPixelDensity = 1, WindowDisplayScale = 1 };
+        RecordingGraphicsFactory graphics = new();
+        using WindowApplicationRuntime runtime = new(new SdlWindowPlatform(api, graphics));
+        Window model = new() { Width = 640, Height = 480 };
+        runtime.StartMainWindow(model);
+        FakeSdlApi.FakeWindow native = Assert.Single(api.Windows.Values);
+
+        native.Width = 1920;
+        native.Height = 1080;
+        api.Enqueue(new SdlEvent(SdlEventKind.WindowMaximized, native.Id));
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+
+        Assert.Equal(WindowState.Maximized, model.WindowState);
+        Assert.Equal((640f, 480f), (model.Width, model.Height));
     }
 
     [Fact]

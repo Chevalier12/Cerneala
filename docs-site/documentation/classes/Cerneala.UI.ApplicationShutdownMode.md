@@ -24,7 +24,7 @@ app.ShutdownMode = ApplicationShutdownMode.OnMainWindowClose;
 | `OnExplicitShutdown` | Keeps the application alive until `Application.Shutdown` is called or hosting stops it. |
 
 ## Remarks
-A cancelled `Window.Closing` event does not satisfy any automatic shutdown policy. Reassigning `MainWindow` changes which future close is observed by `OnMainWindowClose`.
+A cancelled `Window.Closing` event does not satisfy any automatic shutdown policy. A close whose `Window.Closed` handler throws does count: the window is closed, so the policy runs, for example `OnLastWindowClose` raises `Application.Exit` when no window is left, and then the handler's exception propagates from `Window.Close`. Reassigning `MainWindow` changes which future close is observed by `OnMainWindowClose`.
 
 ## Applies to
 Desktop application hosting.

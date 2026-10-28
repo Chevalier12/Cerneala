@@ -310,7 +310,16 @@ internal sealed class WindowApplicationRuntime : IDisposable
 
         window.SetOwnerCore(null);
         window.SetRuntimeOwner(null);
-        window.MarkClosed();
+        // A throwing Closed handler fails the same way: the window is closed, so the Application still sees the close.
+        try
+        {
+            window.MarkClosed();
+        }
+        catch (Exception exception)
+        {
+            failure ??= ExceptionDispatchInfo.Capture(exception);
+        }
+
         application?.HandleWindowClosed(window);
         failure?.Throw();
         return true;
@@ -1140,7 +1149,7 @@ internal sealed class WindowApplicationRuntime : IDisposable
             }
         }
 
-        public void BoundsChanged(UiViewport viewport, float left, float top, WindowState state)
+        public void BoundsChanged(UiViewport viewport, float left, float top, float width, float height, WindowState state)
         {
             WindowContext context = Context ?? throw new InvalidOperationException("Window callback arrived before host initialization.");
             if (viewport.Width <= 0 || viewport.Height <= 0)
@@ -1149,7 +1158,7 @@ internal sealed class WindowApplicationRuntime : IDisposable
                     "The Servo Window lost its renderable viewport before its Servo input completed."));
             }
             context.OverrideViewport = viewport;
-            window.SetPlatformBounds(left, top, state);
+            window.SetPlatformBounds(left, top, width, height, state);
             context.RenderRequested = true;
         }
 
