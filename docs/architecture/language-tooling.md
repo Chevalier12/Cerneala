@@ -295,6 +295,11 @@ Language server:
    On .NET Framework, all `ProcessExit` handlers together get 2 s, so a 3 s
    wait there would end before the kill. If the server is still running, `Stop`
    logs "did not exit within ... seconds; terminating it" and kills it.
+   `Dispose` does not wait for a `StartAsync` or `StopAsync` that is still
+   running, and it does not dispose the lifecycle semaphore under them: a
+   solution-close stop that overlaps the disable finishes without an exception,
+   and a restart that waits in its backoff throws `ObjectDisposedException`
+   instead of starting a new server.
    Only a cancelled activation (`StopImmediately`) kills without waiting.
 
 Preview:
@@ -418,19 +423,26 @@ Setup and use are in the [Visual Studio guide](../guides/visual-studio-community
   (`:87 CrashesUseBoundedBackoffAndDisableTheRestartLoopAtTheThreshold`).
 - Disable, update and uninstall each close stdin and wait first, and kill only
   after the timeout
-  (`:198 DisableUpdateAndUninstallForceTerminationOnlyAfterTheTimeout`).
+  (`:259 DisableUpdateAndUninstallForceTerminationOnlyAfterTheTimeout`).
 - `StopAsync`, `Dispose` (extension disable) and `Stop(VisualStudioShutdown)`
   each close stdin and wait before they kill, and log "did not exit" when they
-  kill (`:222 EveryDisableShutdownPathWaitsBeforeKillingAndLogsTheForcedTermination`).
+  kill (`:283 EveryDisableShutdownPathWaitsBeforeKillingAndLogsTheForcedTermination`).
   A server that exits when stdin closes is not killed
-  (`:254 DisposeOfAServerThatExitsOnInputCloseDoesNotKillIt`).
+  (`:315 DisposeOfAServerThatExitsOnInputCloseDoesNotKillIt`).
+- `Dispose` while a solution-close `StopAsync` still waits for the server: the
+  stop finishes without an exception and the process is disposed once
+  (`:172 DisposeDuringSolutionCloseStopLetsTheStopFinishWithoutThrowing`).
+- `Dispose` while `StartAsync` waits in its restart backoff: no new process is
+  started, and `StartAsync` throws `ObjectDisposedException` for
+  `CernealaServerProcessManager`
+  (`:198 DisposeDuringRestartBackoffDoesNotStartAnotherProcess`).
 - `Dispose` waits 3 s; Visual Studio shutdown waits 1 s, less than the 2 s
   that .NET Framework gives all `ProcessExit` handlers together
-  (`:270 ExtensionDisableWaitsTheShutdownTimeoutAndVisualStudioShutdownStaysInsideTheProcessExitBudget`).
+  (`:331 ExtensionDisableWaitsTheShutdownTimeoutAndVisualStudioShutdownStaysInsideTheProcessExitBudget`).
 - A cancelled activation still kills at once, without a wait
-  (`:294 ActivationCancellationStillAbortsWithoutWaiting`).
+  (`:355 ActivationCancellationStillAbortsWithoutWaiting`).
 - The bundled path is `<install root>\Server\<version>\Cerneala.LanguageServer.exe`
-  (`:313 BundledPathIsVersionedUnderTheExtensionInstallRoot`).
+  (`:374 BundledPathIsVersionedUnderTheExtensionInstallRoot`).
 
 Netestat:
 

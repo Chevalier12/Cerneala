@@ -157,23 +157,28 @@ internal sealed class CernealaServerProcessManager : IDisposable
             }
 
             ICernealaServerProcess started;
+            bool startAttempted = false;
             try
             {
-                started = processFactory.Start(
-                    executablePath,
-                    Path.GetDirectoryName(executablePath)!);
+                lock (stateGate)
+                {
+                    // Dispose can run during the restart backoff above. Checking it under the lock that
+                    // publishes the process means Dispose either sees this process and stops it, or no
+                    // process is started at all.
+                    ThrowIfDisposed();
+                    startAttempted = true;
+                    started = processFactory.Start(
+                        executablePath,
+                        Path.GetDirectoryName(executablePath)!);
+                    process = started;
+                    expectedExit = false;
+                    initialized = false;
+                }
             }
-            catch (Exception exception)
+            catch (Exception exception) when (startAttempted)
             {
                 log.Error("Cerneala language server failed to start from " + executablePath + ".", exception);
                 throw;
-            }
-
-            lock (stateGate)
-            {
-                process = started;
-                expectedExit = false;
-                initialized = false;
             }
 
             started.Exited += OnProcessExited;
@@ -276,14 +281,22 @@ internal sealed class CernealaServerProcessManager : IDisposable
 
     public void Dispose()
     {
-        if (disposed)
+        lock (stateGate)
         {
-            return;
+            if (disposed)
+            {
+                return;
+            }
+
+            disposed = true;
         }
 
-        disposed = true;
+        // lifecycleGate is deliberately not disposed: a StartAsync or StopAsync that holds it can
+        // still be running (a solution-close stop waiting for the server, a restart backoff) and
+        // releases it later. SemaphoreSlim.Dispose is only legal after all other operations on it
+        // have completed, and this gate never creates its AvailableWaitHandle, so it owns no
+        // unmanaged resource to release.
         Stop(CernealaServerShutdownReason.ExtensionDisable);
-        lifecycleGate.Dispose();
     }
 
     private void StopSynchronously(
