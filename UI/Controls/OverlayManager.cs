@@ -358,8 +358,10 @@ internal sealed class OverlayManager
             UIElement target = overlay.EffectivePlacementTarget;
             LayoutRect targetBounds = target.ArrangedBounds;
             float targetBottom = targetBounds.Y + targetBounds.Height;
-            float below = MathF.Max(0, viewport.Height - targetBottom);
-            float above = MathF.Max(0, targetBounds.Y);
+            // The space on a side is the part of the viewport on that side, so a target outside the viewport, for
+            // example scrolled above or below it, cannot give a side more space than the viewport has (#865).
+            float below = Math.Clamp(viewport.Height - targetBottom, 0, viewport.Height);
+            float above = Math.Clamp(targetBounds.Y, 0, viewport.Height);
             float initialLimit = overlay.Placement switch
             {
                 OverlayPlacement.Bottom => below,
