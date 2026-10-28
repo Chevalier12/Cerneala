@@ -438,22 +438,7 @@ internal static class Program
         HashSet<string> actualTypes = publicPrismTypes
             .Select(type => type.FullName!)
             .ToHashSet(StringComparer.Ordinal);
-        HashSet<string> expectedTypes = new(ExpectedPublicPrismTypes, StringComparer.Ordinal);
-        expectedTypes.UnionWith(ExpectedHighLevelPrismTypes);
-        foreach (CatalogEntry entry in catalog.Entries)
-        {
-            string? suffix = entry.Kind switch
-            {
-                "filter" => "Filter",
-                "style" => "Style",
-                _ => null
-            };
-            if (suffix is not null)
-            {
-                expectedTypes.Add($"Cerneala.Drawing.Prism.{entry.Symbol}{suffix}");
-            }
-        }
-        CompareSet(actualTypes, expectedTypes, "public Prism types", errors);
+        CompareSet(actualTypes, ApprovedPublicPrismTypes(catalog), "public Prism types", errors);
 
         string[] publicGraphTypes = actualTypes
             .Where(name => name.StartsWith("Cerneala.Drawing.Prism.Graph.", StringComparison.Ordinal))
@@ -542,6 +527,27 @@ internal static class Program
         }
     }
 
+    // The hand-written types, the high-level pipeline types, and one generated ...Filter or ...Style type per catalog entry.
+    private static HashSet<string> ApprovedPublicPrismTypes(CatalogSnapshot catalog)
+    {
+        HashSet<string> expectedTypes = new(ExpectedPublicPrismTypes, StringComparer.Ordinal);
+        expectedTypes.UnionWith(ExpectedHighLevelPrismTypes);
+        foreach (CatalogEntry entry in catalog.Entries)
+        {
+            string? suffix = entry.Kind switch
+            {
+                "filter" => "Filter",
+                "style" => "Style",
+                _ => null
+            };
+            if (suffix is not null)
+            {
+                expectedTypes.Add($"Cerneala.Drawing.Prism.{entry.Symbol}{suffix}");
+            }
+        }
+        return expectedTypes;
+    }
+
     private static string BuildReport(AuditResult audit)
     {
         StringBuilder report = new();
@@ -584,7 +590,7 @@ internal static class Program
         report.AppendLine($"| masks | 5 properties + feature | {audit.Catalog.CommonProperties["mask"].Count} properties + feature | PASS |");
         report.AppendLine("| implicit backdrop | lazy destination input + host contract | analyzer + host contract | PASS |");
         report.AppendLine($"| conformance features | {ExpectedConformanceFeatures.Length} | {audit.Catalog.Features.Count} | PASS |");
-        report.AppendLine($"| public Prism types | {ExpectedPublicPrismTypes.Count} | {audit.PublicPrismTypes.Count} | PASS |");
+        report.AppendLine($"| public Prism types | {ApprovedPublicPrismTypes(audit.Catalog).Count} | {audit.PublicPrismTypes.Count} | PASS |");
         report.AppendLine($"| existing public types extended for Prism | {ExpectedCrossSurfaceTypes.Count} | {audit.CrossSurfaceTypes.Count} | PASS |");
         report.AppendLine();
         report.AppendLine("Directives: " + string.Join(", ", ExpectedDirectives.Select(Cell)) + ".");

@@ -37,7 +37,7 @@ The audit treats generated runtime and documentation owners as concrete only bec
 | masks | 5 properties + feature | 5 properties + feature | PASS |
 | implicit backdrop | lazy destination input + host contract | analyzer + host contract | PASS |
 | conformance features | 4 | 4 | PASS |
-| public Prism types | 66 | 216 | PASS |
+| public Prism types | 216 | 216 | PASS |
 | existing public types extended for Prism | 8 | 8 | PASS |
 
 Directives: `@prism`, `@parameter`, `@layer`, `@group`, `@filter`, `@style`, `@mask`.
