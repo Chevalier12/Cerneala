@@ -162,6 +162,18 @@ python ./Tools/RoslynMcp/test_roslyn_mcp.py --exe $exe --output ./.artifacts/ros
 python ./Tools/RoslynMcp/test_roslyn_mcp.py --launcher ./Tools/scripts/Start-RoslynMcp.ps1 --output ./.artifacts/roslyn-mcp/my-launch-run --generated-only
 ```
 
+`--exe` mode starts the executable directly with the same `PATH` preparation
+as `Start-RoslynMcp.ps1`: it prepends the newest `host\fxr\<version>` folder
+that holds `hostfxr.dll`, under the first `dotnet.exe` on `PATH`. When there is
+no `dotnet.exe` on `PATH` or no `hostfxr.dll` under it, the harness prints
+`Setup error: ...` and exits with 1 before it starts the server. Regression
+tests for this preparation (the last one starts the installed server and sends
+`initialize`):
+
+```powershell
+python ./Tools/RoslynMcp/test_exe_environment.py -v
+```
+
 `--generated-only` is the focused regression, not full verification. Full mode
 also checks overloads, private identity, cross-project implementations,
 inheritance/base calls, composite analysis, project references, invalid

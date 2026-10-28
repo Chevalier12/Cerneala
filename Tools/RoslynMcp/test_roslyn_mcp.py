@@ -11,6 +11,7 @@ import os
 from pathlib import Path
 import queue
 import subprocess
+import sys
 import tempfile
 import threading
 import time
@@ -27,11 +28,33 @@ class MemoryCounters(ctypes.Structure):
             "PagefileUsage", "PeakPagefileUsage", "PrivateUsage")]
 
 
+class SetupError(Exception):
+    pass
+
+
+def exe_environment(environment):
+    # Same PATH preparation as Tools/scripts/Start-RoslynMcp.ps1: the single-file
+    # executable bundles hostfxr, but MSBuildLocator P/Invokes it by name and fails
+    # with DllNotFoundException. Prepend the newest hostfxr folder of the first
+    # dotnet on PATH so the native search can resolve it.
+    path = environment.get("PATH", "")
+    dotnet = next((Path(entry) / "dotnet.exe" for entry in path.split(os.pathsep)
+        if entry and (Path(entry) / "dotnet.exe").is_file()), None)
+    if dotnet is None:
+        raise SetupError("dotnet was not found on PATH. Nothing launched.")
+    fxr_root = dotnet.parent / "host" / "fxr"
+    candidates = [folder for folder in fxr_root.iterdir() if (folder / "hostfxr.dll").is_file()] if fxr_root.is_dir() else []
+    if not candidates:
+        raise SetupError(f"No hostfxr.dll under {fxr_root}. Nothing launched.")
+    fxr = max(candidates, key=lambda folder: tuple(int(part) for part in folder.name.split("-")[0].split(".")))
+    return dict(environment, PATH=str(fxr) + os.pathsep + path)
+
+
 class Client:
-    def __init__(self, command, output, solution):
+    def __init__(self, command, output, solution, environment=None):
         self.raw = (output / "protocol.jsonl").open("x", encoding="utf-8")
         self.stderr = (output / "stderr.log").open("x", encoding="utf-8")
-        self.process = subprocess.Popen(command, cwd=ROOT, stdin=subprocess.PIPE,
+        self.process = subprocess.Popen(command, cwd=ROOT, env=environment, stdin=subprocess.PIPE,
             stdout=subprocess.PIPE, stderr=self.stderr, text=True, encoding="utf-8",
             creationflags=subprocess.CREATE_NO_WINDOW)
         self.messages = queue.Queue()
@@ -316,13 +339,18 @@ def main():
     parser.add_argument("--output", type=Path, required=True, help="New, nonexistent evidence directory")
     parser.add_argument("--generated-only", action="store_true")
     args = parser.parse_args()
+    try:
+        environment = exe_environment(os.environ) if args.exe else None
+    except SetupError as error:
+        print(f"Setup error: {error}", file=sys.stderr, flush=True)
+        return 1
     args.output.mkdir(parents=True, exist_ok=False)
     source_hash = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
     if args.launcher:
         launcher_guards(args.launcher, args.output)
     command = [str(args.exe), "--solution", str(ROOT / "Cerneala.slnx")] if args.exe else [
         "powershell.exe", "-NoLogo", "-NoProfile", "-NonInteractive", "-File", str(args.launcher)]
-    client = Client(command, args.output, ROOT / "Cerneala.slnx")
+    client = Client(command, args.output, ROOT / "Cerneala.slnx", environment)
     temporary = None if args.generated_only else tempfile.TemporaryDirectory(prefix="cerneala-roslyn-mcp-")
     passed = False
     error = None
