@@ -143,7 +143,9 @@ internal sealed class CommandSourceState
     // only that source's command. A click that a command source in the owner's content owns, such as a Button or a
     // ComboBox's PART_DropDownToggle, bubbles its MouseUp to the owner but is not the owner's click (#421, #935). The
     // decision uses the route map the bridge routed the MouseUp with, so it stays the same when an earlier handler,
-    // such as the inner button's Click, removes or collapses the clicked element or detaches the owner (#501).
+    // such as the inner button's Click, removes or collapses the clicked element or detaches the owner (#501). Like the
+    // bridge, it walks the visual ancestors: a MouseUp from content that an Overlay in the owner's content projects
+    // bubbles to the owner, but the owner is not a visual ancestor of it, so it is not the owner's click (#1203).
     public bool OwnsClick(MouseButtonEventArgs args)
     {
         ElementInputRouteMap? routeMap = args.RouteMap;
@@ -163,7 +165,13 @@ internal sealed class CommandSourceState
             return true;
         }
 
-        foreach (UIElement current in routeMap.GetRouteToRoot(source))
+        IReadOnlyList<UIElement> visualRoute = routeMap.GetVisualRouteToRoot(source);
+        if (visualRoute.Count == 0)
+        {
+            return true;
+        }
+
+        foreach (UIElement current in visualRoute)
         {
             if (current is IInputCommandSource)
             {
@@ -171,7 +179,7 @@ internal sealed class CommandSourceState
             }
         }
 
-        return true;
+        return false;
     }
 
     public void Attach()
