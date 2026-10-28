@@ -219,11 +219,9 @@ public sealed partial class UiMarkupGenerator
                 }
 
                 string conditionText = text.Substring(0, question).Trim();
-                string trueText = text.Substring(question + 1, colon - question - 1).Trim();
-                string falseText = text.Substring(colon + 1).Trim();
                 DirectiveExpression condition = ParseExpression(new DirectiveHeader(conditionText, location.Source, location.Offset));
-                MotionValueSyntax whenTrue = ParseMotionValue(trueText, new DirectiveExpressionLocation(location.Source, location.Offset + question + 1));
-                MotionValueSyntax whenFalse = ParseMotionValue(falseText, new DirectiveExpressionLocation(location.Source, location.Offset + colon + 1));
+                MotionValueSyntax whenTrue = ParseMotionBranch(text, question + 1, colon, location);
+                MotionValueSyntax whenFalse = ParseMotionBranch(text, colon + 1, text.Length, location);
                 // `current` selects where a Motion starts or ends; it is not a
                 // value a conditional can evaluate to.
                 if (whenTrue is MotionCurrentValueSyntax || whenFalse is MotionCurrentValueSyntax)
@@ -258,6 +256,18 @@ public sealed partial class UiMarkupGenerator
             }
 
             return new MotionAtomValueSyntax(text, location);
+        }
+
+        // The branch location covers the trimmed branch value, so a diagnostic about a
+        // branch points at its value, as one about a whole value does.
+        private static MotionValueSyntax ParseMotionBranch(string text, int start, int end, DirectiveExpressionLocation location)
+        {
+            string branch = text.Substring(start, end - start);
+            string value = branch.Trim();
+            int offset = value.Length == 0 ? start : start + branch.Length - branch.TrimStart().Length;
+            return ParseMotionValue(
+                value,
+                new DirectiveExpressionLocation(location.Source, location.Offset + offset, Math.Max(1, value.Length)));
         }
 
         public static MotionSpecSyntax ParseMotionSpec(string text, DirectiveExpressionLocation location)

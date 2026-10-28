@@ -56,7 +56,7 @@ float returningValue = sampler.Current; // 5
 
 Each sampler starts at `from`. During sampling, the cycle index and the progress within the current cycle are calculated from the exact elapsed `TimeSpan` ticks, so an elapsed time that is a whole number of cycles always lands at the start of the next cycle, transformed through the wrapped tween's `Easing`, and mixed with the supplied `ValueMixer<T>`. The wrapped tween's `Duration` and `Easing` are used directly.
 
-For a finite cycle count, the total runtime is `inner.Duration * cycles`. When the sampler reaches or passes that total duration, it completes and sets `Current` to `from` for an even cycle count, or `to` for an odd cycle count. With `cycles: null`, the sampler remains active until its owner cancels it. Reduced-motion modes complete an unbounded ping-pong immediately at `to`.
+For a finite cycle count, the total runtime is `inner.Duration * cycles`. When the sampler reaches or passes that total duration, it completes and sets `Current` to `from` for an even cycle count, or `to` for an odd cycle count. The sampler compares the number of completed cycles with `cycles` and never builds the total runtime, so a count whose total runtime exceeds `TimeSpan.MaxValue`, such as `int.MaxValue` cycles of a one-hour tween, animates normally instead of throwing `OverflowException`. With `cycles: null`, the sampler remains active until its owner cancels it. Reduced-motion modes complete an unbounded ping-pong immediately at `to`.
 
 `Retarget` is implemented as a no-op by the current sampler. Calling it does not change the target, current value, elapsed time, or completion state.
 

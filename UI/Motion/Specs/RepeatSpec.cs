@@ -78,7 +78,8 @@ public sealed class RepeatSpec<T> : MotionSpec<T>
 
             elapsed += delta;
             TimeSpan duration = spec.Duration;
-            if (repeatCount is int count && elapsed >= duration * count)
+            // Compare cycle indexes: duration * count can exceed TimeSpan.MaxValue.
+            if (repeatCount is int count && elapsed.Ticks / duration.Ticks >= count)
             {
                 current = to;
                 isComplete = true;

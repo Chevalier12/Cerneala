@@ -54,7 +54,7 @@ float halfwayThroughSecondCycle = sampler.Current; // 5
 
 `RepeatSpec<T>` wraps a `TweenSpec<T>` and uses the wrapped tween's `Duration` and `Easing` for each repeated cycle. Each cycle samples from the original `from` value toward the original `to` value; when a cycle finishes, progress wraps back to the beginning instead of reversing.
 
-When `repeatCount` is a positive integer, the sampler completes after `inner.Duration * repeatCount` and sets `Current` to `to`. When `repeatCount` is `null`, the sampler repeats indefinitely and continues requesting frames until the owning motion is canceled or replaced.
+When `repeatCount` is a positive integer, the sampler completes after `inner.Duration * repeatCount` and sets `Current` to `to`. The sampler compares the number of completed cycles with `repeatCount` and never builds that product, so a count whose total runtime exceeds `TimeSpan.MaxValue`, such as `int.MaxValue` cycles of a one-hour tween, animates normally instead of throwing `OverflowException`. When `repeatCount` is `null`, the sampler repeats indefinitely and continues requesting frames until the owning motion is canceled or replaced.
 
 Infinite repeats are treated as non-essential motion when reduced motion is enabled. If the context's reduced-motion mode is not `NoPreference`, `CreateSampler` records a reduced-motion skip when diagnostics are available and returns a complete static sampler whose `Current` value is `to`.
 

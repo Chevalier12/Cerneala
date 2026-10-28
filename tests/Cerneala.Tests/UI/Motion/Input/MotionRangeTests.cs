@@ -38,4 +38,23 @@ public sealed class MotionRangeTests
             Math.Abs(actual - expected) <= 1e-6f * Math.Max(1f, Math.Abs(expected)),
             $"({inputStart}, {inputEnd}) -> ({outputStart}, {outputEnd}), Map({value}) = {actual}, expected {expected}.");
     }
+
+    [Theory]
+    [InlineData(0f, 1f, 0f, float.PositiveInfinity, 0f, 0f)]
+    [InlineData(0f, 1f, 0f, float.PositiveInfinity, -5f, 0f)]
+    [InlineData(0f, 1f, float.NegativeInfinity, 1f, 1f, 1f)]
+    [InlineData(0f, 1f, float.NegativeInfinity, 1f, 5f, 1f)]
+    [InlineData(0f, float.PositiveInfinity, 0f, 1f, float.PositiveInfinity, 1f)]
+    [InlineData(float.NegativeInfinity, 0f, 0f, 1f, float.NegativeInfinity, 0f)]
+    public void MapReturnsTheOutputEndpointExactlyWhenClampedProgressIsZeroOrOne(
+        float inputStart, float inputEnd, float outputStart, float outputEnd, float value, float expected)
+    {
+        MotionRange range = new(inputStart, inputEnd, outputStart, outputEnd);
+
+        float actual = range.Map(value);
+
+        Assert.True(
+            actual.Equals(expected),
+            $"({inputStart}, {inputEnd}) -> ({outputStart}, {outputEnd}), Map({value}) = {actual}, expected {expected}.");
+    }
 }
