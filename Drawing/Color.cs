@@ -174,7 +174,7 @@ public readonly record struct Color(byte R, byte G, byte B, byte A = 255)
         {
             string hex = value[1..];
             if (hex.Length is not (6 or 8)
-                || !uint.TryParse(hex, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out uint packed))
+                || !uint.TryParse(hex, NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture, out uint packed))
             {
                 return false;
             }

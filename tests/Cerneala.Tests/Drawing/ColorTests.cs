@@ -27,6 +27,7 @@ public sealed class ColorTests
     [InlineData("Transparent", 0, 0, 0, 0)]
     [InlineData("#1E90FF", 30, 144, 255, 255)]
     [InlineData("#801E90FF", 30, 144, 255, 128)]
+    [InlineData("  #00FFFF  ", 0, 255, 255, 255)]
     [InlineData("30, 144, 255", 30, 144, 255, 255)]
     [InlineData("30, 144, 255, 128", 30, 144, 255, 128)]
     public void TryParseAcceptsWpfNamesHexAndChannels(string text, byte r, byte g, byte b, byte a)
@@ -48,6 +49,10 @@ public sealed class ColorTests
     [InlineData("#12")]
     [InlineData("1,2")]
     [InlineData("256,2,3")]
+    [InlineData("#  FFFF")]
+    [InlineData("# FFFFFF")]
+    [InlineData("# FFFFFFF")]
+    [InlineData("#FFFF  ")]
     public void TryParseRejectsInvalidValues(string text)
     {
         Assert.False(Color.TryParse(text, out _));
