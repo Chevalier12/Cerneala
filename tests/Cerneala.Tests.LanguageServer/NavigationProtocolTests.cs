@@ -171,6 +171,129 @@ public sealed class NavigationProtocolTests
         fixture.Build(noRestore: true);
     }
 
+    [Fact]
+    public async Task RenameFromOneFileUsesTheUnsavedTextOfOtherOpenDocuments()
+    {
+        using TemporaryNavigationWorkspace fixture = TemporaryNavigationWorkspace.Create();
+        using CancellationTokenSource timeout = new(TimeSpan.FromMinutes(2));
+        await using ProtocolTestClient client = ProtocolTestClient.Start();
+        await client.InitializeAsync(timeout.Token, fixture.ProjectPath);
+        await client.Rpc.NotifyWithParameterObjectAsync("initialized", new { });
+        (string applicationUri, string applicationMarkup, string savedView) = await OpenApplicationAndViewAsync(client, fixture);
+        int declarationOffset = applicationMarkup.IndexOf("Name=\"Accent\"", StringComparison.Ordinal) + "Name=\"".Length + 1;
+        RenameParams rename = new()
+        {
+            TextDocument = new TextDocumentIdentifier { Uri = applicationUri },
+            Position = PositionAt(applicationMarkup, declarationOffset),
+            NewName = "Highlight"
+        };
+
+        // Control: View.crn is unchanged in the editor, so the edit applies to the saved text.
+        LspWorkspaceEdit control = await client.Rpc.InvokeWithParameterObjectAsync<LspWorkspaceEdit>(
+            "textDocument/rename",
+            rename,
+            timeout.Token);
+        Assert.Contains("Background=\"$Highlight\"", ApplyEdits(savedView, control.Changes[fixture.ViewMarkupUri]), StringComparison.Ordinal);
+
+        // The editor now holds an unsaved View.crn with one extra line at the top.
+        string unsavedView = "<!-- unsaved -->\n" + savedView;
+        await ChangeDocumentAsync(client, fixture.ViewMarkupUri, version: 2, unsavedView);
+
+        LspWorkspaceEdit edit = await client.Rpc.InvokeWithParameterObjectAsync<LspWorkspaceEdit>(
+            "textDocument/rename",
+            rename,
+            timeout.Token);
+
+        LspTextEdit[] viewEdits = edit.Changes[fixture.ViewMarkupUri];
+        string applied = ApplyEdits(unsavedView, viewEdits);
+        int savedLine = PositionAt(savedView, savedView.IndexOf("$Accent\"", StringComparison.Ordinal)).Line;
+        int unsavedLine = PositionAt(unsavedView, unsavedView.IndexOf("$Accent\"", StringComparison.Ordinal)).Line;
+        Assert.True(
+            applied.Contains("Background=\"$Highlight\"", StringComparison.Ordinal),
+            "Edits for View.crn: " + string.Join("; ", viewEdits.Select(viewEdit => FormatRange(viewEdit.Range) + " -> " + viewEdit.NewText)) +
+            ". Accent is at line " + unsavedLine + " of the unsaved text and line " + savedLine + " of the saved text.");
+        Assert.Equal(unsavedView.Replace("$Accent\"", "$Highlight\"", StringComparison.Ordinal), applied);
+        Assert.Equal(0, await client.StopAsync(timeout.Token));
+    }
+
+    [Fact]
+    public async Task ReferencesFromOneFileUseTheUnsavedTextOfOtherOpenDocuments()
+    {
+        using TemporaryNavigationWorkspace fixture = TemporaryNavigationWorkspace.Create();
+        using CancellationTokenSource timeout = new(TimeSpan.FromMinutes(2));
+        await using ProtocolTestClient client = ProtocolTestClient.Start();
+        await client.InitializeAsync(timeout.Token, fixture.ProjectPath);
+        await client.Rpc.NotifyWithParameterObjectAsync("initialized", new { });
+        (string applicationUri, string applicationMarkup, string savedView) = await OpenApplicationAndViewAsync(client, fixture);
+        int declarationOffset = applicationMarkup.IndexOf("Name=\"Accent\"", StringComparison.Ordinal) + "Name=\"".Length + 1;
+        ReferenceParams references = new()
+        {
+            TextDocument = new TextDocumentIdentifier { Uri = applicationUri },
+            Position = PositionAt(applicationMarkup, declarationOffset),
+            Context = new ReferenceContext { IncludeDeclaration = true }
+        };
+
+        // Control: View.crn is unchanged in the editor, so the reference is on the saved line.
+        int savedLine = PositionAt(savedView, savedView.IndexOf("$Accent\"", StringComparison.Ordinal)).Line;
+        LspLocation[] control = await client.Rpc.InvokeWithParameterObjectAsync<LspLocation[]>(
+            "textDocument/references",
+            references,
+            timeout.Token);
+        Assert.Contains(control, location => location.Uri == fixture.ViewMarkupUri && location.Range.Start.Line == savedLine);
+
+        // The editor now holds an unsaved View.crn with one extra line at the top.
+        string unsavedView = "<!-- unsaved -->\n" + savedView;
+        await ChangeDocumentAsync(client, fixture.ViewMarkupUri, version: 2, unsavedView);
+        int unsavedLine = PositionAt(unsavedView, unsavedView.IndexOf("$Accent\"", StringComparison.Ordinal)).Line;
+
+        LspLocation[] result = await client.Rpc.InvokeWithParameterObjectAsync<LspLocation[]>(
+            "textDocument/references",
+            references,
+            timeout.Token);
+
+        LspLocation[] inView = result.Where(location => location.Uri == fixture.ViewMarkupUri).ToArray();
+        Assert.True(
+            inView.Any(location => location.Range.Start.Line == unsavedLine),
+            "References in View.crn: " + string.Join("; ", inView.Select(location => FormatRange(location.Range))) +
+            ". Accent is at line " + unsavedLine + " of the unsaved text and line " + savedLine + " of the saved text.");
+        Assert.Equal(0, await client.StopAsync(timeout.Token));
+    }
+
+    private static async Task<(string ApplicationUri, string ApplicationMarkup, string ViewMarkup)> OpenApplicationAndViewAsync(
+        ProtocolTestClient client,
+        TemporaryNavigationWorkspace fixture)
+    {
+        string applicationUri = new Uri(fixture.ApplicationMarkupPath).AbsoluteUri;
+        string applicationMarkup = File.ReadAllText(fixture.ApplicationMarkupPath);
+        string viewMarkup = File.ReadAllText(fixture.ViewMarkupPath);
+        foreach ((string uri, string text) in new[] { (applicationUri, applicationMarkup), (fixture.ViewMarkupUri, viewMarkup) })
+        {
+            await client.Rpc.NotifyWithParameterObjectAsync(
+                "textDocument/didOpen",
+                new DidOpenTextDocumentParams
+                {
+                    TextDocument = new TextDocumentItem { Uri = uri, LanguageId = "cerneala", Version = 1, Text = text }
+                });
+        }
+
+        return (applicationUri, applicationMarkup, viewMarkup);
+    }
+
+    private static string ApplyEdits(string text, IEnumerable<LspTextEdit> edits)
+    {
+        foreach (LspTextEdit edit in edits.OrderByDescending(edit => OffsetAt(text, edit.Range.Start)))
+        {
+            int start = OffsetAt(text, edit.Range.Start);
+            int end = OffsetAt(text, edit.Range.End);
+            text = text[..start] + edit.NewText + text[end..];
+        }
+
+        return text;
+    }
+
+    private static string FormatRange(LspRange range) =>
+        range.Start.Line + ":" + range.Start.Character + "-" + range.End.Line + ":" + range.End.Character;
+
     private static Task ChangeDocumentAsync(
         ProtocolTestClient client,
         string uri,

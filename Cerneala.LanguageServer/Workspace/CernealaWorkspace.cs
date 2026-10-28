@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Cerneala.Language;
 using Cerneala.Language.Semantics;
 using Cerneala.LanguageServer.Logging;
 using LanguageSourceText = Cerneala.Language.Text.SourceText;
@@ -156,7 +157,13 @@ internal sealed class CernealaWorkspace : IAsyncDisposable
                 document = new CernealaDocument(path, LanguageSourceText.From(text, capturedState.Revision));
             }
 
-            return new WorkspaceDocumentSnapshot(capturedState, document, owners, Telemetry);
+            // The open text of every other document of the owners wins over its saved text, as in workspace requests.
+            CernealaDocument[] otherOpenDocuments = overlays.GetSnapshots()
+                .Where(open => !PathComparer.Instance.Equals(open.Path, path) &&
+                    owners.Any(owner => owner.TryGetDocument(open.Path, out _)))
+                .Select(open => new CernealaDocument(open.Path, open.Text))
+                .ToArray();
+            return new WorkspaceDocumentSnapshot(capturedState, document, otherOpenDocuments, owners, Telemetry);
         }
         catch (OperationCanceledException)
         {
@@ -266,24 +273,14 @@ internal sealed class CernealaWorkspace : IAsyncDisposable
             foreach (ProjectContext project in capturedState.Projects)
             {
                 linked.Token.ThrowIfCancellationRequested();
+                CernealaDocument[] projectOverlays = overlaySnapshots
+                    .Where(overlay => project.TryGetDocument(overlay.Path, out _))
+                    .Select(overlay => new CernealaDocument(overlay.Path, overlay.Text))
+                    .ToArray();
                 CernealaCompilation compilation = project.LanguageCompilation;
-                bool temporary = false;
-                foreach (DocumentOverlaySnapshot overlay in overlaySnapshots.Where(overlay =>
-                    project.DocumentPaths.Contains(overlay.Path, PathComparer.Instance)))
+                if (projectOverlays.Length > 0)
                 {
-                    CernealaCompilation updated = compilation.WithDocument(
-                        new CernealaDocument(overlay.Path, overlay.Text));
-                    if (temporary)
-                    {
-                        compilation.Dispose();
-                    }
-
-                    compilation = updated;
-                    temporary = true;
-                }
-
-                if (temporary)
-                {
+                    compilation = project.CreateOverlayCompilation(projectOverlays);
                     temporaryCompilations.Add(compilation);
                 }
 
@@ -515,7 +512,9 @@ internal sealed class CernealaWorkspace : IAsyncDisposable
 
         string fileName = Path.GetFileName(path);
         string extension = Path.GetExtension(path);
-        return extension.Equals(".cs", StringComparison.OrdinalIgnoreCase) ||
+        // Markup files are project inputs too: project item globs decide their owners, and closed ones keep saved text.
+        return CernealaDocumentPath.IsMarkupFile(path) ||
+            extension.Equals(".cs", StringComparison.OrdinalIgnoreCase) ||
             extension.Equals(".csproj", StringComparison.OrdinalIgnoreCase) ||
             extension.Equals(".props", StringComparison.OrdinalIgnoreCase) ||
             extension.Equals(".targets", StringComparison.OrdinalIgnoreCase) ||

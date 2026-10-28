@@ -158,6 +158,119 @@ public sealed class WorkspaceTests
     }
 
     [Fact]
+    public async Task RangedChangeWithCharacterPastTheLineEndClampsToTheLineLengthExcludingTheLineBreak()
+    {
+        using TemporaryWorkspace fixture = TemporaryWorkspace.CreateSingleProject();
+        await using CernealaWorkspace workspace = await CreateWorkspaceAsync(fixture.ProjectPath);
+        (string Text, int Line, int[] EndCharacters, string Expected)[] cases =
+        [
+            ("ab\r\ncd", 0, [2, 3, 4, 5], "X\r\ncd"),
+            ("ab\ncd", 0, [2, 3, 4], "X\ncd"),
+            ("ab\rcd", 0, [2, 3, 4], "X\rcd"),
+            ("cd\r\nab", 1, [2, 3, 9], "cd\r\nX")
+        ];
+        List<string> expected = new();
+        List<string> actual = new();
+        int documentIndex = 0;
+        foreach ((string text, int line, int[] endCharacters, string expectedText) in cases)
+        {
+            foreach (int endCharacter in endCharacters)
+            {
+                string uri = new Uri(Path.Combine(fixture.RootPath, "Clamp" + documentIndex++ + ".crn")).AbsoluteUri;
+                Assert.True(workspace.OpenDocument(uri, text, 1));
+                expected.Add(endCharacter + ": " + expectedText);
+                try
+                {
+                    Assert.True(workspace.ApplyChanges(uri, 2, [new TextDocumentContentChangeEvent
+                    {
+                        Range = new LspRange
+                        {
+                            Start = new LspPosition { Line = line, Character = 0 },
+                            End = new LspPosition { Line = line, Character = endCharacter }
+                        },
+                        Text = "X"
+                    }]));
+                    using WorkspaceDocumentSnapshot snapshot = await workspace.GetSnapshotAsync(uri, TestCancellation);
+                    actual.Add(endCharacter + ": " + snapshot.Document.Text);
+                }
+                catch (ArgumentOutOfRangeException exception)
+                {
+                    actual.Add(endCharacter + ": THROWS " + exception.GetType().Name);
+                }
+            }
+        }
+
+        Assert.Equal(expected, actual);
+    }
+
+    [Fact]
+    public void RequestPositionWithCharacterPastTheLineEndClampsToTheLineLengthExcludingTheLineBreak()
+    {
+        Cerneala.Language.Text.SourceText source = Cerneala.Language.Text.SourceText.From("ab\r\ncd\nef\rgh");
+        int[] actual = [
+            LspTextCoordinates.ToOffset(source, new LspPosition { Line = 0, Character = 3 }),
+            LspTextCoordinates.ToOffset(source, new LspPosition { Line = 0, Character = 40 }),
+            LspTextCoordinates.ToOffset(source, new LspPosition { Line = 1, Character = 3 }),
+            LspTextCoordinates.ToOffset(source, new LspPosition { Line = 2, Character = 3 }),
+            LspTextCoordinates.ToOffset(source, new LspPosition { Line = 3, Character = 9 })
+        ];
+
+        Assert.Equal([2, 2, 6, 9, 12], actual);
+    }
+
+    [Fact]
+    public async Task NewCrnFileMatchedByAProjectGlobGetsAnOwnerThroughTheFileWatcher()
+    {
+        using TemporaryWorkspace fixture = TemporaryWorkspace.CreateGlobProject();
+        await using CernealaWorkspace workspace = await CreateWatchingWorkspaceAsync(fixture.ProjectPath);
+        int reloads = 0;
+        workspace.Reloaded += () => Interlocked.Increment(ref reloads);
+        string secondPath = Path.Combine(fixture.RootPath, "Second.crn");
+        string secondUri = new Uri(secondPath).AbsoluteUri;
+        Assert.Empty(workspace.GetOwnerSummaries(secondUri));
+
+        File.WriteAllText(secondPath, "<Window />");
+
+        bool owned = await WaitUntilAsync(() => workspace.GetOwnerSummaries(secondUri).Count == 1, TimeSpan.FromSeconds(10));
+        Assert.True(owned, "Second.crn matches the project's *.crn glob but has no owner 10 s after it was created; reloads observed: " + Volatile.Read(ref reloads) + ".");
+
+        File.Delete(secondPath);
+
+        bool released = await WaitUntilAsync(() => workspace.GetOwnerSummaries(secondUri).Count == 0, TimeSpan.FromSeconds(10));
+        Assert.True(released, "Second.crn was deleted but still has an owner 10 s later; reloads observed: " + Volatile.Read(ref reloads) + ".");
+    }
+
+    [Fact]
+    public async Task ClosedCrnFileEditedOnDiskRefreshesItsSavedTextThroughTheFileWatcher()
+    {
+        using TemporaryWorkspace fixture = TemporaryWorkspace.CreateGlobProject();
+        await using CernealaWorkspace workspace = await CreateWatchingWorkspaceAsync(fixture.ProjectPath);
+        const string edited = "<Window Title=\"Edited on disk\" />";
+
+        fixture.WriteMarkup(edited);
+
+        bool refreshed = await WaitUntilAsync(() =>
+        {
+            using WorkspaceDocumentSnapshot snapshot = workspace.GetSnapshotAsync(fixture.MarkupUri, TestCancellation).GetAwaiter().GetResult();
+            return snapshot.Document.Text.ToString() == edited;
+        }, TimeSpan.FromSeconds(10));
+        Assert.True(refreshed, "View.crn was edited on disk while closed, but the server still uses its old saved text 10 s later.");
+    }
+
+    [Fact]
+    public async Task NewCsFileTriggersAReloadThroughTheFileWatcher()
+    {
+        using TemporaryWorkspace fixture = TemporaryWorkspace.CreateGlobProject();
+        await using CernealaWorkspace workspace = await CreateWatchingWorkspaceAsync(fixture.ProjectPath);
+        int reloads = 0;
+        workspace.Reloaded += () => Interlocked.Increment(ref reloads);
+
+        File.WriteAllText(Path.Combine(fixture.RootPath, "Extra.cs"), "namespace Fixture; internal sealed class Extra { }");
+
+        Assert.True(await WaitUntilAsync(() => Volatile.Read(ref reloads) > 0, TimeSpan.FromSeconds(10)), "No reload within 10 s after Extra.cs was created.");
+    }
+
+    [Fact]
     public async Task LinkedDocumentCanHaveTwoOwnersWithoutMixingTheirSymbols()
     {
         using TemporaryWorkspace fixture = TemporaryWorkspace.CreateTwoProjectsWithLinkedMarkup();
@@ -299,18 +412,40 @@ public sealed class WorkspaceTests
 
     private static TextDocumentContentChangeEvent FullReplacement(string text) => new() { Text = text };
 
-    private static Task<CernealaWorkspace> CreateWorkspaceAsync(string workspacePath)
+    private static Task<CernealaWorkspace> CreateWorkspaceAsync(string workspacePath) =>
+        CreateWorkspaceAsync(workspacePath, watchFileSystem: false);
+
+    private static Task<CernealaWorkspace> CreateWatchingWorkspaceAsync(string workspacePath) =>
+        CreateWorkspaceAsync(workspacePath, watchFileSystem: true);
+
+    private static Task<CernealaWorkspace> CreateWorkspaceAsync(string workspacePath, bool watchFileSystem)
     {
         WorkspaceConfiguration configuration = new(
             Path.GetDirectoryName(workspacePath),
             workspacePath,
             null,
             "Debug",
-            WatchFileSystem: false);
+            WatchFileSystem: watchFileSystem);
         return CernealaWorkspace.CreateAsync(
             configuration,
             new StructuredServerLogger(TextWriter.Null),
             TestCancellation);
+    }
+
+    private static async Task<bool> WaitUntilAsync(Func<bool> condition, TimeSpan timeout)
+    {
+        DateTime deadline = DateTime.UtcNow + timeout;
+        while (!condition())
+        {
+            if (DateTime.UtcNow >= deadline)
+            {
+                return false;
+            }
+
+            await Task.Delay(50);
+        }
+
+        return true;
     }
 
     private sealed class TrackingAnalyzerReference : AnalyzerReference
@@ -392,6 +527,27 @@ public sealed class WorkspaceTests
             string project = Path.Combine(root, "Fixture.csproj");
             string markup = Path.Combine(root, "View.crn");
             WriteProject(project, "Fixture", [markup]);
+            File.WriteAllText(markup, "<Window />");
+            File.WriteAllText(Path.Combine(root, "View.crn.cs"), "namespace Fixture; internal sealed class View { }");
+            return new TemporaryWorkspace(root, project, markup);
+        }
+
+        public static TemporaryWorkspace CreateGlobProject()
+        {
+            string root = CreateRoot();
+            string project = Path.Combine(root, "Fixture.csproj");
+            string markup = Path.Combine(root, "View.crn");
+            File.WriteAllText(project, """
+                <Project Sdk="Microsoft.NET.Sdk">
+                  <PropertyGroup>
+                    <TargetFramework>net10.0</TargetFramework>
+                    <AssemblyName>Fixture</AssemblyName>
+                  </PropertyGroup>
+                  <ItemGroup>
+                    <AdditionalFiles Include="*.crn" />
+                  </ItemGroup>
+                </Project>
+                """);
             File.WriteAllText(markup, "<Window />");
             File.WriteAllText(Path.Combine(root, "View.crn.cs"), "namespace Fixture; internal sealed class View { }");
             return new TemporaryWorkspace(root, project, markup);

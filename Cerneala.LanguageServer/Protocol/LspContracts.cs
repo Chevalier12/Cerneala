@@ -661,9 +661,6 @@ internal sealed class CompletionItemData
     [JsonPropertyName("uri")]
     public required string Uri { get; init; }
 
-    [JsonPropertyName("version")]
-    public long Version { get; init; }
-
     [JsonPropertyName("type")]
     public required string TypeMetadataName { get; init; }
 

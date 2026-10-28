@@ -1,4 +1,5 @@
 using Cerneala.Language.Text;
+using Cerneala.LanguageServer.Features;
 using LanguageSourceText = Cerneala.Language.Text.SourceText;
 
 namespace Cerneala.LanguageServer.Workspace;
@@ -54,13 +55,7 @@ internal sealed class DocumentOverlayStore : IDisposable
                     continue;
                 }
 
-                int start = text.GetOffset(new LinePosition(
-                    change.Range.Start.Line,
-                    change.Range.Start.Character));
-                int end = text.GetOffset(new LinePosition(
-                    change.Range.End.Line,
-                    change.Range.End.Character));
-                text = text.WithChange(new TextChange(new TextSpan(start, end - start), change.Text));
+                text = text.WithChange(new TextChange(LspTextCoordinates.ToSpan(text, change.Range), change.Text));
             }
 
             Replace(path, LanguageSourceText.From(text.ToString(), version));
