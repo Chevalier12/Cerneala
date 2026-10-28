@@ -11,41 +11,41 @@ public sealed class CommandRouterTests
         UIRoot root = BuildTree(out UIElement parent, out UIElement child, out ElementInputRouteMap map);
         RoutedCommand command = new("Save", typeof(CommandRouterTests));
         List<string> calls = [];
-        root.CommandBindings.Add(new CommandBinding(command, null, (_, _) => calls.Add("preview-root")));
-        parent.CommandBindings.Add(new CommandBinding(command, null, (_, _) => calls.Add("preview-parent")));
-        child.CommandBindings.Add(new CommandBinding(command, null, (_, args) =>
+        root.CommandBindings.Add(new CommandBinding(command, null, (_, _) => calls.Add("root")));
+        parent.CommandBindings.Add(new CommandBinding(command, null, (_, args) =>
         {
-            calls.Add("preview-child");
+            calls.Add("parent");
             args.CanExecute = true;
             args.Handled = true;
         }));
+        child.CommandBindings.Add(new CommandBinding(command, null, (_, _) => calls.Add("child")));
 
         bool canExecute = new CommandRouter().CanExecute(new RoutedCommandContext(command, child, map));
 
         Assert.True(canExecute);
-        Assert.Equal(["preview-root", "preview-parent", "preview-child"], calls);
+        Assert.Equal(["child", "parent"], calls);
     }
 
+    // As WPF's CommandBinding.CanExecute, a binding answers only the bubbling CanExecuteEvent, so each callback runs
+    // once per query, not once for the preview pass and again for the bubbling pass (#1034).
     [Fact]
-    public void CanExecuteBubblesWhenPreviewIsNotHandled()
+    public void CanExecuteRunsEachBindingOnceWhenNothingHandlesIt()
     {
         UIRoot root = BuildTree(out UIElement parent, out UIElement child, out ElementInputRouteMap map);
         RoutedCommand command = new("Save", typeof(CommandRouterTests));
         List<string> calls = [];
-        root.CommandBindings.Add(new CommandBinding(command, null, (_, _) => calls.Add("preview-root")));
-        parent.CommandBindings.Add(new CommandBinding(command, null, (_, _) => calls.Add("preview-parent")));
+        root.CommandBindings.Add(new CommandBinding(command, null, (_, _) => calls.Add("root")));
+        parent.CommandBindings.Add(new CommandBinding(command, null, (_, _) => calls.Add("parent")));
         child.CommandBindings.Add(new CommandBinding(command, null, (_, args) =>
         {
-            calls.Add("preview-child");
+            calls.Add("child");
             args.CanExecute = true;
         }));
 
         bool canExecute = new CommandRouter().CanExecute(new RoutedCommandContext(command, child, map));
 
         Assert.True(canExecute);
-        Assert.Equal(
-            ["preview-root", "preview-parent", "preview-child", "preview-child", "preview-parent", "preview-root"],
-            calls);
+        Assert.Equal(["child", "parent", "root"], calls);
     }
 
     [Fact]
@@ -75,26 +75,26 @@ public sealed class CommandRouterTests
     }
 
     [Fact]
-    public void HandledPreviewExecuteSuppressesBubble()
+    public void HandledExecuteStopsTheBubble()
     {
         UIRoot root = BuildTree(out _, out UIElement child, out ElementInputRouteMap map);
         RoutedCommand command = new("Save", typeof(CommandRouterTests));
         List<string> calls = [];
         child.CommandBindings.Add(new CommandBinding(command, (_, args) =>
         {
-            calls.Add("preview-child");
+            calls.Add("child");
             args.Handled = true;
         }, (_, args) =>
         {
             args.CanExecute = true;
             args.Handled = true;
         }));
-        root.CommandBindings.Add(new CommandBinding(command, (_, _) => calls.Add("preview-root")));
+        root.CommandBindings.Add(new CommandBinding(command, (_, _) => calls.Add("root")));
 
         bool didExecute = new CommandRouter().Execute(new RoutedCommandContext(command, child, map));
 
         Assert.True(didExecute);
-        Assert.Equal(["preview-root", "preview-child"], calls);
+        Assert.Equal(["child"], calls);
     }
 
     [Fact]

@@ -226,6 +226,43 @@ public sealed class OverlayInputRouteTests
         Assert.Equal(1, windowMoves);
     }
 
+    // The click owner of a press is visual, as its pressed state and click command are: a click on content that an
+    // Overlay in a Button's content projects bubbles its MouseUp to the button but is not the button's click, so the
+    // button raises no Click and runs no Command (issue #1203).
+    [Fact]
+    public void AClickOnProjectedOverlayContentInsideAButtonRaisesNoClickAndRunsNoCommand()
+    {
+        TextBlock projected = new() { Text = "popup text", Width = 80, Height = 20 };
+        Overlay overlay = new() { Content = projected, IsOpen = true };
+        TextBlock label = new() { Text = "label", Width = 60, Height = 20 };
+        StackPanel content = new();
+        content.Children.Add(label);
+        content.Children.Add(overlay);
+        Button button = new() { Content = content, Width = 100, Height = 40 };
+        int clicks = 0;
+        int executions = 0;
+        int mouseUps = 0;
+        button.Click += (_, _) => clicks++;
+        button.Command = new ActionCommand(_ => executions++);
+        button.AddHandler(UIElement.MouseUpEvent, (_, _) => mouseUps++, handledEventsToo: true);
+        UIRoot root = Attach(button);
+        root.ProcessFrame();
+        Assert.True(overlay.IsProjected);
+        ElementInputBridge bridge = new();
+
+        Click(bridge, root, projected);
+        root.ProcessFrame();
+
+        Assert.Equal(1, mouseUps);
+        Assert.False(button.IsPressed);
+        Assert.Equal((0, 0), (clicks, executions));
+
+        Click(bridge, root, label);
+        root.ProcessFrame();
+
+        Assert.Equal((1, 1), (clicks, executions));
+    }
+
     // Opened and Closed describe the overlay that raised them, like WPF Popup.Opened and Popup.Closed (issue #491).
     [Fact]
     public void OpeningAndClosingAComboBoxDropDownInsideAnOpenOverlayDoesNotRaiseTheOverlayOpenedOrClosed()

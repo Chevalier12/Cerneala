@@ -30,6 +30,157 @@ public sealed class ButtonBaseCommandStateIntegrationTests
     }
 
     [Fact]
+    public void ExecutedHandlerRunsOncePerExecution()
+    {
+        UIRoot root = new(100, 100);
+        ButtonBase button = new();
+        root.VisualChildren.Add(button);
+        RoutedCommand command = new("Save", typeof(ButtonBaseCommandStateIntegrationTests));
+        int executions = 0;
+        root.CommandBindings.Add(new CommandBinding(command, (_, _) => executions++, (_, args) =>
+        {
+            args.CanExecute = true;
+            args.Handled = true;
+        }));
+        button.Command = command;
+        root.ProcessFrame();
+
+        bool executed = new CommandRouter().Execute(
+            new RoutedCommandContext(command, button, root.InputCache.EnsureCurrent(root), null));
+
+        Assert.True(executed);
+        Assert.Equal(1, executions);
+    }
+
+    [Fact]
+    public void CanExecuteHandlerRunsOncePerQuery()
+    {
+        UIRoot root = new(100, 100);
+        ButtonBase button = new();
+        root.VisualChildren.Add(button);
+        RoutedCommand command = new("Save", typeof(ButtonBaseCommandStateIntegrationTests));
+        int queries = 0;
+        root.CommandBindings.Add(new CommandBinding(command, (_, _) => { }, (_, args) =>
+        {
+            queries++;
+            args.CanExecute = true;
+        }));
+        root.ProcessFrame();
+
+        bool canExecute = new CommandRouter().CanExecute(
+            new RoutedCommandContext(command, button, root.InputCache.EnsureCurrent(root), null));
+
+        Assert.True(canExecute);
+        Assert.Equal(1, queries);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void ButtonInClosedOverlayFollowsItsCommandOnceTheOverlayOpens(bool canExecute)
+    {
+        UIRoot root = new(200, 200);
+        Overlay overlay = new();
+        ButtonBase button = new();
+        root.VisualChildren.Add(overlay);
+        overlay.Content = button;
+        RoutedCommand command = new("Save", typeof(ButtonBaseCommandStateIntegrationTests));
+        root.CommandBindings.Add(new CommandBinding(command, (_, _) => { }, (_, args) =>
+        {
+            args.CanExecute = canExecute;
+            args.Handled = true;
+        }));
+
+        button.Command = command;
+        int refreshesWhileClosed = root.ProcessFrame().CommandStateElements;
+        overlay.IsOpen = true;
+        int refreshesAfterOpen = root.ProcessFrame().CommandStateElements;
+        root.ProcessFrame();
+
+        Assert.True(
+            canExecute == button.IsEnabled,
+            $"IsEnabled = {button.IsEnabled}, expected {canExecute}; refreshes: {refreshesWhileClosed} while closed, {refreshesAfterOpen} after opening");
+    }
+
+    [Fact]
+    public void NonRoutedCommandButtonInClosedOverlayIsDisabledOnceTheOverlayOpens()
+    {
+        UIRoot root = new(200, 200);
+        Overlay overlay = new();
+        ButtonBase button = new();
+        root.VisualChildren.Add(overlay);
+        overlay.Content = button;
+
+        button.Command = new ActionCommand(_ => { }, _ => false);
+        root.ProcessFrame();
+        overlay.IsOpen = true;
+        root.ProcessFrame();
+        root.ProcessFrame();
+
+        Assert.False(button.IsEnabled);
+    }
+
+    [Fact]
+    public void ButtonDisabledByItsCommandIsEnabledAfterCommandIsCleared()
+    {
+        Button button = new() { Content = "x", Command = new ActionCommand(_ => { }, _ => false) };
+        UIRoot root = new(320, 240);
+        root.VisualChildren.Add(button);
+        root.ProcessFrame();
+        bool before = button.IsEnabled;
+
+        button.Command = null;
+        root.ProcessFrame();
+
+        Assert.Equal((false, true), (before, button.IsEnabled));
+    }
+
+    [Fact]
+    public void MenuItemDisabledByItsCommandIsEnabledAfterCommandIsCleared()
+    {
+        MenuItem item = new() { Header = "File", Command = new ActionCommand(_ => { }, _ => false) };
+        UIRoot root = new(320, 240);
+        root.VisualChildren.Add(item);
+        root.ProcessFrame();
+        bool before = item.IsEnabled;
+
+        item.Command = null;
+        root.ProcessFrame();
+
+        Assert.Equal((false, true), (before, item.IsEnabled));
+    }
+
+    [Fact]
+    public void ButtonDisabledByTheAppStaysDisabledAfterCommandIsCleared()
+    {
+        Button button = new() { Content = "x", Command = new ActionCommand(_ => { }, _ => true) };
+        UIRoot root = new(320, 240);
+        root.VisualChildren.Add(button);
+        root.ProcessFrame();
+        button.IsEnabled = false;
+
+        button.Command = null;
+        root.ProcessFrame();
+
+        Assert.False(button.IsEnabled);
+    }
+
+    [Fact]
+    public void ButtonDisabledByItsCommandAndThenByTheAppStaysDisabledAfterCommandIsCleared()
+    {
+        Button button = new() { Content = "x", Command = new ActionCommand(_ => { }, _ => false) };
+        UIRoot root = new(320, 240);
+        root.VisualChildren.Add(button);
+        root.ProcessFrame();
+        button.IsEnabled = false;
+
+        button.Command = null;
+        root.ProcessFrame();
+
+        Assert.False(button.IsEnabled);
+    }
+
+    [Fact]
     public void RoutedCommandBindingCanExecuteFalseDisablesButtonBeforeKeyboardActivation()
     {
         UIRoot root = RootWithButton(out ButtonBase button);
