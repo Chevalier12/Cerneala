@@ -22,9 +22,13 @@ namespace Cerneala.Platforms.Sdl3;
 // never joins after a wheel notch, which is raised at the frame's final position.
 internal sealed class SdlInputSource : IInputSource
 {
+    // (-1, -1) is the position of a pointer outside the window. A new window has not seen the
+    // pointer yet, so it starts there, as after a Leave, not at (0, 0) over its top-left element.
+    private static readonly PointerSnapshot NoPointer = PointerSnapshot.Empty.WithPosition(-1, -1);
+
     private readonly Action? frameRequested;
-    private PointerSnapshot previousPointer = PointerSnapshot.Empty;
-    private PointerSnapshot currentPointer = PointerSnapshot.Empty;
+    private PointerSnapshot previousPointer = NoPointer;
+    private PointerSnapshot currentPointer = NoPointer;
     private KeyboardSnapshot previousKeyboard = KeyboardSnapshot.Empty;
     private readonly HashSet<InputKey> downKeys = [];
     // The key each held keypad key went down as, by scancode.
@@ -275,7 +279,7 @@ internal sealed class SdlInputSource : IInputSource
                 break;
             case PendingKind.Leave:
                 hasPointerPosition = false;
-                currentPointer = currentPointer.WithPosition(-1, -1);
+                currentPointer = currentPointer.WithPosition(NoPointer.X, NoPointer.Y);
                 break;
             case PendingKind.Button:
                 hasButtonTransition = true;
@@ -362,7 +366,7 @@ internal sealed class SdlInputSource : IInputSource
     private bool Changes(in PendingInput input) => input.Kind switch
     {
         PendingKind.Move => !hasPointerPosition || currentPointer.X != input.X || currentPointer.Y != input.Y,
-        PendingKind.Leave => hasPointerPosition || currentPointer.X != -1 || currentPointer.Y != -1,
+        PendingKind.Leave => hasPointerPosition || currentPointer.X != NoPointer.X || currentPointer.Y != NoPointer.Y,
         PendingKind.Button => (InputMouseButton)input.Value != InputMouseButton.None &&
             currentPointer.IsDown((InputMouseButton)input.Value) != input.Down,
         PendingKind.Wheel => input.Value != 0,

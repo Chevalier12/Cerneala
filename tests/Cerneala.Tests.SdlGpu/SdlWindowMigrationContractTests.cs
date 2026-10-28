@@ -76,6 +76,51 @@ public sealed class SdlWindowMigrationContractTests
         Assert.Equal(SdlSystemCursor.Crosshair, api.CreatedCursors[api.SelectedCursor]);
     }
 
+    // #870: before any mouse event the pointer is not over the window, as after the pointer leaves it.
+    [Fact]
+    public void WindowTheMouseNeverEnteredHasNoHoveredElementAndNoElementCursor()
+    {
+        FakeSdlApi api = new() { WindowPixelDensity = 1, WindowDisplayScale = 1 };
+        RecordingGraphicsFactory graphics = new();
+        using WindowApplicationRuntime runtime = new(new SdlWindowPlatform(api, graphics));
+        Button button = new() { Content = "Hover", Cursor = Cursor.Hand };
+        int mouseEnters = 0;
+        button.MouseEnter += (_, _) => mouseEnters++;
+        runtime.StartMainWindow(new Window { Content = button, Width = 320, Height = 200 });
+
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+
+        Assert.True(
+            !button.IsPointerOver,
+            $"The button is hovered although no mouse event reached the window (button bounds {button.ArrangedBounds}).");
+        Assert.Equal(0, mouseEnters);
+        Assert.NotEqual(SdlSystemCursor.Pointer, SelectedCursor(api));
+    }
+
+    [Fact]
+    public void MouseMotionInsideTheButtonHoversItAndSelectsTheHandCursor()
+    {
+        // Control for the never-entered test: a real MouseMotion inside the button.
+        FakeSdlApi api = new() { WindowPixelDensity = 1, WindowDisplayScale = 1 };
+        RecordingGraphicsFactory graphics = new();
+        using WindowApplicationRuntime runtime = new(new SdlWindowPlatform(api, graphics));
+        Button button = new() { Content = "Hover", Cursor = Cursor.Hand };
+        runtime.StartMainWindow(new Window { Content = button, Width = 320, Height = 200 });
+        SdlWindowSurface surface = Assert.IsType<SdlWindowSurface>(Assert.Single(graphics.Surfaces));
+        var bounds = button.ArrangedBounds;
+        api.Enqueue(new SdlEvent(SdlEventKind.MouseMotion, surface.WindowId,
+            X: bounds.X + bounds.Width / 2, Y: bounds.Y + bounds.Height / 2));
+
+        runtime.PumpOnce(TimeSpan.FromMilliseconds(16));
+
+        Assert.True(button.IsPointerOver);
+        Assert.Equal(SdlSystemCursor.Pointer, SelectedCursor(api));
+    }
+
+    private static SdlSystemCursor? SelectedCursor(FakeSdlApi api) =>
+        api.CreatedCursors.TryGetValue(api.SelectedCursor, out SdlSystemCursor cursor) ? cursor : null;
+
     [Fact]
     public void GraphicsFactoryReceivesSurfaceAndResizeEventsAreCoalesced()
     {
