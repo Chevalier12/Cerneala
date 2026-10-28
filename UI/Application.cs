@@ -261,14 +261,21 @@ public class Application
         }
         finally
         {
-            if (services is IDisposable disposable)
+            // A failing service provider Dispose does not skip the rest of the exit: Timbre is retired and the
+            // runtime and Current are cleared, then the failure propagates.
+            try
             {
-                disposable.Dispose();
+                if (services is IDisposable disposable)
+                {
+                    disposable.Dispose();
+                }
             }
-
-            services = null;
-            RetireTimbre();
-            DetachRuntime();
+            finally
+            {
+                services = null;
+                RetireTimbre();
+                DetachRuntime();
+            }
         }
     }
 
