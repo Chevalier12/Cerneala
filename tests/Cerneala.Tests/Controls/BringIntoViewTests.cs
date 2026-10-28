@@ -37,6 +37,24 @@ public sealed class BringIntoViewTests
         AssertInsideViewport(viewer, top);
     }
 
+    // As WPF, RequestBringIntoView bubbles also from a disabled element: a disabled Button that ends at 320 scrolls the
+    // viewport 100 pixels high to offset 220 (#1175).
+    [Fact]
+    public void BringIntoViewOfADisabledElementScrollsTheScrollViewer()
+    {
+        Button button = new() { Height = 20, IsEnabled = false };
+        StackPanel stack = new();
+        stack.VisualChildren.Add(new Border { Height = 300 });
+        stack.VisualChildren.Add(button);
+        stack.VisualChildren.Add(new Border { Height = 200 });
+        (UIRoot root, ScrollViewer viewer) = CreateViewer(stack, width: 200, height: 100);
+
+        button.BringIntoView();
+        root.ProcessFrame();
+
+        Assert.Equal(220, viewer.Presenter.VerticalOffset);
+    }
+
     // BringIntoView with a rectangle brings only that part of the element into view: the top 5 pixels of a Button that
     // starts at 300 end at 305, so the offset of the viewport 100 pixels high becomes 205 (#702).
     [Fact]

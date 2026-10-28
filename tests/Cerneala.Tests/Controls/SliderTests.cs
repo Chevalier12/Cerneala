@@ -1132,6 +1132,37 @@ public sealed class SliderTests
         Assert.Equal(4, slider.Value, 3);
     }
 
+    // A thumb that is disabled or hidden while it drags ends its drag; its DragCompleted bubbles to the slider, which
+    // closes the drag ToolTip as WPF's Slider.OnThumbDragCompleted.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void AutoToolTipClosesWhenTheDraggingThumbIsDisabledOrHidden(bool hide)
+    {
+        (UIRoot root, Slider slider) = CreateAutoToolTipSlider(Orientation.Horizontal, AutoToolTipPlacement.TopLeft);
+        ElementInputBridge bridge = new();
+        (float x, float y) = Center(slider.Track.Thumb);
+        bridge.Dispatch(root, PointerFrame(x, y, currentDown: true));
+        bridge.Dispatch(root, PointerFrame(x, y, x + 30, y, previousDown: true, currentDown: true));
+        root.ProcessFrame();
+        Assert.True(slider.AutoToolTip!.IsOpen);
+
+        if (hide)
+        {
+            slider.Track.Thumb.Visibility = Visibility.Hidden;
+        }
+        else
+        {
+            slider.Track.Thumb.IsEnabled = false;
+        }
+
+        bridge.Dispatch(root, PointerFrame(x + 30, y, x + 30, y, previousDown: true, currentDown: true));
+        root.ProcessFrame();
+
+        Assert.False(slider.Track.Thumb.IsDragging);
+        Assert.False(slider.AutoToolTip.IsOpen);
+    }
+
     // A template replacement during a drag closes the drag ToolTip, and the next drag places it beside the new thumb.
     [Fact]
     public void TemplateReplacementClosesAutoToolTip()
