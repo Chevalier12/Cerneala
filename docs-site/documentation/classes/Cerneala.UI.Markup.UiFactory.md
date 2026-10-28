@@ -71,6 +71,19 @@ UIElement? root = result.Value;
 
 The factory depends on a `UiMarkupTypeRegistry`. For each markup node, it looks up the element registration by node name, invokes the registration factory, applies attributes through registered property setters, applies text content through the registered content property, and adds child elements through the registered child action.
 
+The tree is built top-down, as WPF builds a `FrameworkElement`: a child is created, added to its parent through the registered child action, and only then gets its own resources, attributes, text content, and children. So a property setter already sees the element's ancestors, and a `$Name` brush finds a resource declared on a parent or grandparent in the same markup through `UIElement.TryFindResource`. In this markup the `Border` gets the `Tomato` brush of its parent, and no diagnostic is reported:
+
+```xml
+<StackPanel>
+  <StackPanel.Resources>
+    <SolidColorBrush Name="Accent" Color="Tomato" />
+  </StackPanel.Resources>
+  <Border Background="$Accent" />
+</StackPanel>
+```
+
+A resource declared on a sibling is not on the path and is not found: `MARKUP027` is reported. A child that cannot be added (`MARKUP025` or `MARKUP026`) still gets its own attributes and children applied, so their diagnostics are reported as well, but it has no parent while they are applied.
+
 `Create` starts with diagnostics already attached to the document and appends creation diagnostics. When `options` is `null`, `MarkupLoadOptions.Strict` is used. In strict mode, any error diagnostic causes the returned `MarkupResult<UIElement>` to have a `null` `Value`. In recovery mode, the method continues collecting diagnostics and may return the created root, including a partial tree when some child nodes could not be created or attached.
 
 The method reports markup creation failures as diagnostics rather than throwing for unknown elements, unknown properties, unsupported text content, unsupported children, failed element construction, failed child attachment, or invalid property values. It still throws `ArgumentNullException` when the `document` argument is `null`. A property setter exception other than `FormatException`, `ArgumentException`, or `InvalidOperationException` is not converted. A missing brush resource is an invalid property value: `<Button Background="$Missing" />` with no `Missing` brush resource reports `MARKUP027` with the message `Could not set markup property 'Background': Brush resource 'Missing' was not found.`

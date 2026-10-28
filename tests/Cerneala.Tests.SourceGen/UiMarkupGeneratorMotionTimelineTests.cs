@@ -490,6 +490,146 @@ public sealed partial class UiMarkupGeneratorTests
         AssertMotionDiagnostic(result, "only inside @keyframes");
     }
 
+    // #802: Step(...) is an easing of a @keyframes segment only. Every other path that takes an inline spec reports the
+    // same rule instead of emitting a StepSpec<T> type that does not exist (CS0234).
+    [Theory]
+    [InlineData("@on Loaded { @animate { @to { Opacity = 1 with Step(4); } } }")]
+    [InlineData("@on Loaded { @animate { @to { Opacity = 1 with Step(4, JumpEnd); } } }")]
+    [InlineData("@presence { enter = Step(4); exit = Tween(100ms); }")]
+    [InlineData("@presence { enter = Tween(100ms); exit = Step(4); }")]
+    public void MotionStepIsRejectedOutsideKeyframesOnEveryPath(string body)
+    {
+        GeneratorRunResult result = RunGenerator(
+            "MotionStepOutsideKeyframes.crn",
+            MotionAspectMarkup(body),
+            out Compilation compilation);
+
+        string compilationErrors = string.Join(
+            Environment.NewLine,
+            compilation.GetDiagnostics().Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error));
+        Assert.True(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Severity == DiagnosticSeverity.Error &&
+                diagnostic.GetMessage().Contains("only inside @keyframes", StringComparison.OrdinalIgnoreCase)),
+            "No 'only inside @keyframes' error. Generator diagnostics: " +
+            string.Join(" | ", result.Diagnostics) + " Compilation errors: " + compilationErrors);
+        Assert.DoesNotContain("CS0234", compilationErrors, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("@layout id $self.Text with Step(4);")]
+    [InlineData("@drag with Step(4);")]
+    [InlineData("@gesture press with Step(4);")]
+    public void MotionStepIsRejectedOutsideKeyframesOnTheLayoutDragAndGesturePaths(string body)
+    {
+        GeneratorRunResult result = RunGenerator("MotionStepOutsideKeyframesTriggers.crn", MotionTextBlockAspectMarkup(body), out Compilation compilation);
+
+        string compilationErrors = string.Join(
+            Environment.NewLine,
+            compilation.GetDiagnostics().Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error));
+        Assert.True(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Severity == DiagnosticSeverity.Error &&
+                diagnostic.GetMessage().Contains("only inside @keyframes", StringComparison.OrdinalIgnoreCase)),
+            "No 'only inside @keyframes' error. Generator diagnostics: " +
+            string.Join(" | ", result.Diagnostics) + " Compilation errors: " + compilationErrors);
+        Assert.DoesNotContain("CS0234", compilationErrors, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void MotionStepInsideKeyframesStillCompilesClean()
+    {
+        GeneratorRunResult result = RunGenerator(
+            "MotionStepInsideKeyframes.crn",
+            MotionAspectMarkup("@on Loaded { @keyframes duration 400ms { @animate 0%..100% with Step(4) { @from { Opacity = 0; } @to { Opacity = 1; } } } }"),
+            out Compilation compilation);
+
+        AssertNoGeneratorOrCompilationErrors(result, compilation);
+    }
+
+    // #800: an inline spec accepts the values that its resource form and the runtime constructor accept. Tween needs a
+    // positive duration; Spring needs a positive stiffness and mass and a damping that is not negative.
+    [Theory]
+    [InlineData("@on Loaded { @animate with Tween(0ms) { @to { Opacity = 1; } } }")]
+    [InlineData("@on Loaded { @animate with Tween(0s, Linear) { @to { Opacity = 1; } } }")]
+    [InlineData("@on Loaded { @animate with Spring(0) { @to { Opacity = 1; } } }")]
+    [InlineData("@on Loaded { @animate with Spring(100, -2) { @to { Opacity = 1; } } }")]
+    [InlineData("@on Loaded { @animate with Spring(100, 10, 0) { @to { Opacity = 1; } } }")]
+    [InlineData("@on Loaded { @animate with Spring(-5, 10, 1) { @to { Opacity = 1; } } }")]
+    [InlineData("@on Loaded { @animate with Repeat(Tween(0ms), 2) { @to { Opacity = 1; } } }")]
+    [InlineData("@on Loaded { @animate with PingPong(Tween(0ms), forever) { @to { Opacity = 1; } } }")]
+    [InlineData("@on Loaded { @animate { @to { Opacity = 1 with Tween(0ms); } } }")]
+    [InlineData("@on Loaded { @animate { @to { Opacity = 1 with Spring(0); } } }")]
+    [InlineData("@presence { enter = Tween(0ms); exit = Tween(100ms); }")]
+    [InlineData("@presence { enter = Tween(100ms); exit = Spring(100, 10, 0); }")]
+    public void MotionInlineSpecsRejectValuesTheRuntimeRejects(string body)
+    {
+        GeneratorRunResult result = RunGenerator(
+            "MotionInvalidInlineSpec.crn",
+            MotionAspectMarkup(body),
+            out _);
+
+        Assert.True(
+            result.Diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error),
+            "No error for inline spec in " + body + ". Diagnostics: " + string.Join(" | ", result.Diagnostics));
+    }
+
+    [Theory]
+    [InlineData("@layout id $self.Text with Tween(0ms);")]
+    [InlineData("@drag with Spring(0);")]
+    [InlineData("@gesture press with Spring(100, -1);")]
+    public void MotionInlineSpecsRejectValuesTheRuntimeRejectsOnTheLayoutDragAndGesturePaths(string body)
+    {
+        GeneratorRunResult result = RunGenerator("MotionInvalidInlineSpecTriggers.crn", MotionTextBlockAspectMarkup(body), out _);
+
+        Assert.True(
+            result.Diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error),
+            "No error for inline spec in " + body + ". Diagnostics: " + string.Join(" | ", result.Diagnostics));
+    }
+
+    [Theory]
+    [InlineData("Tween(200ms)")]
+    [InlineData("Tween(1ms, Linear)")]
+    [InlineData("Spring(100, 10, 1)")]
+    [InlineData("Spring(100, 0)")]
+    [InlineData("Repeat(Tween(100ms), 2)")]
+    public void MotionInlineSpecsWithValidValuesCompileClean(string spec)
+    {
+        GeneratorRunResult result = RunGenerator(
+            "MotionValidInlineSpec.crn",
+            MotionAspectMarkup("@on Loaded { @animate with " + spec + " { @to { Opacity = 1; } } }"),
+            out Compilation compilation);
+
+        AssertNoGeneratorOrCompilationErrors(result, compilation);
+    }
+
+    [Theory]
+    [InlineData("<Tween Name=\"Invalid\" Duration=\"0ms\" />")]
+    [InlineData("<Spring Name=\"Invalid\" Stiffness=\"0\" />")]
+    [InlineData("<Spring Name=\"Invalid\" Damping=\"-2\" />")]
+    [InlineData("<Spring Name=\"Invalid\" Mass=\"0\" />")]
+    public void MotionResourceSpecsRejectValuesTheRuntimeRejects(string resource)
+    {
+        GeneratorRunResult result = RunGenerator(
+            "MotionInvalidResourceSpec.crn",
+            AdvancedMotionResourceMarkup(resource),
+            out _);
+
+        Assert.Contains(result.Diagnostics, diagnostic =>
+            diagnostic.Id == "CERNEALAUI004" && diagnostic.Severity == DiagnosticSeverity.Error);
+    }
+
+    private static string MotionTextBlockAspectMarkup(string body)
+    {
+        return $$"""
+            <TextBlock Text="card">
+              <TextBlock.Resources>
+                <Aspect TargetType="TextBlock">{{body}}</Aspect>
+              </TextBlock.Resources>
+            </TextBlock>
+            """;
+    }
+
     [Theory]
     [InlineData("50%..50%", "non-empty")]
     [InlineData("75%..25%", "ordered")]

@@ -408,6 +408,12 @@ internal sealed partial class CernealaSemanticModel
                 return;
         }
 
+        if (resource.Kind == ResourceKind.Brush && LocalElementName(resource.Element.Name) == "RadialGradientBrush")
+        {
+            ValidateRequiredPositiveFloatAttribute(resource.Element, "RadiusX");
+            ValidateRequiredPositiveFloatAttribute(resource.Element, "RadiusY");
+        }
+
         symbols.Add(new CernealaSemanticSymbol(
             CernealaSemanticSymbolKind.Resource,
             resource.Name ?? resource.Element.Name,
@@ -415,6 +421,19 @@ internal sealed partial class CernealaSemanticModel
             resource.NameSpan,
             resource.Type,
             definitionLocation: resource.Location));
+    }
+
+    // A RadialGradientBrush radius has no valid default: the brush rejects a radius that is missing, zero or negative,
+    // and so does the source generator (UiMarkupBrushEmitter), with the same CERNEALAUI004.
+    private void ValidateRequiredPositiveFloatAttribute(ElementSyntax element, string name)
+    {
+        if (FindAttribute(element, name) is null)
+        {
+            AddDiagnostic("CERNEALAUI004", element.NameToken.Span, element.Name, name, string.Empty);
+            return;
+        }
+
+        ValidatePositiveFloatAttribute(element, name, allowZero: false);
     }
 
     private void BindContentTemplate(

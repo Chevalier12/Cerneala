@@ -414,6 +414,48 @@ public sealed class SemanticScopesTests
         Assert.Contains(invalid.Diagnostics, diagnostic => diagnostic.Id == "CERNEALAUI004");
     }
 
+    // #801: a RadialGradientBrush resource radius has no valid default, so the editor reports a missing, zero or
+    // negative RadiusX or RadiusY with the same CERNEALAUI004 as the build.
+    [Theory]
+    [InlineData("Center=\"0.5,0.5\"", "RadiusX")]
+    [InlineData("Center=\"0.5,0.5\" RadiusX=\"0.5\"", "RadiusY")]
+    [InlineData("Center=\"0.5,0.5\" RadiusY=\"0.5\"", "RadiusX")]
+    [InlineData("Center=\"0.5,0.5\" RadiusX=\"0\" RadiusY=\"0.5\"", "RadiusX")]
+    public void RadialGradientBrushResourceWithoutAPositiveRadiusReportsCernealaUi004(string attributes, string missing)
+    {
+        string markup = $"""
+            <StackPanel><StackPanel.Resources><RadialGradientBrush Name="P" {attributes}><GradientStop Offset="0" Color="Blue" /></RadialGradientBrush></StackPanel.Resources><Button Background="$P" /></StackPanel>
+            """;
+
+        CernealaSemanticModel model = Model("Radial.crn", markup, string.Empty);
+
+        Assert.Contains(model.Diagnostics, diagnostic =>
+            diagnostic.Id == "CERNEALAUI004" && diagnostic.Message.Contains("RadialGradientBrush." + missing, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void RadialGradientBrushPropertyElementWithoutARadiusReportsCernealaUi004()
+    {
+        const string markup = """
+            <Button><Button.Background><RadialGradientBrush Center="0.5,0.5" RadiusX="0.5"><GradientStop Offset="0" Color="Blue" /></RadialGradientBrush></Button.Background></Button>
+            """;
+
+        CernealaSemanticModel model = Model("RadialPropertyElement.crn", markup, string.Empty);
+
+        Assert.Contains(model.Diagnostics, diagnostic =>
+            diagnostic.Id == "CERNEALAUI004" && diagnostic.Message.Contains("RadialGradientBrush.RadiusY", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void RadialGradientBrushResourceWithBothRadiiReportsNoDiagnostic()
+    {
+        const string markup = """
+            <StackPanel><StackPanel.Resources><RadialGradientBrush Name="P" Center="0.5,0.5" RadiusX="0.5" RadiusY="0.5"><GradientStop Offset="0" Color="Blue" /></RadialGradientBrush></StackPanel.Resources><Button Background="$P" /></StackPanel>
+            """;
+
+        Assert.Empty(Model("Radial.crn", markup, string.Empty).Diagnostics);
+    }
+
     [Fact]
     public void ValidBindingTemplateAndAspectCorpusMatchesSourceGeneratorDiagnostics()
     {

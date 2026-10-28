@@ -50,4 +50,57 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.Equal(namedButton.Background.GetType(), inlineButton.Background!.GetType());
         Assert.NotSame(namedButton.Background, inlineButton.Background);
     }
+
+    // #801: RadiusX and RadiusY have no valid default (RadialGradientBrush rejects 0), so a missing radius is a build
+    // error that names it, in the resource form and in the property-element form, and no code is generated.
+    [Theory]
+    [InlineData("Center=\"0.5,0.5\"", "RadiusX")]
+    [InlineData("Center=\"0.5,0.5\" RadiusX=\"0.5\"", "RadiusY")]
+    [InlineData("Center=\"0.5,0.5\" RadiusY=\"0.5\"", "RadiusX")]
+    [InlineData("Center=\"0.5,0.5\" RadiusX=\"0\" RadiusY=\"0.5\"", "RadiusX")]
+    [InlineData("Center=\"0.5,0.5\" RadiusX=\"0.5\" RadiusY=\"-1\"", "RadiusY")]
+    public void RadialGradientBrushWithoutAPositiveRadiusReportsAnError(string attributes, string missing)
+    {
+        string markup = $"""
+            <StackPanel><StackPanel.Resources><RadialGradientBrush Name="P" {attributes}><GradientStop Offset="0" Color="Blue" /></RadialGradientBrush></StackPanel.Resources><Button Background="$P" /></StackPanel>
+            """;
+
+        GeneratorRunResult result = RunGenerator("RadialMissingRadius.crn", markup, out _);
+
+        Assert.True(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Severity == DiagnosticSeverity.Error &&
+                diagnostic.GetMessage().Contains(missing, StringComparison.Ordinal)),
+            "No error mentioning " + missing + ". Diagnostics: " + string.Join(" | ", result.Diagnostics));
+        Assert.Empty(result.GeneratedSources);
+    }
+
+    [Fact]
+    public void RadialGradientBrushPropertyElementWithoutARadiusReportsAnError()
+    {
+        const string markup = """
+            <Button><Button.Background><RadialGradientBrush Center="0.5,0.5" RadiusX="0.5"><GradientStop Offset="0" Color="Blue" /></RadialGradientBrush></Button.Background></Button>
+            """;
+
+        GeneratorRunResult result = RunGenerator("RadialPropertyElementMissingRadius.crn", markup, out _);
+
+        Assert.True(
+            result.Diagnostics.Any(diagnostic =>
+                diagnostic.Severity == DiagnosticSeverity.Error &&
+                diagnostic.GetMessage().Contains("RadiusY", StringComparison.Ordinal)),
+            "No error mentioning RadiusY. Diagnostics: " + string.Join(" | ", result.Diagnostics));
+        Assert.Empty(result.GeneratedSources);
+    }
+
+    [Fact]
+    public void RadialGradientBrushWithBothRadiiReportsNoDiagnostic()
+    {
+        const string markup = """
+            <StackPanel><StackPanel.Resources><RadialGradientBrush Name="P" Center="0.5,0.5" RadiusX="0.5" RadiusY="0.5"><GradientStop Offset="0" Color="Blue" /></RadialGradientBrush></StackPanel.Resources><Button Background="$P" /></StackPanel>
+            """;
+
+        GeneratorRunResult result = RunGenerator("RadialBothRadii.crn", markup, out _);
+
+        Assert.Empty(result.Diagnostics);
+    }
 }

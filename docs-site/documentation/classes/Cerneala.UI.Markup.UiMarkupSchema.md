@@ -68,7 +68,7 @@ The schema also registers these shared element/control properties. The `Elements
 
 `Button.Content` and `TextBlock.Text` are registered as element-specific properties. Text content is accepted only when the element registration has a matching content property registration.
 
-Color values use `Color.TryParse`: any WPF named color, matched without regard to case (for example `Red` or `cornflowerblue`), `#RRGGBB`, `#AARRGGBB`, or three or four comma-separated bytes: red, green, blue, and optional alpha. When alpha is omitted, the schema uses `255`. A brush value that starts with `$` looks up the brush resource with the rest of the name; a missing resource throws `FormatException`, which `UiFactory.Create` reports as `MARKUP027`.
+Color values use `Color.TryParse`: any WPF named color, matched without regard to case (for example `Red` or `cornflowerblue`), `#RRGGBB`, `#AARRGGBB`, or three or four comma-separated bytes: red, green, blue, and optional alpha. When alpha is omitted, the schema uses `255`. A brush value that starts with `$` looks up the brush resource with the rest of the name through `UIElement.TryFindResource`, which checks the element and then its parents. `UiFactory.Create` adds an element to its parent before it applies the element's attributes, so `<Border Background="$Accent" />` finds an `Accent` brush declared in the `Resources` of the `Border` itself, of its parent, or of a grandparent in the same markup. A missing resource throws `FormatException`, which `UiFactory.Create` reports as `MARKUP027`.
 
 Thickness values must use either one value, which creates uniform thickness, or four comma-separated values: left, top, right, and bottom. Floating-point values use `CultureInfo.InvariantCulture`.
 

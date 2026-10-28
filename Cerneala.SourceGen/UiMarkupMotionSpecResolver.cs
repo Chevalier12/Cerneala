@@ -203,6 +203,14 @@ public sealed partial class UiMarkupGenerator
             {
                 MotionInlineSpecSyntax inline = (MotionInlineSpecSyntax)syntax;
                 kind = inline.Kind;
+                if (kind == "Step")
+                {
+                    // Step(...) is an easing of a @keyframes segment (TryResolveKeyframeEasing), not a MotionSpec<T>:
+                    // there is no StepSpec<T>. Every other path that takes an inline spec ends here.
+                    Report(InvalidDirective, inline.Location, Path.GetFileName(file.Path), "hold and Step(...) are allowed only inside @keyframes.");
+                    return false;
+                }
+
                 if (!TryBuildInlineSpecArguments(inline, out arguments))
                 {
                     return false;
@@ -234,9 +242,17 @@ public sealed partial class UiMarkupGenerator
 
         private bool TryBuildInlineSpecArguments(MotionInlineSpecSyntax inline, out IReadOnlyList<string> arguments)
         {
+            // The inline forms accept the values that the resource forms (ReadMotionSpecResource) and the runtime
+            // constructors of TweenSpec<T> and SpringSpec<T> accept.
             List<string> result = [];
             if (inline.Kind == "Tween")
             {
+                if (!IsPositiveInlineTweenDuration(inline.Arguments[0]))
+                {
+                    arguments = [];
+                    return false;
+                }
+
                 MotionDurationSyntax duration = inline.Arguments[0].Duration!;
                 result.Add(BuildDurationExpression(duration));
                 string easing = inline.Arguments.Count == 2 ? inline.Arguments[1].Text : "Standard";
@@ -254,6 +270,12 @@ public sealed partial class UiMarkupGenerator
                 MotionInlineSpecSyntax inner = (MotionInlineSpecSyntax)DirectiveCursor.ParseMotionSpec(
                     inline.Arguments[0].Text,
                     inline.Arguments[0].Location);
+                if (!IsPositiveInlineTweenDuration(inner.Arguments[0]))
+                {
+                    arguments = [];
+                    return false;
+                }
+
                 MotionDurationSyntax duration = inner.Arguments[0].Duration!;
                 string easing = inner.Arguments.Count == 2 ? inner.Arguments[1].Text : "Standard";
                 if (!IsKnownEasing(easing))
@@ -276,12 +298,28 @@ public sealed partial class UiMarkupGenerator
                     return false;
                 }
 
-                foreach (MotionSpecArgumentSyntax argument in inline.Arguments)
+                for (int index = 0; index < inline.Arguments.Count; index++)
                 {
+                    MotionSpecArgumentSyntax argument = inline.Arguments[index];
                     if (!float.TryParse(argument.Text, NumberStyles.Float, CultureInfo.InvariantCulture, out float value) ||
                         float.IsNaN(value) || float.IsInfinity(value))
                     {
                         Report(InvalidDirective, argument.Location, Path.GetFileName(file.Path), "Spring argument '" + argument.Text + "' must be numeric.");
+                        arguments = [];
+                        return false;
+                    }
+
+                    // Spring(stiffness, damping?, mass?): the same rules as the Stiffness, Damping and Mass of <Spring>.
+                    string? rule = index switch
+                    {
+                        0 when value <= 0 => "Spring stiffness '" + argument.Text + "' must be positive.",
+                        1 when value < 0 => "Spring damping '" + argument.Text + "' cannot be negative.",
+                        2 when value <= 0 => "Spring mass '" + argument.Text + "' must be positive.",
+                        _ => null
+                    };
+                    if (rule is not null)
+                    {
+                        Report(InvalidDirective, argument.Location, Path.GetFileName(file.Path), rule);
                         arguments = [];
                         return false;
                     }
@@ -292,6 +330,18 @@ public sealed partial class UiMarkupGenerator
 
             arguments = result;
             return true;
+        }
+
+        // A Tween duration must be at least one tick, as <Tween Duration> must (TryBuildDurationExpression).
+        private bool IsPositiveInlineTweenDuration(MotionSpecArgumentSyntax argument)
+        {
+            if (TryBuildDurationExpression(argument.Text, out _))
+            {
+                return true;
+            }
+
+            Report(InvalidDirective, argument.Location, Path.GetFileName(file.Path), "Tween duration '" + argument.Text + "' must be positive.");
+            return false;
         }
 
         private static bool TryBuildDurationExpression(string text, out string expression)

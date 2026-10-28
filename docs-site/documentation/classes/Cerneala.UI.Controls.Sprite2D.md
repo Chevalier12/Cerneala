@@ -184,6 +184,18 @@ The rules, each with the test that checks it (all in `SceneAwakeTests` unless an
 </Sprite2D>
 ```
 
+Because `Collider` is the content property, the `<Sprite2D.Collider>` property element is the same slot. This markup builds the same sprite as the one above, with `sprite.Collider` set to the box:
+
+```xml
+<Sprite2D Image="$WorldAtlas" X="64" Y="32" Width="32" Height="32">
+  <Sprite2D.Collider>
+    <BoxCollider2D Width="32" Height="8" OffsetY="24" />
+  </Sprite2D.Collider>
+</Sprite2D>
+```
+
+`<Sprite2D.Collider>` holds exactly one collider, with no text and no attribute other than a namespace declaration. An empty `<Sprite2D.Collider />`, text inside it, or an attribute on it is `CERNEALAUI005` in the editor and in the build: `Sprite2D.Collider requires exactly one collider child.` A collider in `<Sprite2D.Collider>` and a direct collider child together are two colliders, which is also `CERNEALAUI005` (`Sprite2D accepts at most one collider.`).
+
 Collider coordinates are destination units relative to the sprite anchor. `X`, `Y`, `Rotation`, and ancestor scene transforms place both the image and its collider. Image `Width`/`Height`, natural dimensions, crop, source-pixel `Origin`, `Flip`, and animation frames affect drawing only, with one exception: a `Vision` cone mirrors with the image, so the flip the image is drawn with (`Flip` composed with the frame's `Flip`) mirrors the cone's direction and its apex (see [Vision](#vision)). A `32 × 32` collider stays `32 × 32` when the sprite is drawn at `64 × 64`; applications explicitly update or bind the collider geometry when needed. A collider can exist on a sprite without a resolved image and does not cause an image to be synthesized.
 
 ### Vision

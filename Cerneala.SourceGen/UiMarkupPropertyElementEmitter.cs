@@ -123,6 +123,7 @@ public sealed partial class UiMarkupGenerator
                 GetContentTemplatePropertyName(owner, child) is not null ||
                 IsRenderSurfaceSceneElement(owner, child) ||
                 IsVisionPropertyElement(owner, child) ||
+                IsColliderPropertyElement(owner, child) ||
                 IsLegacyTemplatesPropertyElement(owner, child) ||
                 IsItemsControlItemsPanelElement(owner, child) ||
                 (owner.Name.LocalName == "Grid" &&
@@ -292,6 +293,65 @@ public sealed partial class UiMarkupGenerator
 
             string coneVariable = EmitElement(children[0]);
             currentLines.Add(ownerVariable + ".Vision = " + coneVariable + ";");
+        }
+
+        // <Sprite2D.Collider> is the property-element form of the body slot: its one collider is assigned to
+        // Sprite2D.Collider, as a direct collider child of the Sprite2D is (EmitChild). The Language semantic model
+        // checks what the collider is and that the sprite has at most one; this checks the property element itself.
+        private bool IsColliderPropertyElement(MarkupElement owner, MarkupElement child)
+        {
+            string ownerName = owner.Name.LocalName;
+            if (child.Name.LocalName != ownerName + ".Collider")
+            {
+                return false;
+            }
+
+            INamedTypeSymbol? ownerType = ResolvePropertyOwnerType(
+                ownerName,
+                isRoot: ReferenceEquals(owner, document.Root));
+            INamedTypeSymbol? spriteType = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.Sprite2D");
+            return ownerType is not null && spriteType is not null && IsOrDerivesFrom(ownerType, spriteType);
+        }
+
+        private void EmitColliderPropertyElement(MarkupElement owner, string ownerVariable)
+        {
+            MarkupElement[] propertyElements = owner.Elements()
+                .Where(child => IsColliderPropertyElement(owner, child))
+                .ToArray();
+            if (propertyElements.Length == 0)
+            {
+                return;
+            }
+
+            if (propertyElements.Length > 1)
+            {
+                Report(
+                    InvalidDocumentShape,
+                    propertyElements[1],
+                    Path.GetFileName(file.Path),
+                    owner.Name.LocalName + ".Collider may be declared only once.");
+                return;
+            }
+
+            MarkupElement propertyElement = propertyElements[0];
+            MarkupElement[] children = propertyElement.Elements().ToArray();
+            INamedTypeSymbol? childType = children.Length == 1 ? GetElementTypeSymbol(children[0]) : null;
+            INamedTypeSymbol? colliderType = compilation.GetTypeByMetadataName("Cerneala.UI.Controls.Collider2D");
+            if (propertyElement.Attributes().Any(attribute => !attribute.IsNamespaceDeclaration) ||
+                propertyElement.Nodes().OfType<MarkupText>().Any(text => !string.IsNullOrWhiteSpace(text.Value)) ||
+                children.Length != 1 ||
+                childType is null || colliderType is null || !IsOrDerivesFrom(childType, colliderType))
+            {
+                Report(
+                    InvalidDocumentShape,
+                    propertyElement,
+                    Path.GetFileName(file.Path),
+                    propertyElement.Name.LocalName + " requires exactly one collider child.");
+                return;
+            }
+
+            string colliderVariable = EmitElement(children[0]);
+            currentLines.Add(ownerVariable + ".Collider = " + colliderVariable + ";");
         }
 
         private void ReportLegacyTemplatesPropertyElements(MarkupElement owner)

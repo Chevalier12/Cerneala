@@ -60,8 +60,9 @@ public sealed partial class UiMarkupGenerator
         private string? BuildRadialGradientBrushExpression(MarkupElement resource)
         {
             string? center = ParseBrushPoint(resource, "Center");
-            string? radiusX = ParseBrushFloat(resource, "RadiusX", 0, value => value > 0);
-            string? radiusY = ParseBrushFloat(resource, "RadiusY", 0, value => value > 0);
+            // A radius has no valid default: RadialGradientBrush rejects 0, so both are required (NaN default).
+            string? radiusX = ParseBrushFloat(resource, "RadiusX", float.NaN, value => value > 0);
+            string? radiusY = ParseBrushFloat(resource, "RadiusY", float.NaN, value => value > 0);
             string? stops = ParseGradientStops(resource);
             string? opacity = ParseBrushFloat(resource, "Opacity", 1, value => value >= 0 && value <= 1);
             return center is null || radiusX is null || radiusY is null || stops is null || opacity is null
