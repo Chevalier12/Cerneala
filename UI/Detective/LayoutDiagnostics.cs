@@ -37,6 +37,6 @@ public sealed record LayoutDiagnosticsSnapshot(
     {
         return string.Create(
             CultureInfo.InvariantCulture,
-            $"{ElementType} desired={DesiredSize} arranged={ArrangedBounds} layoutVersion={LayoutVersion} visibility={Visibility}");
+            $"{ElementType} desired={DetectiveInvariantText.Format(DesiredSize)} arranged={DetectiveInvariantText.Format(ArrangedBounds)} layoutVersion={LayoutVersion} visibility={Visibility}");
     }
 }
