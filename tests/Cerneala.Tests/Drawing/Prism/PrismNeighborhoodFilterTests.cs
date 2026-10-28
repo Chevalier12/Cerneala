@@ -3181,6 +3181,40 @@ public sealed class PrismNeighborhoodFilterTests
             });
     }
 
+    [Theory]
+    [InlineData("Speed")]
+    [InlineData("EndSpeed")]
+    public void PathBlurSpeedParametersAreDeviceScaledDipLengths(
+        string parameter)
+    {
+        const float value = 3;
+        const float pixelScale = 2;
+        DrawRect bounds = new(0, 0, 64, 64);
+        PrismGraphNode node = CreateGraph(
+            PrismFilterId.PathBlur,
+            bounds,
+            (state, entry) => SetNumber(state, entry, parameter, value))
+            .Nodes
+            .First(candidate => candidate.Kind == PrismGraphNodeKind.Filter);
+        PrismNeighborhoodPlan plan = PrismNeighborhoodPlanner.Create(
+            PrismFilterId.PathBlur,
+            node.Parameters,
+            PrismBlendMode.Normal,
+            pixelScale,
+            Matrix3x2.Identity,
+            bounds);
+        float prepared = parameter == "Speed"
+            ? plan.Options0.X
+            : plan.Options0.W;
+        PrismCatalogParameterInfo info = PrismCatalog
+            .GetFilter(PrismFilterId.PathBlur)
+            .Parameters
+            .Single(candidate => candidate.Name == parameter);
+
+        Assert.Equal(value * pixelScale, prepared, 0.00001f);
+        Assert.Equal("dip", info.Unit);
+    }
+
     [Fact]
     public void PathBlurTaperAndNoiseAreEffectiveFiniteAndDeterministic()
     {

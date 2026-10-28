@@ -2680,7 +2680,7 @@
           "domain": {
             "kind": "finite"
           },
-          "unit": "unitless",
+          "unit": "dip",
           "default": 20.0
         },
         {
@@ -2713,7 +2713,7 @@
           "domain": {
             "kind": "finite"
           },
-          "unit": "unitless",
+          "unit": "dip",
           "default": 20.0
         },
         {
@@ -8703,7 +8703,7 @@
           "domain": {
             "kind": "finite"
           },
-          "unit": "unitless",
+          "unit": "dip",
           "default": 10.0
         },
         {

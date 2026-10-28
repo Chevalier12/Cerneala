@@ -29,6 +29,19 @@ public sealed class PrismCraquelureFilterTests
     }
 
     [Fact]
+    public void CrackSpacingIsDeviceScaledDipLength()
+    {
+        PrismCatalogFilterPlan plan = CreatePlan(3, 6, 9, 17, pixelScale: 2);
+        PrismCatalogParameterInfo info = PrismCatalog
+            .GetFilter(PrismFilterId.Craquelure)
+            .Parameters
+            .Single(candidate => candidate.Name == "CrackSpacing");
+
+        Assert.Equal(6, plan.Options4.X, 0.00001f);
+        Assert.Equal("dip", info.Unit);
+    }
+
+    [Fact]
     public void EveryControlChangesItsOwnedResponseDeterministically()
     {
         const int width = 64;
