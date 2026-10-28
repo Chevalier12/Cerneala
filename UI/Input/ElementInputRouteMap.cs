@@ -15,12 +15,13 @@ public sealed class ElementInputRouteMap
 
     public void Add(UIElement element, UIElement? parent)
     {
-        Add(element, parent, parent);
+        Add(element, parent, parent, element.IsEnabled);
     }
 
     // The visual parent differs from the route parent only for projected content: its route parent is the projection
-    // owner, its visual parent the nearest registered visual ancestor.
-    internal void Add(UIElement element, UIElement? parent, UIElement? visualParent)
+    // owner, its visual parent the nearest registered visual ancestor. The handlers of an element registered with
+    // runsHandlers false are skipped when an event routes through it.
+    internal void Add(UIElement element, UIElement? parent, UIElement? visualParent, bool runsHandlers)
     {
         ArgumentNullException.ThrowIfNull(element);
         if (visualParent is not null && !visualParents.ContainsKey(visualParent))
@@ -33,7 +34,7 @@ public sealed class ElementInputRouteMap
             throw new ArgumentException("Element is already registered in this route map.", nameof(element));
         }
 
-        InputTree.Add(element, parent, element.IsEnabled);
+        InputTree.Add(element, parent, runsHandlers);
         visualParents.Add(element, visualParent);
         elementsInRouteOrder.Add(element);
     }

@@ -68,8 +68,9 @@ public sealed class PointerCaptureManager
         RaiseLostCapture(routeMap, oldCapture);
     }
 
-    // The old captured element always gets LostMouseCapture. An element outside the route map has no input route, so its
-    // own handlers get the event, as UIElement.RaiseEvent raises it for such an element.
+    // The old captured element always gets LostMouseCapture. An element outside the route map has no input route, so it
+    // raises the event with UIElement.RaiseEvent, which bubbles it along the element's ancestors (only to the element's
+    // own handlers when it is detached).
     private static void RaiseLostCapture(ElementInputRouteMap routeMap, UIElement? element)
     {
         if (element is null)
