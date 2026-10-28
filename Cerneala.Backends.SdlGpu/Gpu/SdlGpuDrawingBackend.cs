@@ -1035,7 +1035,7 @@ internal sealed partial class SdlGpuDrawingBackend :
         if (MathF.Abs(transform.M12) <= 0.00001f &&
             MathF.Abs(transform.M21) <= 0.00001f)
         {
-            DrawRect world = DrawCommandStateAnalyzer.TransformBounds(
+            DrawRect world = DrawCommandStateAnalyzer.TransformClipBounds(
                 command.Rect,
                 transform);
             SdlRect next = IntersectScissor(
@@ -1499,15 +1499,24 @@ internal sealed partial class SdlGpuDrawingBackend :
 
     private static SdlRect ToScissor(DrawRect rect, float scale)
     {
-        int left = (int)MathF.Floor(rect.X * scale);
-        int top = (int)MathF.Floor(rect.Y * scale);
-        int right = (int)MathF.Ceiling(rect.Right * scale);
-        int bottom = (int)MathF.Ceiling(rect.Bottom * scale);
+        int left = ToScissorEdge(MathF.Floor(rect.X * scale));
+        int top = ToScissorEdge(MathF.Floor(rect.Y * scale));
+        int right = ToScissorEdge(MathF.Ceiling(rect.Right * scale));
+        int bottom = ToScissorEdge(MathF.Ceiling(rect.Bottom * scale));
         return new SdlRect(
             left,
             top,
             Math.Max(0, right - left),
             Math.Max(0, bottom - top));
+    }
+
+    // A clip edge up to 2e9 logical pixels away, times the display scale, can
+    // exceed int. Edges past 2^29 pixels lie outside every render target, so
+    // saturate them there; then widths and edge sums cannot overflow either.
+    private static int ToScissorEdge(float value)
+    {
+        const float Limit = 1 << 29;
+        return (int)Math.Clamp(value, -Limit, Limit);
     }
 
     private static SdlRect IntersectScissor(SdlRect left, SdlRect right)

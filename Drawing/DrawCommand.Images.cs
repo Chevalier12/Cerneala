@@ -316,13 +316,17 @@ public readonly partial record struct DrawCommand
                 nameof(insets));
         }
 
+        // A flip mirrors the whole nine-slice: the source border reversed to the
+        // other side keeps its own width there, not the width of the border it replaces.
+        bool flipHorizontal = (options.Flip & DrawImageFlip.Horizontal) != 0;
+        bool flipVertical = (options.Flip & DrawImageFlip.Vertical) != 0;
         (float destinationLeft, float destinationRight) = FitPair(
-            insets.Left,
-            insets.Right,
+            flipHorizontal ? insets.Right : insets.Left,
+            flipHorizontal ? insets.Left : insets.Right,
             destination.Width);
         (float destinationTop, float destinationBottom) = FitPair(
-            insets.Top,
-            insets.Bottom,
+            flipVertical ? insets.Bottom : insets.Top,
+            flipVertical ? insets.Top : insets.Bottom,
             destination.Height);
         float[] x =
         [
@@ -352,11 +356,11 @@ public readonly partial record struct DrawCommand
             (source.Bottom - insets.Bottom) / image.Height,
             source.Bottom / image.Height
         ];
-        if ((options.Flip & DrawImageFlip.Horizontal) != 0)
+        if (flipHorizontal)
         {
             Array.Reverse(u);
         }
-        if ((options.Flip & DrawImageFlip.Vertical) != 0)
+        if (flipVertical)
         {
             Array.Reverse(v);
         }

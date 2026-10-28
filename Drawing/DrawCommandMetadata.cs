@@ -419,11 +419,16 @@ internal abstract class DrawCommandMetadata
     private static DrawRect? ResolveBounds(DrawCommand command) =>
         command.Kind switch
         {
-            DrawCommandKind.FillRectangle or
+            // A pen-less stroke is drawn with the default style at the
+            // command's thickness, so it extends exactly as that pen would.
             DrawCommandKind.DrawRectangle or
-            DrawCommandKind.FillRoundedRectangle or
             DrawCommandKind.DrawRoundedRectangle or
-            DrawCommandKind.DrawEllipse or
+            DrawCommandKind.DrawEllipse => ExpandStroke(
+                command.Rect,
+                command.Thickness,
+                command.Pen?.Style ?? DrawStrokeStyle.Default),
+            DrawCommandKind.FillRectangle or
+            DrawCommandKind.FillRoundedRectangle or
             DrawCommandKind.FillPath or
             DrawCommandKind.DrawPath or
             DrawCommandKind.RenderSurface2D or
@@ -510,14 +515,12 @@ internal abstract class DrawCommandMetadata
         return value;
     }
 
-    private static DrawRect? ExpandStroke(DrawRect bounds, DrawPen? pen)
-    {
-        if (pen is null)
-        {
-            return bounds;
-        }
+    private static DrawRect? ExpandStroke(DrawRect bounds, DrawPen? pen) =>
+        pen is null ? bounds : ExpandStroke(bounds, pen.Thickness, pen.Style);
 
-        float extent = pen.Thickness * MathF.Max(1, pen.Style.MiterLimit);
+    private static DrawRect? ExpandStroke(DrawRect bounds, float thickness, DrawStrokeStyle style)
+    {
+        float extent = thickness * MathF.Max(1, style.MiterLimit);
         return DrawRect.TryCreate(
             bounds.X - extent,
             bounds.Y - extent,

@@ -94,6 +94,38 @@ public sealed class DrawingImageMeshBatchTests
             new DrawInsets(6)));
     }
 
+    // A flipped nine-slice mirrors the unflipped one: the 6 px source border
+    // keeps its 6 px column on the side the flip moves it to (#796).
+    [Theory]
+    [InlineData(DrawImageFlip.None, true, new float[] { 0, 2, 10, 16 })]
+    [InlineData(DrawImageFlip.Horizontal, true, new float[] { 0, 6, 14, 16 })]
+    [InlineData(DrawImageFlip.None, false, new float[] { 0, 2, 10, 16 })]
+    [InlineData(DrawImageFlip.Vertical, false, new float[] { 0, 6, 14, 16 })]
+    public void NineSliceFlipMirrorsTheDestinationSlicesOfUnequalOpposingInsets(
+        DrawImageFlip flip, bool horizontalAxis, float[] expectedEdges)
+    {
+        TestImage image = new(16, 16);
+        DrawInsets insets = horizontalAxis ? new DrawInsets(2, 0, 6, 0) : new DrawInsets(0, 2, 0, 6);
+
+        DrawCommand command = DrawCommand.DrawNineSlice(
+            image,
+            new DrawRect(0, 0, 16, 16),
+            insets,
+            new DrawImageOptions(flip: flip, sampling: DrawSamplingMode.Point));
+
+        float[] actualEdges = horizontalAxis
+            ? [.. Enumerable.Range(0, 4).Select(column => command.Mesh!.Vertices[column].Position.X)]
+            : [.. Enumerable.Range(0, 4).Select(row => command.Mesh!.Vertices[row * 4].Position.Y)];
+        Assert.Equal(expectedEdges, actualEdges);
+        // Each border column samples its own source border: the first column
+        // spans the 6 px border when flipped, the 2 px border otherwise.
+        float[] texture = horizontalAxis
+            ? [.. Enumerable.Range(0, 4).Select(column => command.Mesh!.Vertices[column].TextureCoordinate.X * 16)]
+            : [.. Enumerable.Range(0, 4).Select(row => command.Mesh!.Vertices[row * 4].TextureCoordinate.Y * 16)];
+        Assert.Equal(actualEdges[1] - actualEdges[0], MathF.Abs(texture[1] - texture[0]));
+        Assert.Equal(actualEdges[3] - actualEdges[2], MathF.Abs(texture[3] - texture[2]));
+    }
+
     [Fact]
     public void MeshCopiesInputsAndValidatesTopologyIndicesAndImageLifetimeShape()
     {

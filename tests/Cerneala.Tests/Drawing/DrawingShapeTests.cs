@@ -304,6 +304,56 @@ public sealed class DrawingShapeTests
         Assert.Equal(Color.Black, fixture.Sample(pixels, 32, 24));
     }
 
+    // A pen-less stroke is centered on the edge with the default stroke style,
+    // so its bounds contain half the thickness outside the shape (#795).
+    [Theory]
+    [InlineData("rectangle", false)]
+    [InlineData("ellipse", false)]
+    [InlineData("rounded", false)]
+    [InlineData("rectangle", true)]
+    [InlineData("ellipse", true)]
+    [InlineData("rounded", true)]
+    public void PenlessStrokeBoundsContainTheStrokeExtent(string shape, bool withPen)
+    {
+        DrawRect bounds = AnalyzeStrokeBounds(shape, withPen);
+
+        Assert.True(
+            bounds.X <= 7 && bounds.Y <= 7 && bounds.Right >= 33 && bounds.Bottom >= 33,
+            $"{shape}: bounds={bounds}, stroke extent needs (7,7)-(33,33)");
+    }
+
+    [Theory]
+    [InlineData("rectangle")]
+    [InlineData("ellipse")]
+    [InlineData("rounded")]
+    public void PenlessStrokeBoundsEqualTheBoundsOfTheSameDefaultPenStroke(string shape)
+    {
+        Assert.Equal(AnalyzeStrokeBounds(shape, withPen: true), AnalyzeStrokeBounds(shape, withPen: false));
+    }
+
+    private static DrawRect AnalyzeStrokeBounds(string shape, bool withPen)
+    {
+        DrawCommandList commands = new();
+        DrawingContext drawing = new(commands);
+        DrawRect rect = new(10, 10, 20, 20);
+        DrawPen pen = new(new SolidColorBrush(Color.White), 6);
+        switch (shape)
+        {
+            case "rectangle":
+                if (withPen) { drawing.DrawRectangle(rect, pen); } else { drawing.DrawRectangle(rect, Color.White, 6); }
+                break;
+            case "ellipse":
+                if (withPen) { drawing.DrawEllipse(rect, pen); } else { drawing.DrawEllipse(rect, Color.White, 6); }
+                break;
+            default:
+                if (withPen) { drawing.DrawRoundedRectangle(rect, new DrawCornerRadius(4), pen); }
+                else { drawing.DrawRoundedRectangle(rect, new DrawCornerRadius(4), Color.White, 6); }
+                break;
+        }
+
+        return new DrawCommandStateAnalyzer().Analyze(commands).Entries[0].Bounds!.Value;
+    }
+
     private static void AssertRectNear(DrawRect expected, DrawRect actual)
     {
         Assert.InRange(MathF.Abs(actual.X - expected.X), 0, 0.001f);

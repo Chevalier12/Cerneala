@@ -197,6 +197,84 @@ public sealed class DrawingStateTests
         Assert.Null(analysis.Entries[11].Bounds);
     }
 
+    // A clip whose world bounds leave the DrawRect range is analyzed, not
+    // rejected, and still contains the content drawn inside it (#1065).
+    [Theory]
+    [InlineData(1f, false)]
+    [InlineData(1e6f, false)]
+    [InlineData(1f, true)]
+    [InlineData(1e6f, true)]
+    public void AnalyzingAClipWhoseWorldBoundsExceedTheDrawRectRangeDoesNotThrow(float scale, bool pathClip)
+    {
+        DrawCommandList commands = new();
+        DrawingContext drawing = new(commands);
+        drawing.PushTransform(Matrix3x2.CreateScale(scale));
+        if (pathClip)
+        {
+            drawing.PushClip(
+                new DrawPathBuilder()
+                    .MoveTo(new DrawPoint(0, 0))
+                    .LineTo(new DrawPoint(5000, 0))
+                    .LineTo(new DrawPoint(5000, 5000))
+                    .LineTo(new DrawPoint(0, 5000))
+                    .Close()
+                    .Build(),
+                DrawFillRule.NonZero);
+        }
+        else
+        {
+            drawing.PushClip(new DrawRect(0, 0, 5000, 5000));
+        }
+        drawing.FillRectangle(new DrawRect(0, 0, 10, 10), Color.White);
+        drawing.PopClip();
+        drawing.PopTransform();
+
+        DrawCommandStateAnalysis? analysis = null;
+        Exception? failure = Record.Exception(() => analysis = new DrawCommandStateAnalyzer().Analyze(commands));
+
+        Assert.True(failure is null, $"scale={scale}, pathClip={pathClip}: {failure?.GetType().Name}: {failure?.Message}");
+        DrawRect clip = Assert.IsType<DrawRect>(analysis!.Entries[2].ClipBounds);
+        if (scale == 1f)
+        {
+            Assert.Equal(new DrawRect(0, 0, 5000, 5000), clip);
+        }
+        else
+        {
+            // The world clip (0, 0)-(5e9, 5e9) keeps its part inside the
+            // origin-centered DrawRect range, which contains the fill (0, 0)-(1e7, 1e7).
+            Assert.Equal(new DrawRect(0, 0, 1e9f, 1e9f), clip);
+            Assert.Equal(new DrawRect(0, 0, 1e7f, 1e7f), analysis.Entries[2].Bounds);
+        }
+    }
+
+    // The backend scissor of a rectangle clip under a large scale still clips
+    // the content at the clip's visible edge (#1065): the world clip is x 20
+    // to 3e9, the fill covers x 0..60 and y 0..40, and x < 20 is outside the clip.
+    [Theory]
+    [InlineData(1f)]
+    [InlineData(2.5f)]
+    public void RectangleClipWhoseWorldBoundsExceedTheDrawRectRangeStillClipsRenderedContent(float coordinateScale)
+    {
+        using SdlDrawingFixture fixture = new(
+            (int)(96 * coordinateScale),
+            (int)(64 * coordinateScale),
+            coordinateScale: coordinateScale);
+        DrawCommandList commands = new();
+        DrawingContext drawing = new(commands);
+        drawing.PushTransform(Matrix3x2.CreateScale(2));
+        drawing.PushClip(new DrawRect(10, 0, 1.5e9f, 1.5e9f));
+        drawing.FillRectangle(new DrawRect(0, 0, 30, 20), Color.White);
+        drawing.PopClip();
+        drawing.PopTransform();
+
+        Color[] pixels = fixture.Render(commands);
+
+        Assert.Equal(Color.Black, fixture.Sample(pixels, 10, 20));
+        Assert.Equal(Color.White, fixture.Sample(pixels, 30, 20));
+        Assert.Equal(Color.White, fixture.Sample(pixels, 50, 20));
+        Assert.Equal(Color.Black, fixture.Sample(pixels, 70, 20));
+    }
+
     [Fact]
     public void AnalyzerRejectsMixedStackImbalanceWithPushIndex()
     {
