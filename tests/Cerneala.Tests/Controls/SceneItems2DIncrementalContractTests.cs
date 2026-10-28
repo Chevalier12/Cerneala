@@ -334,6 +334,47 @@ public sealed class SceneItems2DIncrementalContractTests(ITestOutputHelper outpu
         Assert.Equal(0, fixture.Root.ImageResourceCache!.ResidentCount);
     }
 
+    [Fact]
+    public void HidingTheSpriteItselfRemovesItsColliderFromActiveCollisionGeometry()
+    {
+        // Control for the group test: the same hide applied to the sprite.
+        using Fixture fixture = new(new[] { "npc" });
+        Sprite2D npc = new() { Width = 10, Height = 10, Collider = new BoxCollider2D { Width = 10, Height = 10 } };
+        fixture.Items.Templates[0] = new ContentTemplate<string>("npc", null, 0, _ => npc);
+        Assert.Same(npc, fixture.GetNode("npc"));
+        Sprite2D probe = new() { X = 2, Collider = new BoxCollider2D { Width = 10, Height = 10 } };
+        fixture.Scene.Children.Add(probe);
+        Assert.Single(fixture.Scene.CollisionWorld.Overlap(probe.Collider!));
+
+        npc.IsVisible = false;
+
+        Assert.Empty(fixture.Scene.CollisionWorld.Overlap(probe.Collider!));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void HidingTheSceneItemsGroupRemovesItsColliderFromActiveCollisionGeometry(bool collapse)
+    {
+        using Fixture fixture = new(new[] { "npc" });
+        Sprite2D npc = new() { Width = 10, Height = 10, Collider = new BoxCollider2D { Width = 10, Height = 10 } };
+        fixture.Items.Templates[0] = new ContentTemplate<string>("npc", null, 0, _ => npc);
+        Assert.Same(npc, fixture.GetNode("npc"));
+        Sprite2D probe = new() { X = 2, Collider = new BoxCollider2D { Width = 10, Height = 10 } };
+        fixture.Scene.Children.Add(probe);
+        Assert.Single(fixture.Scene.CollisionWorld.Overlap(probe.Collider!));
+
+        if (collapse) { fixture.Items.Visibility = Visibility.Collapsed; } else { fixture.Items.IsVisible = false; }
+
+        Assert.Empty(fixture.Scene.CollisionWorld.Overlap(probe.Collider!));
+        // A vertical ray at x = 1 crosses the npc (x = 0..10) but not the probe (x = 2..12).
+        Assert.Empty(fixture.Scene.CollisionWorld.Raycast(new Vector2(1, -5), Vector2.UnitY, 20));
+
+        if (collapse) { fixture.Items.Visibility = Visibility.Visible; } else { fixture.Items.IsVisible = true; }
+
+        Assert.Same(npc.Collider, Assert.Single(fixture.Scene.CollisionWorld.Overlap(probe.Collider!)).Collider);
+    }
+
     private sealed class ImageLoader : IAsyncImageLoader
     {
         internal int Loaded, Disposed;

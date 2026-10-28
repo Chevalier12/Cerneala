@@ -14,6 +14,10 @@ public sealed partial class CollisionWorld2D
     private readonly List<CollisionEntry2D?> entriesById = [];
     private readonly List<int> candidates = [];
     private bool initialized;
+    // Attachment ordinals follow the scene tree: depth first, children in order. An incremental add or a structural
+    // change leaves them stale until the next query renumbers them, so the order does not depend on when the world
+    // was built.
+    private bool ordinalsStale;
     private long observedVersion = -1;
     private int nextId;
     private long nextOrdinal;
@@ -80,7 +84,8 @@ public sealed partial class CollisionWorld2D
             }
 
             EnsureCollisionCoverage(source.Geometry.SceneBounds, collider, query);
-            broadphase.Query(source.Geometry.SceneBounds, candidates);
+            // Contact within Epsilon counts, so the query reaches as far as the narrow phase does.
+            broadphase.Query(IncludeContactFringe(source.Geometry.SceneBounds), candidates);
             broadphaseCandidateCount += candidates.Count;
             List<(CollisionHit2D Hit, long Ordinal)> hits = [];
             foreach (int id in candidates)
@@ -254,7 +259,8 @@ public sealed partial class CollisionWorld2D
             List<(CollisionHit2D Hit, long Ordinal)> triggers = [];
             for (int index = 0; index < queryBoundsCount; index++)
             {
-                broadphase.Query(queryBounds[index], candidates);
+                // Contact within Epsilon counts, so the query reaches as far as the narrow phase does.
+                broadphase.Query(IncludeContactFringe(queryBounds[index]), candidates);
                 broadphaseCandidateCount += candidates.Count;
                 foreach (int id in candidates)
                 {
@@ -408,6 +414,8 @@ public sealed partial class CollisionWorld2D
         int changed = kind == SceneCollisionMutationKind.Structure
             ? ReconcileAll()
             : ReconcileSubtree(node);
+        // A structural change can reorder colliders without adding one.
+        ordinalsStale |= kind == SceneCollisionMutationKind.Structure;
         observedVersion = version;
         incrementalUpdateCount++;
         updatedEntryCount += changed;
@@ -434,6 +442,33 @@ public sealed partial class CollisionWorld2D
         {
             Rebuild();
         }
+        else if (ordinalsStale)
+        {
+            RenumberInTreeOrder();
+        }
+    }
+
+    private void RenumberInTreeOrder()
+    {
+        nextOrdinal = 0;
+        foreach (Collider2D collider in EnumerateColliders(owner))
+        {
+            if (!entriesByCollider.TryGetValue(collider, out CollisionEntry2D? entry))
+            {
+                continue;
+            }
+
+            long ordinal = ++nextOrdinal;
+            if (entry.Ordinal != ordinal)
+            {
+                CollisionEntry2D renumbered = entry with { Ordinal = ordinal };
+                entriesByCollider[collider] = renumbered;
+                entriesById[entry.Id] = renumbered;
+                collider.ContactOrdinal = ordinal;
+            }
+        }
+
+        ordinalsStale = false;
     }
 
     private void Rebuild()
@@ -458,6 +493,7 @@ public sealed partial class CollisionWorld2D
         }
 
         initialized = true;
+        ordinalsStale = false;
         observedVersion = Version;
         rebuildCount++;
     }
@@ -559,6 +595,8 @@ public sealed partial class CollisionWorld2D
         entriesById[id] = entry;
         broadphase.AddOrUpdate(id, geometry.SceneBounds);
         OnContactEntryAdded(entry);
+        // The ordinal is provisional outside a rebuild: the next query gives the entry its tree position.
+        ordinalsStale = true;
         return true;
     }
 

@@ -292,6 +292,100 @@ public sealed class CollisionStageTwoContractTests
 
     [Fact]
     [Trait("CollisionStage", "2")]
+    public void RaycastEdgeContactToleranceIsOneEMinusFiveSceneUnitsOnAUnitLengthRay()
+    {
+        // Control: with maxDistance 1 the fraction tolerance equals the documented 1e-5 scene units.
+        Scene2D tooFar = new();
+        tooFar.Children.Add(new Sprite2D { X = 1 + 1e-4f, Collider = Box() });
+        Scene2D withinEpsilon = new();
+        withinEpsilon.Children.Add(new Sprite2D { X = 1 + 1e-6f, Collider = Box() });
+
+        Assert.Empty(tooFar.CollisionWorld.Raycast(new Vector2(0, 5), Vector2.UnitX, 1));
+        Assert.Single(withinEpsilon.CollisionWorld.Raycast(new Vector2(0, 5), Vector2.UnitX, 1));
+    }
+
+    [Fact]
+    public void RaycastDoesNotHitAFaceBeyondTheRayEndOnALongRay()
+    {
+        // The box face is at x = 10000.05, 0.05 units beyond the end of the ray.
+        Scene2D scene = new();
+        scene.Children.Add(new Sprite2D { X = 10000.05f, Collider = Box() });
+
+        CollisionHit2D[] hits = scene.CollisionWorld.Raycast(new Vector2(0, 5), Vector2.UnitX, 10000);
+
+        Assert.True(hits.Length == 0, "Unexpected hit: " + Describe(hits));
+    }
+
+    [Fact]
+    public void RaycastDoesNotHitABoxTheLongDiagonalLineMissesByAboutTwoAndAHalfUnits()
+    {
+        // The line y = x passes the box x = 14..24, y = 0..10 above its top-left corner (14, 10).
+        Scene2D scene = new();
+        scene.Children.Add(new Sprite2D { X = 14, Y = 0, Collider = Box() });
+
+        CollisionHit2D[] hits = scene.CollisionWorld.Raycast(Vector2.Zero, Vector2.Normalize(new Vector2(1, 1)), 1_000_000);
+
+        Assert.True(hits.Length == 0, "Unexpected hit: " + Describe(hits));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void RaycastDoesNotHitACircleOrSegmentBeyondTheRayEndOnALongRay(bool segment)
+    {
+        // The left edge of the circle of radius 5000, or the vertical segment, is at x = 10000.05,
+        // 0.05 units beyond the end of the ray.
+        Scene2D scene = new();
+        scene.Children.Add(segment
+            ? new Sprite2D { X = 10000.05f, Y = -5, Collider = new SegmentCollider2D { EndY = 10, EndX = 0 } }
+            : new Sprite2D { X = 15000.05f, Collider = new CircleCollider2D { Radius = 5000 } });
+
+        CollisionHit2D[] hits = scene.CollisionWorld.Raycast(Vector2.Zero, Vector2.UnitX, 10000);
+
+        Assert.True(hits.Length == 0, "Unexpected hit: " + Describe(hits));
+    }
+
+    [Fact]
+    public void RaycastDoesNotHitALongSegmentThatEndsBeforeTheRay()
+    {
+        // The segment runs from (0, 0) to (10000, 0); the vertical ray at x = 10000.05 passes 0.05 units beyond its end.
+        Scene2D scene = new();
+        scene.Children.Add(new Sprite2D { Collider = new SegmentCollider2D { EndX = 10000, EndY = 0 } });
+
+        CollisionHit2D[] hits = scene.CollisionWorld.Raycast(new Vector2(10000.05f, -5), Vector2.UnitY, 10);
+
+        Assert.True(hits.Length == 0, "Unexpected hit: " + Describe(hits));
+    }
+
+    [Fact]
+    public void RaycastDoesNotHitACircleThatAShortRayPassesTwoUnitsAway()
+    {
+        // The ray from (0, 3) is 0.001 long; the circle of radius 1 at (0.0005, 0) is 2 units below it.
+        Scene2D scene = new();
+        scene.Children.Add(new Sprite2D { X = 0.0005f, Collider = new CircleCollider2D { Radius = 1 } });
+
+        CollisionHit2D[] hits = scene.CollisionWorld.Raycast(new Vector2(0, 3), Vector2.UnitX, 0.001f);
+
+        Assert.True(hits.Length == 0, "Unexpected hit: " + Describe(hits));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void OverlapOrderDoesNotDependOnWhetherTheWorldWasQueriedBeforeAnInsert(bool showInsteadOfInsert)
+    {
+        // Sprites a (X = 0), p (X = 2) and b (X = 5), each with a 10x10 box. b is inserted first in the tree,
+        // or is first in the tree from the start but hidden and then shown.
+        string initializedOrder = BuildAndQuery(queryBeforeChange: true, showInsteadOfInsert);
+        string lazyOrder = BuildAndQuery(queryBeforeChange: false, showInsteadOfInsert);
+
+        Assert.True(
+            initializedOrder == lazyOrder,
+            $"Overlap order with the world initialized before the change: [{initializedOrder}]; without: [{lazyOrder}].");
+    }
+
+    [Fact]
+    [Trait("CollisionStage", "2")]
     public void LayerMaskTriggerAndQueryFiltersRunBeforeExactTests()
     {
         BoxCollider2D source = Box(layer: 1, mask: 2);
@@ -401,6 +495,27 @@ public sealed class CollisionStageTwoContractTests
         WeakReference context = new(dataContext);
         scene.Children.Remove(sprite);
         return (scene, node, context);
+    }
+
+    private static string Describe(CollisionHit2D[] hits) =>
+        string.Join("; ", hits.Select(static hit => $"Point={hit.Point}, Distance={hit.Distance}, Fraction={hit.Fraction}"));
+
+    private static string BuildAndQuery(bool queryBeforeChange, bool showInsteadOfInsert)
+    {
+        Sprite2D a = new() { X = 0, Collider = Box() };
+        Sprite2D p = new() { X = 2, Collider = Box() };
+        Sprite2D b = new() { X = 5, Collider = Box(), IsVisible = !showInsteadOfInsert };
+        Scene2D scene = new();
+        if (showInsteadOfInsert) { scene.Children.Add(b); }
+        scene.Children.Add(a);
+        scene.Children.Add(p);
+        if (queryBeforeChange) { scene.CollisionWorld.Overlap(p.Collider!); }
+
+        if (showInsteadOfInsert) { b.IsVisible = true; }
+        else { scene.Children.Insert(0, b); }
+
+        return string.Join(",", scene.CollisionWorld.Overlap(p.Collider!)
+            .Select(hit => ReferenceEquals(hit.Collider, a.Collider) ? "a" : ReferenceEquals(hit.Collider, b.Collider) ? "b" : "?"));
     }
 
     private static void ForceCollection()
