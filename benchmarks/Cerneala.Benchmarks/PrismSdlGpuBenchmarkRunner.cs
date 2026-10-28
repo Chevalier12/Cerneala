@@ -210,6 +210,8 @@ internal static class PrismSdlGpuBenchmarkRunner
             UiViewport viewport,
             float left,
             float top,
+            float width,
+            float height,
             WindowState state)
         {
         }

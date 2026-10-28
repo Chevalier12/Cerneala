@@ -256,9 +256,14 @@ internal sealed class SdlPlatformWindow : IPlatformWindow, IPlatformInputInjecto
     private bool destroyed;
     private bool enabled = true;
     private bool? lastActive;
-    private (UiViewport Viewport, float Left, float Top, WindowState State)? lastBounds;
+    private (UiViewport Viewport, float Left, float Top, float Width, float Height, WindowState State)? lastBounds;
     // Native position of the window in the normal state: where it was placed or last seen while normal.
     private (int X, int Y)? normalPosition;
+    // The model size (and coordinate scale) the native normal size was last set from or reported as, and that native
+    // size. A property change that leaves Width and Height at this size does not set the native size again, so a size
+    // the user resized the window to survives a change of Title or another window property.
+    private (float Width, float Height, float Scale)? syncedSize;
+    private (int Width, int Height) syncedNativeSize;
     private WindowState desiredState;
     private int graphicsPixelWidth;
     private int graphicsPixelHeight;
@@ -736,7 +741,8 @@ internal sealed class SdlPlatformWindow : IPlatformWindow, IPlatformInputInjecto
             logicalX = float.NaN;
             logicalY = float.NaN;
         }
-        var current = (Viewport, logicalX, logicalY, desiredState);
+        (float logicalWidth, float logicalHeight) = ReadNormalSize();
+        var current = (Viewport, logicalX, logicalY, logicalWidth, logicalHeight, desiredState);
         // Equals, not !=: an unknown position is NaN, and NaN != NaN would report unchanged bounds again.
         if (lastBounds is not { } last || !last.Equals(current))
         {
@@ -745,10 +751,38 @@ internal sealed class SdlPlatformWindow : IPlatformWindow, IPlatformInputInjecto
                 Viewport,
                 logicalX,
                 logicalY,
+                logicalWidth,
+                logicalHeight,
                 desiredState);
         }
 
         callbacks.RenderRequested();
+    }
+
+    // The normal size in logical units, as the model's Width and Height hold it. A native normal size other than the one
+    // last synchronized with the model was set by the user or the system, so it becomes the reported size; a maximized
+    // or minimized window keeps the model's size, which is the size it is restored to.
+    private (float Width, float Height) ReadNormalSize()
+    {
+        if (desiredState != WindowState.Normal)
+        {
+            return (window.Width, window.Height);
+        }
+
+        if (!api.GetWindowSize(Handle, out int width, out int height))
+        {
+            throw SdlApiError.Create(api, "SDL window size lookup");
+        }
+
+        if (width <= 0 || height <= 0 || (width, height) == syncedNativeSize)
+        {
+            return (window.Width, window.Height);
+        }
+
+        (float Width, float Height) logical = (width / nativeCoordinateScale, height / nativeCoordinateScale);
+        syncedSize = (logical.Width, logical.Height, nativeCoordinateScale);
+        syncedNativeSize = (width, height);
+        return logical;
     }
 
     private (int PixelWidth, int PixelHeight, float Scale) ReadPixelGeometry()
@@ -765,11 +799,17 @@ internal sealed class SdlPlatformWindow : IPlatformWindow, IPlatformInputInjecto
 
     private void ApplyLogicalSize(Window value)
     {
-        Require(api.SetWindowSize(
-            Handle,
-            ToNativeDimension(value.Width, minimum: 1),
-            ToNativeDimension(value.Height, minimum: 1)),
-            "SDL window size update");
+        (float Width, float Height, float Scale) requested = (value.Width, value.Height, nativeCoordinateScale);
+        if (syncedSize != requested)
+        {
+            (int Width, int Height) native = (
+                ToNativeDimension(value.Width, minimum: 1),
+                ToNativeDimension(value.Height, minimum: 1));
+            Require(api.SetWindowSize(Handle, native.Width, native.Height), "SDL window size update");
+            syncedSize = requested;
+            syncedNativeSize = native;
+        }
+
         Require(api.SetWindowMinimumSize(
             Handle,
             ToNativeDimension(value.MinWidth, minimum: 0),

@@ -177,7 +177,7 @@ public sealed class NativeDrawingSmokeTests
     {
         public void RequestClose() { }
         public void ActivationChanged(bool active) { }
-        public void BoundsChanged(UiViewport viewport, float left, float top, WindowState state) { }
+        public void BoundsChanged(UiViewport viewport, float left, float top, float width, float height, WindowState state) { }
         public void RenderRequested() { }
     }
 }

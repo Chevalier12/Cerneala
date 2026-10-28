@@ -34,6 +34,10 @@ Each maximum is independent: a finite `MaxWidth` still applies when `MaxHeight` 
 
 When both `Left` and `Top` are finite, that explicit position takes precedence over automatic startup centering. Maximizing or minimizing preserves the model's normal restore position instead of replacing it with the native maximized or minimized coordinates.
 
+`Width` and `Height` follow a user resize, as `Left` and `Top` follow a user move. Example: a window created with `Width = 640` and `Height = 480`, which the user drags to 900x700 at display scale 1, then has `Width == 900` and `Height == 700`. The values are logical units: at display scale 1.25 the same drag reports 720x560. Setting `Title`, `Topmost`, `ShowInTaskbar`, or any other window property afterwards keeps the 900x700 size; only a new `Width` or `Height` value resizes the native window. While the window is maximized or minimized, `Width` and `Height` keep the normal size the window is restored to.
+
+`ShowDialogAsync` returns a task that completes with `DialogResult` when the dialog closes. This also holds when the dialog closes during its first frame, for example when a `ContentRendered` handler sets `DialogResult`: the returned task is then already completed. A `Closed` handler that throws does not stop the close: the window is closed, the dialog task completes with `DialogResult`, the application's shutdown policy sees the close, and then the handler's exception propagates from the call that closed the window, such as `Close` or the `DialogResult` setter.
+
 On Windows, the host preserves the application icon supplied by SDL. If neither the native window nor its class has an application icon, the host supplies the standard Windows application icon.
 
 The window renders its configured background and border before its content. `LastFrame` is assigned immediately after a frame is presented. The `FrameRendered` event is then raised on the window's UI thread, allowing diagnostic UI to inspect the completed frame without reaching into the hosting runtime.
@@ -50,7 +54,7 @@ When the native platform activates a window and no retained element already has 
 | Name | Description |
 | --- | --- |
 | `Title` | Native window title. |
-| `Width`, `Height` | Requested dimensions. |
+| `Width`, `Height` | Client-area size in logical units. Setting them resizes the native window; a user resize writes the new normal size back to them. |
 | `MinWidth`, `MinHeight`, `MaxWidth`, `MaxHeight` | Client-area dimension constraints; maximum limits also apply when maximized. They hide the `UIElement` layout limits of the same names and are separate properties: for `UIElement element = new Window { MinWidth = 640 }`, `element.MinWidth` is `0`. |
 | `Left`, `Top` | Requested screen position. |
 | `WindowState` | Normal, minimized, or maximized state. |

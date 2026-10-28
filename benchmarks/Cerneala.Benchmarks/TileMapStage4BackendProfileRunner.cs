@@ -446,7 +446,7 @@ internal static class TileMapStage4BackendProfileRunner
         {
         }
 
-        public void BoundsChanged(UiViewport viewport, float left, float top, WindowState state)
+        public void BoundsChanged(UiViewport viewport, float left, float top, float width, float height, WindowState state)
         {
         }
 
