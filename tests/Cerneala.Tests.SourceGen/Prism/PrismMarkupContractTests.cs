@@ -466,6 +466,146 @@ public sealed partial class UiMarkupGeneratorTests
             """;
 
     [Theory]
+    [InlineData("Multiply", false)]
+    [InlineData("Add", true)]
+    [InlineData("Bogus", true)]
+    public void PrismSymbolParameterIsCheckedAgainstTheCatalog(string symbol, bool invalid)
+    {
+        string markup = $$"""
+            <Border>
+              <Border.Resources>
+                <PrismClip Name="P">
+                  @parameter Mode: symbol = {{symbol}};
+                  @layer L { BlendMode = Mode; @filter Blur { Radius = 2; } }
+                </PrismClip>
+              </Border.Resources>
+              <Border.Aspect>
+                @prism $P;
+              </Border.Aspect>
+            </Border>
+            """;
+
+        GeneratorRunResult result = RunGenerator("PrismSymbolParameter.crn", markup, out Compilation compilation);
+
+        string compilationErrors = string.Join(
+            " | ",
+            compilation.GetDiagnostics().Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error));
+        string diagnostics = string.Join(" | ", result.Diagnostics);
+        if (invalid)
+        {
+            Assert.True(
+                result.Diagnostics.Any(diagnostic => diagnostic.Id == "PRISM2009"),
+                "No PRISM2009. Generator diagnostics: " + diagnostics + " Compilation errors: " + compilationErrors);
+        }
+        else
+        {
+            Assert.True(
+                result.Diagnostics.All(diagnostic => diagnostic.Severity != DiagnosticSeverity.Error) && compilationErrors.Length == 0,
+                "Generator diagnostics: " + diagnostics + " Compilation errors: " + compilationErrors);
+        }
+    }
+
+    // PassThrough is valid only on groups; a symbol parameter used as a layer's BlendMode must be held to the same rule.
+    [Theory]
+    [InlineData("direct-layer", true)]
+    [InlineData("parameter-layer", true)]
+    [InlineData("parameter-group", false)]
+    public void PassThroughIsRejectedOnALayerAlsoThroughASymbolParameter(string shape, bool invalid)
+    {
+        string body = shape switch
+        {
+            "direct-layer" => "@layer L { BlendMode = PassThrough; @filter Blur { Radius = 2; } }",
+            "parameter-layer" => "@parameter Mode: symbol = PassThrough; @layer L { BlendMode = Mode; @filter Blur { Radius = 2; } }",
+            _ => "@parameter Mode: symbol = PassThrough; @group G { BlendMode = Mode; @layer L { @filter Blur { Radius = 2; } } }"
+        };
+        string markup = $$"""
+            <Border>
+              <Border.Resources>
+                <PrismClip Name="P">
+                  {{body}}
+                </PrismClip>
+              </Border.Resources>
+              <Border.Aspect>
+                @prism $P;
+              </Border.Aspect>
+            </Border>
+            """;
+
+        GeneratorRunResult result = RunGenerator("PrismPassThrough.crn", markup, out Compilation compilation);
+
+        string compilationErrors = string.Join(
+            " | ",
+            compilation.GetDiagnostics().Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error));
+        bool rejected = result.Diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        Assert.True(
+            rejected == invalid && (invalid || compilationErrors.Length == 0),
+            $"shape={shape}: generator errors [{string.Join(" | ", result.Diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error))}], compilation errors [{compilationErrors}].");
+    }
+
+    // The symbol a parameter default or argument holds reaches the BlendMode
+    // that reads the parameter, so it is reported where it is written.
+    [Theory]
+    [InlineData("Bogus", "", "Bogus", "Unknown Prism symbol 'Bogus' for property 'BlendMode'.")]
+    [InlineData("Add", "", "Add", "Unknown Prism symbol 'Add' for property 'BlendMode'.")]
+    [InlineData("Multiply", "Mode = Bogus", "Bogus", "Unknown Prism symbol 'Bogus' for property 'BlendMode'.")]
+    [InlineData("PassThrough", "", "PassThrough", "PassThrough blending is valid only for Prism groups.")]
+    [InlineData("Multiply", "Mode = PassThrough", "PassThrough", "PassThrough blending is valid only for Prism groups.")]
+    public void PrismSymbolParameterValuesAreReportedWhereTheyAreWritten(
+        string defaultValue,
+        string arguments,
+        string invalid,
+        string message)
+    {
+        string markup = $$"""
+            <Border>
+              <Border.Resources>
+                <PrismClip Name="P">
+                  @parameter Mode: symbol = {{defaultValue}};
+                  @layer L { BlendMode = Mode; @filter Blur { Radius = 2; } }
+                </PrismClip>
+              </Border.Resources>
+              <Border.Aspect>
+                @prism $P({{arguments}});
+              </Border.Aspect>
+            </Border>
+            """;
+
+        GeneratorRunResult result = RunGenerator("PrismSymbolParameter.crn", markup, out Compilation compilation);
+
+        Diagnostic diagnostic = AssertPrismDiagnostic(result, "PRISM2009", markup, invalid);
+        Assert.EndsWith(message, diagnostic.GetMessage(), StringComparison.Ordinal);
+        Assert.DoesNotContain(
+            compilation.GetDiagnostics(),
+            candidate => candidate.Severity == DiagnosticSeverity.Error);
+    }
+
+    [Fact]
+    public void PrismSymbolParameterArgumentInTheCatalogEmitsItsBlendMode()
+    {
+        const string markup = """
+            <Border>
+              <Border.Resources>
+                <PrismClip Name="P">
+                  @parameter Mode: symbol = Multiply;
+                  @layer L { BlendMode = Mode; @filter Blur { Radius = 2; } }
+                </PrismClip>
+              </Border.Resources>
+              <Border.Aspect>
+                @prism $P(Mode = Screen);
+              </Border.Aspect>
+            </Border>
+            """;
+
+        GeneratorRunResult result = RunGenerator("PrismSymbolParameter.crn", markup, out Compilation compilation);
+
+        AssertNoGeneratorOrCompilationErrors(result, compilation);
+        Assert.Contains(
+            "global::Cerneala.Drawing.Prism.Catalog.PrismBlendMode.Screen",
+            SingleGeneratedSource(result),
+            StringComparison.Ordinal);
+    }
+
+    [Theory]
     [InlineData("$DataContext.Opacity", false)]
     [InlineData("$DataContext.Opacity:OneWay", true)]
     [InlineData("$DataContext.Opacity:TwoWay", true)]
