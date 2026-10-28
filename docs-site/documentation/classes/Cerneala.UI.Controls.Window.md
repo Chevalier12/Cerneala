@@ -32,7 +32,9 @@ After a native viewport size change, the window and stretching content are arran
 
 Each maximum is independent: a finite `MaxWidth` still applies when `MaxHeight` is positive infinity, and vice versa. The Windows native runtime enforces this for bordered and borderless windows.
 
-When both `Left` and `Top` are finite, that explicit position takes precedence over automatic startup centering. Maximizing or minimizing preserves the model's normal restore position instead of replacing it with the native maximized or minimized coordinates.
+`MinWidth`, `MinHeight`, `MaxWidth` and `MaxHeight` are logical units, so they keep their meaning when the window's display scale changes, for example when it moves to a monitor with another scale. A window with `MinWidth = 200` and `MaxWidth = 500` created at 150% has native limits of 300 and 750 pixels; after it moves to a 100% monitor they are 200 and 500 pixels.
+
+When both `Left` and `Top` are finite, that explicit position takes precedence over automatic startup centering. Maximizing or minimizing preserves the model's normal restore position instead of replacing it with the native maximized or minimized coordinates. A minimized window that comes back maximized, for example after a taskbar click, goes from `Minimized` straight to `Maximized`: `StateChanged` reports no `Normal` state in between, and `Left` and `Top` keep the restore position.
 
 On Windows, the host preserves the application icon supplied by SDL. If neither the native window nor its class has an application icon, the host supplies the standard Windows application icon.
 

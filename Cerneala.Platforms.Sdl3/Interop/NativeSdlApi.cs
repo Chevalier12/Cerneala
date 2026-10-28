@@ -679,6 +679,8 @@ internal sealed class NativeSdlApi : ISdlApi
 
     public float GetWindowDisplayScale(nint window) => SDL.GetWindowDisplayScale(window);
 
+    public SdlWindowOptions GetWindowFlags(nint window) => (SdlWindowOptions)(ulong)SDL.GetWindowFlags(window);
+
     public bool GetWindowSizeInPixels(nint window, out int width, out int height) =>
         SDL.GetWindowSizeInPixels(window, out width, out height);
 
