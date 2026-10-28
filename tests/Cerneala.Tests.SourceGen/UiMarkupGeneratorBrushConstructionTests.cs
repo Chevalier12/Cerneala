@@ -50,4 +50,21 @@ public sealed partial class UiMarkupGeneratorTests
         Assert.Equal(namedButton.Background.GetType(), inlineButton.Background!.GetType());
         Assert.NotSame(namedButton.Background, inlineButton.Background);
     }
+
+    // Issue #881: RR, GG and BB are two hex digits each, so white space inside a digit pair is invalid.
+    [Theory]
+    [InlineData("Background", "#FF0000", false)]
+    [InlineData("Background", "#F F000", true)]
+    [InlineData("Foreground", "#FF00F ", true)]
+    [InlineData("Background", "#80FF0000", false)]
+    [InlineData("Background", "#80 F0000", true)]
+    public void HexColorsWithWhitespaceInsideADigitPairAreReported(string property, string color, bool invalid)
+    {
+        GeneratorRunResult result = RunGenerator("HexColorWhitespace.crn", "<Button " + property + "=\"" + color + "\" />", out _);
+
+        bool reported = result.Diagnostics.Any(diagnostic => diagnostic.Id == "CERNEALAUI004" && diagnostic.Severity == DiagnosticSeverity.Error);
+        Assert.True(
+            reported == invalid,
+            "CERNEALAUI004 reported: " + reported + ". Diagnostics: " + string.Join(" | ", result.Diagnostics));
+    }
 }

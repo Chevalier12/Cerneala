@@ -78,9 +78,10 @@ public sealed partial class UiMarkupGenerator
                 return null;
             }
 
+            // AllowHexSpecifier alone: NumberStyles.HexNumber also accepts white space around the digits ("F ").
             static bool TryByte(string text, out byte parsed)
             {
-                return byte.TryParse(text, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out parsed);
+                return byte.TryParse(text, NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture, out parsed);
             }
 
             if (value.Length == 7 &&

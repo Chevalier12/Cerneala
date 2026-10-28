@@ -325,6 +325,105 @@ public sealed partial class UiMarkupGeneratorTests
             sprite.Animations!.TryGetClip(sprite.AnimationState!, out _),
             $"The build accepted '{state}', but the emitted AnimationState '{sprite.AnimationState}' finds no clip.");
     }
+
+    // Issue #1027: every frame duration is valid, but the clip total must also fit TimeSpan, as the runtime
+    // SpriteAnimationClip constructor adds the frame ticks with checked arithmetic.
+    [Theory]
+    [Trait("SpriteAnimationStage", "0")]
+    [InlineData("922337203685s", "922337203685s", true)]
+    [InlineData("461168601842s", "461168601842s", false)]
+    // 922337203685s is 9223372036849999872 ticks after the runtime's double conversion, which leaves
+    // 4775935 ticks up to long.MaxValue: 477.5625ms (4775625 ticks) fits, 477.625ms (4776250 ticks) does not.
+    [InlineData("922337203685s", "477.5625ms", false)]
+    [InlineData("922337203685s", "477.625ms", true)]
+    public void ClipWhoseTotalDurationOverflowsIsReportedAtBuildTime(string first, string second, bool overflows)
+    {
+        string markup = $$"""
+            <RenderSurface2D>
+              <RenderSurface2D.Resources>
+                <SpriteAnimationSet Name="HeroAnimations">
+                  <SpriteAnimationClip Name="Idle">
+                    <SpriteAnimationFrame SourceX="0" SourceY="0" SourceWidth="16" SourceHeight="16" Duration="{{first}}" />
+                    <SpriteAnimationFrame SourceX="16" SourceY="0" SourceWidth="16" SourceHeight="16" Duration="{{second}}" />
+                  </SpriteAnimationClip>
+                </SpriteAnimationSet>
+              </RenderSurface2D.Resources>
+              <RenderSurface2D.Scene>
+                <Scene2D>
+                  <Sprite2D Animations="$HeroAnimations" AnimationState="Idle" />
+                </Scene2D>
+              </RenderSurface2D.Scene>
+            </RenderSurface2D>
+            """;
+
+        GeneratorRunResult result = RunGenerator("ProbeClip.crn", markup, out Compilation compilation);
+        Diagnostic[] errors = result.Diagnostics.Where(candidate => candidate.Severity == DiagnosticSeverity.Error).ToArray();
+        if (overflows)
+        {
+            Diagnostic diagnostic = Assert.Single(errors);
+            Assert.Equal("CERNEALAUI016", diagnostic.Id);
+            Assert.Contains(
+                second,
+                markup.Substring(diagnostic.Location.SourceSpan.Start, diagnostic.Location.SourceSpan.Length),
+                StringComparison.Ordinal);
+            return;
+        }
+
+        Assert.True(errors.Length == 0, "Generator errors: " + string.Join<Diagnostic>(" | ", errors));
+        using MemoryStream stream = new();
+        var emitted = compilation.Emit(stream);
+        Assert.True(emitted.Success, string.Join(Environment.NewLine, emitted.Diagnostics));
+        Exception? failure = Record.Exception(() => InvokeCreate(stream, "Cerneala.GeneratedUi.ProbeClipFactory"));
+        Assert.True(failure is null, "The generated factory threw: " + (failure?.InnerException?.Message ?? failure?.Message));
+    }
+
+    // Issue #1152: a literal AnimationState set in an inline Aspect (@default, @when) or a reactive @when is
+    // static, so a state that is not a clip of the sprite's static Animations set fails the build at the value.
+    [Theory]
+    [Trait("SpriteAnimationStage", "0")]
+    [InlineData("<Sprite2D Animations=\"$HeroAnimations\"><Sprite2D.Aspect>@default { AnimationState = \"STATE\"; }</Sprite2D.Aspect></Sprite2D>")]
+    [InlineData("<Sprite2D Animations=\"$HeroAnimations\"><Sprite2D.Aspect>@when IsEnabled { AnimationState = \"STATE\"; }</Sprite2D.Aspect></Sprite2D>")]
+    [InlineData("<Sprite2D Animations=\"$HeroAnimations\" AnimationState=\"Idle\" IsEnabled=\"True\">@when IsEnabled { AnimationState = \"STATE\"; }</Sprite2D>")]
+    [InlineData("<Sprite2D Animations=\"$HeroAnimations\" AnimationState=\"STATE\" />")]
+    public void DirectiveAnimationStateIsValidatedLikeTheAttribute(string spriteTemplate)
+    {
+        foreach ((string state, bool unknown) in new[] { ("Missing", true), ("Idle", false) })
+        {
+            string markup = $$"""
+                <RenderSurface2D>
+                  <RenderSurface2D.Resources>
+                    <SpriteAnimationSet Name="HeroAnimations">
+                      <SpriteAnimationClip Name="Idle">
+                        <SpriteAnimationFrame SourceX="0" SourceY="0" SourceWidth="16" SourceHeight="16" Duration="1ms" />
+                      </SpriteAnimationClip>
+                    </SpriteAnimationSet>
+                  </RenderSurface2D.Resources>
+                  <RenderSurface2D.Scene>
+                    <Scene2D>
+                      {{spriteTemplate.Replace("STATE", state, StringComparison.Ordinal)}}
+                    </Scene2D>
+                  </RenderSurface2D.Scene>
+                </RenderSurface2D>
+                """;
+
+            GeneratorRunResult result = RunGenerator("DirectiveAnimationState.crn", markup, out Compilation compilation);
+            Diagnostic[] all = result.Diagnostics.Concat(compilation.GetDiagnostics()).ToArray();
+            Diagnostic[] errors = all.Where(candidate => candidate.Severity == DiagnosticSeverity.Error).ToArray();
+            if (!unknown)
+            {
+                Assert.True(errors.Length == 0, $"State '{state}' must build. Errors: " + string.Join<Diagnostic>(" | ", errors));
+                continue;
+            }
+
+            Diagnostic diagnostic = Assert.Single(errors);
+            Assert.Equal("CERNEALAUI016", diagnostic.Id);
+            Assert.Equal("DirectiveAnimationState.crn", diagnostic.Location.GetLineSpan().Path);
+            Assert.Contains(
+                "Missing",
+                markup.Substring(diagnostic.Location.SourceSpan.Start, diagnostic.Location.SourceSpan.Length),
+                StringComparison.Ordinal);
+        }
+    }
 }
 
 public sealed class SpriteAnimationMarkupState : INotifyPropertyChanged

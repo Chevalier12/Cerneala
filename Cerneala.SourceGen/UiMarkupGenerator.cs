@@ -318,7 +318,9 @@ public sealed partial class UiMarkupGenerator : IIncrementalGenerator
                 : ResolveWindowPair(context, file, compilation))
             .ToArray();
         int mainWindowCount = windowPairs.Count(resolution => resolution.Pair?.TypeSymbol.Name == "MainWindow");
-        if (mainWindowCount > 1 && compilation.Options.OutputKind != OutputKind.DynamicallyLinkedLibrary)
+        // The MainWindow name selects the startup window only on the legacy path, without an Application document.
+        if (mainWindowCount > 1 && !hasApplicationDocument &&
+            compilation.Options.OutputKind != OutputKind.DynamicallyLinkedLibrary)
         {
             context.ReportDiagnostic(Diagnostic.Create(
                 InvalidWindowStartup,

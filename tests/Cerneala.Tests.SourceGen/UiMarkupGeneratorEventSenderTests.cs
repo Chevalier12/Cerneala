@@ -201,6 +201,70 @@ public sealed partial class UiMarkupGeneratorTests
         </UserControl>
         """;
 
+    // Issue #863: an override, or a `new` method that hides a base method, is one method for C# lookup.
+    [Theory]
+    [InlineData("public partial class SavePage : PageBase { private void OnSave(Button sender, RoutedEventArgs args) { } }", "")]
+    [InlineData("public partial class SavePage : PageBase { protected override void OnSave(Button sender, RoutedEventArgs args) { } }", "protected virtual void OnSave(Button sender, RoutedEventArgs args) { }")]
+    [InlineData("public partial class SavePage : PageBase { protected new void OnSave(Button sender, RoutedEventArgs args) { } }", "protected void OnSave(Button sender, RoutedEventArgs args) { }")]
+    public void HandlerOverridingOrHidingABaseMethodIsOneCompatibleMethod(string derived, string baseMember)
+    {
+        string inputSource = $$"""
+            using Cerneala.UI.Controls;
+            using Cerneala.UI.Input;
+            namespace TestInput.Views;
+            public abstract class PageBase : UserControl
+            {
+                {{baseMember}}
+            }
+            {{derived}}
+            """;
+
+        GeneratorRunResult result = RunPairedGenerator(
+            "Views/SavePage.crn",
+            "<UserControl><Button Click=\"OnSave\" /></UserControl>",
+            inputSource,
+            out Compilation compilation);
+
+        Assert.True(
+            result.Diagnostics.Length == 0,
+            "Generator diagnostics: " + string.Join(" | ", result.Diagnostics));
+        using MemoryStream stream = new();
+        EmitResult emit = compilation.Emit(stream);
+        Assert.True(emit.Success, string.Join(Environment.NewLine, emit.Diagnostics));
+    }
+
+    // Issue #863: two genuine compatible overloads stay ambiguous.
+    [Fact]
+    public void GenuineCompatibleHandlerOverloadsStayAmbiguous()
+    {
+        const string inputSource = """
+            using Cerneala.UI.Controls;
+            using Cerneala.UI.Elements;
+            using Cerneala.UI.Input;
+            namespace TestInput.Views;
+            public abstract class PageBase : UserControl
+            {
+                protected virtual void OnSave(Button sender, RoutedEventArgs args) { }
+            }
+            public partial class SavePage : PageBase
+            {
+                protected override void OnSave(Button sender, RoutedEventArgs args) { }
+                private void OnSave(UIElement sender, RoutedEventArgs args) { }
+            }
+            """;
+
+        GeneratorRunResult result = RunPairedGenerator(
+            "Views/SavePage.crn",
+            "<UserControl><Button Click=\"OnSave\" /></UserControl>",
+            inputSource,
+            out _);
+
+        Assert.Contains(
+            result.Diagnostics,
+            diagnostic => diagnostic.Id == "CERNEALAUI009" &&
+                          diagnostic.GetMessage().Contains("More than one compatible overload was found.", StringComparison.Ordinal));
+    }
+
     private static T GetNamedElement<T>(Type viewType, object view, string name)
         where T : UIElement
     {

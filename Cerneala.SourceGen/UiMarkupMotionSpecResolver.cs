@@ -296,17 +296,24 @@ public sealed partial class UiMarkupGenerator
 
         private static bool TryBuildDurationExpression(string text, out string expression)
         {
-            return TryBuildDurationExpression(text, allowZero: false, out expression);
+            return TryBuildDurationExpression(text, allowZero: false, out expression, out _);
+        }
+
+        private static bool TryBuildDurationExpression(string text, out string expression, out long ticks)
+        {
+            return TryBuildDurationExpression(text, allowZero: false, out expression, out ticks);
         }
 
         private static bool TryBuildNonNegativeDurationExpression(string text, out string expression)
         {
-            return TryBuildDurationExpression(text, allowZero: true, out expression);
+            return TryBuildDurationExpression(text, allowZero: true, out expression, out _);
         }
 
-        private static bool TryBuildDurationExpression(string text, bool allowZero, out string expression)
+        // ticks: the whole ticks of the TimeSpan that the expression creates at run time.
+        private static bool TryBuildDurationExpression(string text, bool allowZero, out string expression, out long ticks)
         {
             expression = string.Empty;
+            ticks = 0;
             string unit;
             string number;
             double ticksPerUnit;
@@ -336,12 +343,14 @@ public sealed partial class UiMarkupGenerator
             // Mirror the runtime's TimeSpan.FromMilliseconds/FromSeconds(double): ticks = value * scale,
             // truncated, OverflowException above long.MaxValue. The generated expression must never throw
             // and must keep a positive duration positive after truncation to whole ticks.
-            double ticks = value * ticksPerUnit;
-            if (ticks > long.MaxValue || (allowZero ? ticks < 0 : ticks < 1))
+            double scaledTicks = value * ticksPerUnit;
+            if (scaledTicks > long.MaxValue || (allowZero ? scaledTicks < 0 : scaledTicks < 1))
             {
                 return false;
             }
 
+            // As TimeSpan does: a value equal to long.MaxValue as a double (2^63) is TimeSpan.MaxValue.
+            ticks = scaledTicks >= long.MaxValue ? long.MaxValue : (long)scaledTicks;
             expression = "global::System.TimeSpan." + unit + "(" + value.ToString("R", CultureInfo.InvariantCulture) + ")";
             return true;
         }

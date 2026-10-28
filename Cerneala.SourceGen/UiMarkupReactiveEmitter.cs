@@ -30,6 +30,9 @@ public sealed partial class UiMarkupGenerator
 
             public string ElementName { get; }
 
+            // The markup element whose reactive content this plan emits, when the plan belongs to one element.
+            public MarkupElement? Element { get; set; }
+
             public bool IsRoot { get; }
 
             public TemplateEmissionContext? TemplateContext { get; }
@@ -168,7 +171,10 @@ public sealed partial class UiMarkupGenerator
                 variable,
                 element.Name.LocalName,
                 ReferenceEquals(element, document.Root),
-                templateEmissionContexts.Count == 0 ? null : templateEmissionContexts.Peek());
+                templateEmissionContexts.Count == 0 ? null : templateEmissionContexts.Peek())
+            {
+                Element = element
+            };
 
             foreach (DirectiveNode node in parsed.Nodes)
             {
@@ -775,7 +781,9 @@ public sealed partial class UiMarkupGenerator
             string rawValue,
             PropertySpec spec,
             MarkupObject source,
-            string? ownerVariable = null)
+            string? ownerVariable = null,
+            MarkupElement? targetElement = null,
+            DirectiveExpressionLocation? valueLocation = null)
         {
             string value = rawValue.Trim();
             if (value.StartsWith("$", StringComparison.Ordinal))
@@ -808,8 +816,27 @@ public sealed partial class UiMarkupGenerator
                 value = UnescapeMarkupDollar(value);
             }
 
+            if (targetElement is not null)
+            {
+                ValidateStaticAnimationState(
+                    targetElement,
+                    propertyName,
+                    valueLocation is null ? source : DirectiveValueLocation(valueLocation, rawValue),
+                    value);
+            }
+
             MarkupAttribute synthetic = new(propertyName, value);
             return ParseLiteralValue(planElementName ?? "value", propertyName, synthetic, value, spec);
+        }
+
+        // The whole trimmed value of a directive assignment, quotes included; valueLocation marks where it starts.
+        private static DirectiveExpressionLocation DirectiveValueLocation(DirectiveExpressionLocation valueLocation, string rawValue)
+        {
+            int leadingWhitespace = rawValue.Length - rawValue.TrimStart().Length;
+            return new DirectiveExpressionLocation(
+                valueLocation.Source,
+                valueLocation.Offset + leadingWhitespace,
+                Math.Max(1, rawValue.Trim().Length));
         }
 
         private GeneratedExpression? ResolveDirectiveReferenceValue(
@@ -998,7 +1025,9 @@ public sealed partial class UiMarkupGenerator
                             assignment.Value,
                             spec,
                             assignment.Source,
-                            plan.OwnerVariable);
+                            plan.OwnerVariable,
+                            plan.Element,
+                            assignment.ValueLocation);
                         if (expression is null)
                         {
                             continue;
