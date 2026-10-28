@@ -43,6 +43,56 @@ public sealed class TypedBindingTests
         Assert.False(binding.IsDisposed);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void OneWayBindingTargetEndsWithTheCurrentSourceValueAfterAReentrantChange(bool clamp)
+    {
+        ObservableValue<int> source = new(0);
+        if (clamp)
+        {
+            source.ValueChanged += (_, args) =>
+            {
+                if (args.NewValue > 100)
+                {
+                    source.Value = 100;
+                }
+            };
+        }
+
+        int target = 0;
+        using Binding<int> binding = Binding.OneWay(source, value => target = value);
+
+        source.Value = 150;
+
+        Assert.Equal(source.Value, target);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void OneWayUiPropertyBindingTargetEndsWithTheCurrentSourceValueAfterAReentrantChange(bool truncate)
+    {
+        ObservableValue<string> source = new("");
+        if (truncate)
+        {
+            source.ValueChanged += (_, args) =>
+            {
+                if (args.NewValue.Length > 5)
+                {
+                    source.Value = args.NewValue[..5];
+                }
+            };
+        }
+
+        Cerneala.UI.Controls.TextBlock textBlock = new();
+        using IDisposable binding = BindingOperations.BindOneWay(textBlock, Cerneala.UI.Controls.TextBlock.TextProperty, source);
+
+        source.Value = "Hello world";
+
+        Assert.Equal(source.Value, textBlock.Text);
+    }
+
     [Fact]
     public void BindingDisposalStopsUpdates()
     {

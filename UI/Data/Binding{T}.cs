@@ -78,7 +78,9 @@ public sealed class Binding<T> : Binding
     {
         if (!IsDisposed)
         {
-            targetSetter(args.NewValue);
+            // A ValueChanged handler can change the source again before this binding sees the outer notification, so
+            // args.NewValue can be stale; the target always takes the value the source holds now.
+            targetSetter(source.Value);
         }
     }
 }

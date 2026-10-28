@@ -50,6 +50,54 @@ public sealed class TextBoxTwoWayBindingTests
         Assert.Equal(1, sourceChanges);
     }
 
+    [Theory]
+    [InlineData(false, "Grace")]
+    [InlineData(true, "Gra")]
+    public void TextBoxTextEndsWithTheSourceValueWhenTheSourceNormalisesTheCommittedValue(bool normalise, string expected)
+    {
+        ObservableValue<string> source = new("Ada");
+        if (normalise)
+        {
+            source.ValueChanged += (_, args) =>
+            {
+                if (args.NewValue.Length > 3)
+                {
+                    source.Value = args.NewValue[..3];
+                }
+            };
+        }
+
+        TextBox textBox = new();
+        using IDisposable binding = BindingOperations.BindTwoWay(textBox, TextBox.TextProperty, source);
+
+        textBox.Text = "Grace";
+
+        Assert.Equal(expected, source.Value);
+        Assert.Equal(source.Value, textBox.Text);
+    }
+
+    [Fact]
+    public void TextBoxCommitThatTheSourceKeepsIsNotWrittenBackToTheTextBox()
+    {
+        ObservableValue<string> source = new("Ada");
+        TextBox textBox = new();
+        using IDisposable binding = BindingOperations.BindTwoWay(textBox, TextBox.TextProperty, source);
+        int textChanges = 0;
+        textBox.PropertyChanged += (_, args) =>
+        {
+            if (ReferenceEquals(args.Property, TextBox.TextProperty))
+            {
+                textChanges++;
+            }
+        };
+
+        textBox.Text = "Grace";
+
+        Assert.Equal("Grace", source.Value);
+        Assert.Equal("Grace", textBox.Text);
+        Assert.Equal(1, textChanges);
+    }
+
     [Fact]
     public void DisposedTextBoxBindingStopsBothDirections()
     {
