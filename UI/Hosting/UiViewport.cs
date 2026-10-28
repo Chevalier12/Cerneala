@@ -48,4 +48,39 @@ public readonly record struct UiViewport
             UiCoordinateMapper.PhysicalToLogical(pixelHeight, scale),
             scale);
     }
+
+    internal bool TryGetPixelSize(out int pixelWidth, out int pixelHeight)
+    {
+        double width = ToPixelExtent(Width, Scale);
+        double height = ToPixelExtent(Height, Scale);
+        if (width <= 0 ||
+            height <= 0 ||
+            width > int.MaxValue ||
+            height > int.MaxValue)
+        {
+            pixelWidth = 0;
+            pixelHeight = 0;
+            return false;
+        }
+
+        pixelWidth = (int)width;
+        pixelHeight = (int)height;
+        return true;
+    }
+
+    // The smallest pixel count whose logical extent covers the given one, so a viewport made by FromPhysicalPixels
+    // converts back to exactly its pixels. Rounding the product up is not enough: 898 / 1.75f is stored as
+    // 513.142883f, whose product with 1.75 is 898.00005 and rounds up to 899.
+    private static double ToPixelExtent(float logical, float scale)
+    {
+        double pixels = Math.Ceiling((double)logical * scale);
+        while (pixels > 0 &&
+            pixels <= int.MaxValue &&
+            UiCoordinateMapper.PhysicalToLogical((float)(pixels - 1), scale) >= logical)
+        {
+            pixels--;
+        }
+
+        return pixels;
+    }
 }

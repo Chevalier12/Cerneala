@@ -348,6 +348,30 @@ public sealed class PrismBackdropHostingMigrationTests
     }
 
     [SdlNativeFact]
+    public void UiHostBackdropRequestMatchesTheSessionFrameAtAFractionalScale()
+    {
+        using BackdropFixture fixture = new();
+        SdlGpuWindowGraphicsSession session = fixture.Session;
+        using BackdropScene scene = CreateBackdropHostingScene();
+        CountingBackdropSource source = new(session);
+        UiViewport viewport = UiViewport.FromPhysicalPixels(898, 600, 1.75f);
+        UiHost host = new(
+            new UiHostOptions
+            {
+                Root = scene.Root,
+                Viewport = viewport,
+                Backend = new HostBackend(session.DrawingBackend, source)
+            });
+        session.Resize(898, 600, coordinateScale: 1.75f);
+
+        CaptureHostedBackdrop(session, host, viewport);
+
+        Assert.Equal(1, source.AcquireCalls);
+        Assert.Equal(1, host.BackdropFrameCounters.AcquiredFrames);
+        Assert.Equal(0, host.BackdropFrameCounters.FailedFrames);
+    }
+
+    [SdlNativeFact]
     public void BackdropLifecycleStressReleasesResourcesAcrossVisibilityReplacementResetAndNavigation()
     {
         LifecycleReferences references =

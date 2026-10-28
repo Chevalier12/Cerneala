@@ -245,6 +245,27 @@ public sealed class PrismBackdropHostingContractTests
         Assert.Equal(2, host.BackdropFrameCounters.AcquiredFrames);
     }
 
+    [Theory]
+    [InlineData(898, 600, 1.75f)]
+    [InlineData(896, 600, 1.75f)]
+    [InlineData(1000, 600, 2f)]
+    [InlineData(600, 898, 1.75f)]
+    public void BackdropRequestMatchesThePhysicalPixelsTheViewportWasCreatedFrom(
+        int pixelWidth,
+        int pixelHeight,
+        float scale)
+    {
+        UIRoot root = RootWith(new OrderedElement(Color.White, "control"));
+        using IDisposable prism = AttachBackdrop(root.VisualChildren[0], "Fractional", 1);
+        RecordingBackdropFrameSource source = new();
+        UiHost host = CreateHost(root, new RecordingDrawingBackend(), source);
+
+        UpdateAndDraw(host, UiViewport.FromPhysicalPixels(pixelWidth, pixelHeight, scale));
+
+        BackdropFrameRequest request = Assert.Single(source.Requests);
+        Assert.Equal((pixelWidth, pixelHeight), (request.PixelWidth, request.PixelHeight));
+    }
+
     [Fact]
     public void HiddenAndCollapsedBackdropOwnersDoNotAcquireAFrame()
     {
