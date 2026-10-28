@@ -45,6 +45,12 @@ public sealed class ElementInputRouteMap
         return element is not IInputRouteGuard { IsInputRouteAvailable: false } && visualParents.ContainsKey(element);
     }
 
+    // The registered visual parent of a registered element, or null.
+    internal UIElement? GetVisualParent(UIElement element)
+    {
+        return visualParents.GetValueOrDefault(element);
+    }
+
     internal IReadOnlyList<UIElement> GetRouteToRoot(UIElement element)
     {
         ArgumentNullException.ThrowIfNull(element);

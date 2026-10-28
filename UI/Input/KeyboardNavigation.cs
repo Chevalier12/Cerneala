@@ -18,7 +18,7 @@ public sealed class KeyboardNavigation
         ArgumentNullException.ThrowIfNull(root);
         ArgumentNullException.ThrowIfNull(routeMap);
 
-        List<NavigationCandidate> candidates = CollectCandidates(routeMap);
+        List<NavigationCandidate> candidates = CollectCandidates(routeMap, current, out UIElement? currentGroupStop);
         if (candidates.Count == 0)
         {
             return null;
@@ -30,6 +30,13 @@ public sealed class KeyboardNavigation
         }
 
         int currentIndex = candidates.FindIndex(candidate => ReferenceEquals(candidate.Element, current));
+        // An element inside a Once group, or the scope of the group itself, moves on from the group's Tab stop, so Tab
+        // and Shift+Tab leave the group, as WPF's Once leaves the whole group (#1159).
+        if (currentIndex < 0 && currentGroupStop is not null)
+        {
+            currentIndex = candidates.FindIndex(candidate => ReferenceEquals(candidate.Element, currentGroupStop));
+        }
+
         if (currentIndex < 0)
         {
             int currentVisualOrder = FindRouteOrder(routeMap, current);
@@ -55,21 +62,59 @@ public sealed class KeyboardNavigation
         return next is not null && focusManager.Focus(next, routeMap);
     }
 
-    private static List<NavigationCandidate> CollectCandidates(ElementInputRouteMap routeMap)
+    // The Tab stops in Tab order, and the Tab stop of the Once group that holds current: the element that the outermost
+    // ITabOnceScope whose container holds current is entered on, or that current is entered on when it is a scope
+    // outside every container; null otherwise.
+    private static List<NavigationCandidate> CollectCandidates(
+        ElementInputRouteMap routeMap,
+        UIElement? current,
+        out UIElement? currentGroupStop)
     {
         List<NavigationCandidate> candidates = [];
+        currentGroupStop = null;
         // The element that each ITabOnceScope is entered on, with the TabIndex of its scope, as WPF orders a Once group
         // by its container. A scope comes before its containers in route order, so its element is known when they come.
         Dictionary<UIElement, int>? tabOnceElements = null;
+        Dictionary<UIElement, UIElement>? scopeStops = null;
+        // The scope of each item container of an ITabOnceScope, and for each element inside such a container the
+        // outermost scope whose container holds it. As WPF's Once makes the whole group one Tab stop, an element in a
+        // group is no Tab stop of its own (#1159). A parent comes before its children in route order.
+        Dictionary<UIElement, UIElement>? containerScopes = null;
+        Dictionary<UIElement, UIElement>? groupScopes = null;
         for (int routeOrder = 0; routeOrder < routeMap.ElementsInRouteOrder.Count; routeOrder++)
         {
             UIElement element = routeMap.ElementsInRouteOrder[routeOrder];
-            if (element is ITabOnceScope scope && scope.GetTabOnceElement(routeMap) is { } tabOnceElement)
+            UIElement? groupScope = null;
+            if (containerScopes is not null && routeMap.GetVisualParent(element) is { } parent)
             {
-                (tabOnceElements ??= new(ReferenceEqualityComparer.Instance))[tabOnceElement] = element.TabIndex;
+                groupScope = groupScopes?.GetValueOrDefault(parent) ?? containerScopes.GetValueOrDefault(parent);
+                if (groupScope is not null)
+                {
+                    (groupScopes ??= new(ReferenceEqualityComparer.Instance))[element] = groupScope;
+                }
             }
 
-            if (!FocusPolicy.CanFocus(element, routeMap))
+            if (element is ITabOnceScope scope)
+            {
+                foreach (UIElement container in scope.GetTabOnceContainers())
+                {
+                    (containerScopes ??= new(ReferenceEqualityComparer.Instance))[container] = element;
+                }
+
+                if (scope.GetTabOnceElement(routeMap) is { } tabOnceElement)
+                {
+                    (tabOnceElements ??= new(ReferenceEqualityComparer.Instance))[tabOnceElement] = element.TabIndex;
+                    (scopeStops ??= new(ReferenceEqualityComparer.Instance))[element] = tabOnceElement;
+                }
+            }
+
+            if (ReferenceEquals(element, current) &&
+                (groupScope ?? (element is ITabOnceScope ? element : null)) is { } currentScope)
+            {
+                currentGroupStop = scopeStops?.GetValueOrDefault(currentScope);
+            }
+
+            if (groupScope is not null || !FocusPolicy.CanFocus(element, routeMap))
             {
                 continue;
             }
