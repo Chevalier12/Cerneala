@@ -120,7 +120,8 @@ Lifecycle:
      document opens.
 2. Every other request before `initialize` fails with `-32002`.
 3. `shutdown` (`:514`) sets the state to "shut down" and disposes the workspace.
-   `exit` (`:526`) then ends the process:
+   Every request after `shutdown`, also a second `shutdown`, fails with
+   `-32600` (`InvalidRequest`, LSP 3.17). `exit` (`:526`) then ends the process:
    - with code 0 after `shutdown`;
    - with code 1 without `shutdown`.
 4. If the client closes stdin instead, `LanguageServerHost` logs
