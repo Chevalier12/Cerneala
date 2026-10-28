@@ -307,6 +307,59 @@ public sealed class SdlTimbreOutputTests
         Assert.Equal(["init", "open", "resume", "destroy", "quit"], api.Operations);
     }
 
+    [Theory]
+    [InlineData(41u, 1)]
+    [InlineData(40u, 0)]
+    public void ARemovalWhileOpenResumesTheDeviceIsReportedOnlyForTheOpeningDevice(uint removed, int expectedLost)
+    {
+        FakeSdlAudioApi api = new() { Device = 41 };
+        SdlTimbreOutput output = new(api);
+        RecordingClient client = new();
+        api.OperationRecorded = operation =>
+        {
+            if (operation == "resume")
+            {
+                // SDL publishes the removal from its own thread while Open still runs.
+                Thread sdl = new(() => output.HandleDeviceRemoved(removed));
+                sdl.Start();
+                Assert.True(sdl.Join(Timeout));
+            }
+        };
+
+        output.Open(client);
+
+        SdlTimbreOutputDiagnostics diagnostics = output.GetDiagnostics();
+        Assert.True(
+            client.Lost.Count == expectedLost,
+            $"lost reports: {client.Lost.Count}, DevicesLost: {diagnostics.DevicesLost}, IsOpen: {diagnostics.IsOpen}, Device: {diagnostics.Device}");
+        Assert.Equal(expectedLost, diagnostics.DevicesLost);
+        Assert.All(client.Lost, error => Assert.Equal(TimbreErrorKind.DeviceUnavailable, Assert.IsType<TimbreException>(error).Kind));
+        output.Close();
+    }
+
+    [Fact]
+    public void ARemovalDuringAFailingResumeLeavesNoDeviceBehind()
+    {
+        FakeSdlAudioApi api = new() { Device = 41, ResumeResult = false };
+        SdlTimbreOutput output = new(api);
+        RecordingClient client = new();
+        api.OperationRecorded = operation =>
+        {
+            if (operation == "resume")
+            {
+                output.HandleDeviceRemoved(41);
+            }
+        };
+
+        Assert.Throws<TimbreException>(() => output.Open(client));
+
+        Assert.Equal(0u, output.GetDiagnostics().Device);
+        api.OperationRecorded = null;
+        int reported = client.Lost.Count;
+        output.HandleDeviceRemoved(41);
+        Assert.Equal(reported, client.Lost.Count);
+    }
+
     [Fact]
     public void DiagnosticsReportTheNegotiatedDeviceFormat()
     {
