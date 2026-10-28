@@ -265,8 +265,10 @@ internal sealed class TextInputView : UIElement
     }
 
     // The display index of the character drawn under a root point, for the word and line selection of a double or
-    // triple click: the text element whose horizontal extent on the hit line contains the point; at or after the end of
-    // the line's text, the last character before the line end. An empty line gives its start.
+    // triple click: the text element whose horizontal extent on the hit line contains the point. Right of the end of the
+    // line's text, it is the last character of the last word of the line, so the trailing spaces of a wrapped line do
+    // not make a double-click there select only them (#806); a line of only whitespace gives its last character. An
+    // empty line gives its start.
     public int GetCharacterIndexAtRootPoint(float rootX, float rootY, int fallback)
     {
         LayoutPoint? point = GetContentPointAtRootPoint(rootX, rootY);
@@ -281,6 +283,11 @@ internal sealed class TextInputView : UIElement
         // The caret position nearest the point is a boundary of the character under it: the point is in the character
         // that ends at that position when it lies left of it, or when the position is the line end.
         int caretIndex = GetDisplayIndexAtX(layout, lineIndex, contentPoint.X, out _);
+        if (caretIndex > line.Start && caretIndex >= line.CaretEnd && contentPoint.X > GetCaretX(line, line.CaretEnd))
+        {
+            return GetLastWordCharacter(line);
+        }
+
         bool inPreviousCharacter = caretIndex > line.Start &&
             (caretIndex >= line.CaretEnd || contentPoint.X < GetCaretX(line, caretIndex));
         if (!inPreviousCharacter)
@@ -303,9 +310,36 @@ internal sealed class TextInputView : UIElement
         return line.Start + previousStart;
     }
 
+    // The start of the last text element of a non-empty line that is not whitespace, or of its last text element when
+    // the line has only whitespace.
+    private static int GetLastWordCharacter(TextInputLine line)
+    {
+        int last = 0;
+        int lastNonWhitespace = -1;
+        foreach (int start in StringInfo.ParseCombiningCharacters(line.CaretText))
+        {
+            last = start;
+            if (!char.IsWhiteSpace(line.CaretText[start]))
+            {
+                lastNonWhitespace = start;
+            }
+        }
+
+        return line.Start + (lastNonWhitespace >= 0 ? lastNonWhitespace : last);
+    }
+
     public int GetLineIndex(int displayIndex, bool atLineEnd)
     {
         return GetLineIndex(CurrentLayout, displayIndex, atLineEnd);
+    }
+
+    // Whether a display index is the caret end of a soft-wrapped line, which is also the start of the next line. A
+    // selection that ends there after the text of the line draws its caret at the end of that line.
+    public bool IsSoftWrappedLineEnd(int displayIndex)
+    {
+        TextInputLineLayout layout = CurrentLayout;
+        TextInputLine line = layout.Lines[GetLineIndex(layout, displayIndex, atLineEnd: true)];
+        return line.IsSoftWrapped && displayIndex == line.CaretEnd;
     }
 
     public int GetLineStart(int lineIndex) => CurrentLayout.Lines[lineIndex].Start;
