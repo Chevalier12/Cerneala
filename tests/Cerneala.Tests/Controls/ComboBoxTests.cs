@@ -3338,6 +3338,339 @@ public sealed class ComboBoxTests
         Assert.Equal(2, closed);
     }
 
+    // #841: a drop-down cannot open while the control is disabled, so IsDropDownOpen and the overlay agree.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void OverlayAndIsDropDownOpenAgreeAfterOpeningWhileDisabledThenEnabling(bool disableFirst)
+    {
+        UIRoot root = new(100, 100);
+        ComboBox comboBox = new();
+        LayoutCanvas canvas = new();
+        canvas.VisualChildren.Add(comboBox);
+        root.VisualChildren.Add(canvas);
+        root.ProcessFrame();
+        int opened = 0;
+        comboBox.DropDownOpened += (_, _) => opened++;
+        Overlay overlay = Assert.IsType<Overlay>(comboBox.ComponentTemplateInstance!.Parts["PART_DropDownOverlay"]);
+
+        if (disableFirst)
+        {
+            comboBox.IsEnabled = false;
+        }
+
+        comboBox.IsDropDownOpen = true;
+        if (disableFirst)
+        {
+            comboBox.IsEnabled = true;
+        }
+
+        root.ProcessFrame();
+        root.ProcessFrame();
+
+        Assert.Equal(comboBox.IsDropDownOpen, overlay.IsOpen);
+        Assert.Equal(comboBox.IsDropDownOpen ? 1 : 0, opened);
+    }
+
+    [Fact]
+    public void IsDropDownOpenStaysFalseWhenSetWhileDisabled()
+    {
+        UIRoot root = new(100, 100);
+        ComboBox comboBox = new();
+        LayoutCanvas canvas = new();
+        canvas.VisualChildren.Add(comboBox);
+        root.VisualChildren.Add(canvas);
+        root.ProcessFrame();
+        int opened = 0;
+        comboBox.DropDownOpened += (_, _) => opened++;
+        comboBox.IsEnabled = false;
+
+        comboBox.IsDropDownOpen = true;
+
+        Assert.False(comboBox.IsDropDownOpen);
+        comboBox.IsEnabled = true;
+        root.ProcessFrame();
+        Assert.False(comboBox.IsDropDownOpen);
+        Assert.Equal(0, opened);
+    }
+
+    // A rule sets Opacity 0.5 in the Expanded state; the look must agree with the overlay (#841).
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ExpandedLookMatchesTheOverlayAfterOpeningWhileDisabledThenEnabling(bool disableFirst)
+    {
+        UIRoot root = new(100, 100);
+        root.AspectRegistry.Register(Cerneala.UI.Aspect.AspectPackage.Create("expanded-overlay-agreement")
+            .Components(components => components.AddRule(new Cerneala.UI.Aspect.AspectRuleSet(
+                "expanded", Cerneala.UI.Aspect.AspectLayer.App,
+                new Cerneala.UI.Aspect.AspectTarget(typeof(ComboBox), conditions: [Cerneala.UI.Aspect.AspectCondition.State(Cerneala.UI.Aspect.AspectState.Expanded)]),
+                [new Cerneala.UI.Aspect.AspectDeclaration(UIElement.OpacityProperty, Cerneala.UI.Aspect.AspectValue<float>.Literal(0.5f))],
+                declarationOrder: 0))));
+        ComboBox comboBox = new();
+        LayoutCanvas canvas = new();
+        canvas.VisualChildren.Add(comboBox);
+        root.VisualChildren.Add(canvas);
+        root.ProcessFrame();
+        Overlay overlay = Assert.IsType<Overlay>(comboBox.ComponentTemplateInstance!.Parts["PART_DropDownOverlay"]);
+
+        if (disableFirst)
+        {
+            comboBox.IsEnabled = false;
+        }
+
+        comboBox.IsDropDownOpen = true;
+        if (disableFirst)
+        {
+            comboBox.IsEnabled = true;
+        }
+
+        root.ProcessFrame();
+        root.ProcessFrame();
+
+        bool expandedLook = comboBox.Opacity == 0.5f;
+        Assert.True(
+            expandedLook == overlay.IsOpen,
+            $"disableFirst={disableFirst}: Expanded look active={expandedLook} (Opacity {comboBox.Opacity}), overlay open={overlay.IsOpen}, IsDropDownOpen={comboBox.IsDropDownOpen}.");
+    }
+
+    // After the same sequence one F4 press must flip what the user sees (#841).
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void OneF4PressFlipsTheVisibleDropDownAfterOpeningWhileDisabledThenEnabling(bool disableFirst)
+    {
+        UIRoot root = new(100, 100);
+        ComboBox comboBox = new();
+        LayoutCanvas canvas = new();
+        canvas.VisualChildren.Add(comboBox);
+        root.VisualChildren.Add(canvas);
+        root.ProcessFrame();
+        Overlay overlay = Assert.IsType<Overlay>(comboBox.ComponentTemplateInstance!.Parts["PART_DropDownOverlay"]);
+
+        if (disableFirst)
+        {
+            comboBox.IsEnabled = false;
+        }
+
+        comboBox.IsDropDownOpen = true;
+        if (disableFirst)
+        {
+            comboBox.IsEnabled = true;
+        }
+
+        root.ProcessFrame();
+        root.ProcessFrame();
+        bool visibleBefore = overlay.IsOpen;
+        ElementInputBridge bridge = new();
+        bridge.FocusManager.Focus(comboBox, root.InputCache.EnsureCurrent(root));
+
+        DispatchKey(root, bridge, InputKey.F4);
+        root.ProcessFrame();
+
+        Assert.True(
+            overlay.IsOpen != visibleBefore,
+            $"disableFirst={disableFirst}: overlay open before F4={visibleBefore}, after one F4={overlay.IsOpen}, IsDropDownOpen={comboBox.IsDropDownOpen}.");
+    }
+
+    // #776: Text follows SelectedItem when the items arrive after SelectedIndex.
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void TextFollowsTheSelectedItemWhenTheItemsArriveAfterTheIndex(bool indexBeforeItems)
+    {
+        ComboBox comboBox = new() { IsEditable = false };
+        if (indexBeforeItems)
+        {
+            comboBox.SelectedIndex = 1;
+            comboBox.SetItems(new[] { "one", "two" });
+        }
+        else
+        {
+            comboBox.SetItems(new[] { "one", "two" });
+            comboBox.SelectedIndex = 1;
+        }
+
+        Assert.Equal("two", comboBox.SelectedItem);
+        Assert.Equal("two", comboBox.Text);
+    }
+
+    [Fact]
+    public void TextFollowsTheSelectedItemWhenAnItemsSourceIsFilledAfterTheIndex()
+    {
+        ObservableCollection<string> items = [];
+        ComboBox comboBox = new() { IsEditable = false, ItemsSource = items };
+        comboBox.SelectedIndex = 1;
+
+        items.Add("one");
+        Assert.Equal(string.Empty, comboBox.Text);
+        items.Add("two");
+
+        Assert.Equal("two", comboBox.SelectedItem);
+        Assert.Equal("two", comboBox.Text);
+    }
+
+    // Only a Text set while the selected item was missing follows the item when it arrives (#776): a preserved typed
+    // prefix stays after an unrelated item change.
+    [Fact]
+    public void PreservedPrefixTextStaysWhenItemsChange()
+    {
+        ComboBox comboBox = new()
+        {
+            IsEditable = true,
+            IsTextFilterEnabled = false,
+            ShouldPreserveUserEnteredPrefix = true
+        };
+        comboBox.Items.Add("Apple");
+        comboBox.ApplyTemplate();
+        TextBox editor = Assert.IsType<TextBox>(comboBox.ComponentTemplateInstance!.Parts["PART_EditableTextBox"]);
+        editor.ReceiveTextInput("app");
+        Assert.Equal(0, comboBox.SelectedIndex);
+        Assert.Equal("apple", comboBox.Text);
+
+        comboBox.Items.Add("Banana");
+
+        Assert.Equal(0, comboBox.SelectedIndex);
+        Assert.Equal("apple", comboBox.Text);
+    }
+
+    // The second case sets the index after the items and is the control (#776).
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void ClosedFieldShowsTheSelectedItemWhenTheItemsArriveAfterTheIndex(bool indexBeforeItems)
+    {
+        UIRoot root = new(300, 200);
+        ComboBox comboBox = new() { IsEditable = false, Width = 180, Height = 32 };
+        if (indexBeforeItems)
+        {
+            comboBox.SelectedIndex = 1;
+            comboBox.SetItems(new[] { "one", "two" });
+        }
+        else
+        {
+            comboBox.SetItems(new[] { "one", "two" });
+            comboBox.SelectedIndex = 1;
+        }
+
+        LayoutCanvas canvas = new();
+        canvas.VisualChildren.Add(comboBox);
+        root.VisualChildren.Add(canvas);
+        root.ProcessFrame();
+        root.ProcessFrame();
+
+        Assert.Equal("two", comboBox.SelectedItem);
+        TextBlock field = Assert.IsType<TextBlock>(FindDescendant<TextBlock>(
+            comboBox.ComponentTemplateInstance!.Parts["PART_SelectionPresenter"]));
+        Assert.Equal("two", field.Text);
+    }
+
+    // #840: with filtering off, unmatched text previews no item, so Enter keeps it.
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void EnterCommitsFreeEditableTextWithDropDownOpen(bool filterEnabled)
+    {
+        UIRoot root = new(300, 200);
+        ComboBox comboBox = new() { IsEditable = true, IsTextFilterEnabled = filterEnabled };
+        comboBox.SetItems(new[] { "Apple", "Banana" });
+        root.VisualChildren.Add(comboBox);
+        root.ProcessFrame();
+        TextBox editor = Assert.IsType<TextBox>(comboBox.ComponentTemplateInstance!.Parts["PART_EditableTextBox"]);
+        ElementInputBridge bridge = new();
+        bridge.FocusManager.Focus(comboBox, root.InputCache.EnsureCurrent(root));
+        DispatchKey(root, bridge, InputKey.F4);
+        Assert.True(comboBox.IsDropDownOpen);
+
+        editor.ReceiveTextInput("zzz");
+        root.ProcessFrame();
+        DispatchKey(root, bridge, InputKey.Enter);
+
+        Assert.Equal(-1, comboBox.SelectedIndex);
+        Assert.Equal("zzz", comboBox.Text);
+        Assert.Equal("zzz", editor.Text);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void EnterCommitsTheMatchedItemWithDropDownOpen(bool filterEnabled)
+    {
+        UIRoot root = new(300, 200);
+        ComboBox comboBox = new() { IsEditable = true, IsTextFilterEnabled = filterEnabled };
+        comboBox.SetItems(new[] { "Apple", "Banana" });
+        root.VisualChildren.Add(comboBox);
+        root.ProcessFrame();
+        TextBox editor = Assert.IsType<TextBox>(comboBox.ComponentTemplateInstance!.Parts["PART_EditableTextBox"]);
+        ElementInputBridge bridge = new();
+        bridge.FocusManager.Focus(comboBox, root.InputCache.EnsureCurrent(root));
+        DispatchKey(root, bridge, InputKey.F4);
+
+        editor.ReceiveTextInput("Ban");
+        root.ProcessFrame();
+        DispatchKey(root, bridge, InputKey.Enter);
+
+        Assert.Equal(1, comboBox.SelectedIndex);
+        Assert.Equal("Banana", comboBox.Text);
+        Assert.Equal("Banana", editor.Text);
+    }
+
+    // #1131: the default template insets the field content by Padding, as WPF's template binds Padding to the
+    // selection box and editor margins.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void PaddingInsetsTheSelectionContent(bool editable)
+    {
+        var withoutPadding = MeasureFieldContent(0, editable);
+        var withPadding = MeasureFieldContent(20, editable);
+
+        Assert.Equal(withoutPadding.Offset + 20, withPadding.Offset);
+        Assert.Equal(withoutPadding.DesiredWidth + 40, withPadding.DesiredWidth);
+        Assert.Equal(withoutPadding.DesiredHeight + 40, withPadding.DesiredHeight);
+    }
+
+    // The desired size does not follow a runtime change yet: the template's nested Grid keeps a stale measure
+    // constraint (#1310). The inset itself follows at once.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void PaddingChangeAtRuntimeUpdatesTheFieldInset(bool editable)
+    {
+        UIRoot root = new(400, 200);
+        ComboBox comboBox = new() { IsEditable = editable };
+        comboBox.SetItems(new[] { "Apple", "Banana" });
+        comboBox.SelectedIndex = 0;
+        LayoutCanvas canvas = new();
+        canvas.VisualChildren.Add(comboBox);
+        root.VisualChildren.Add(canvas);
+        root.ProcessFrame();
+        UIElement part = (UIElement)comboBox.ComponentTemplateInstance!.Parts[
+            editable ? "PART_EditableTextBox" : "PART_SelectionPresenter"];
+        float offsetBefore = part.ArrangedBounds.X - comboBox.ArrangedBounds.X;
+
+        comboBox.Padding = new Thickness(12, 0, 4, 0);
+        root.ProcessFrame();
+
+        Assert.Equal(new Thickness(12, 0, 4, 0), part.Margin);
+        Assert.Equal(offsetBefore + 12, part.ArrangedBounds.X - comboBox.ArrangedBounds.X);
+    }
+
+    private static (float Offset, float DesiredWidth, float DesiredHeight) MeasureFieldContent(float padding, bool editable)
+    {
+        UIRoot root = new(400, 200);
+        ComboBox comboBox = new() { IsEditable = editable, Padding = new Thickness(padding) };
+        comboBox.SetItems(new[] { "Apple", "Banana" });
+        comboBox.SelectedIndex = 0;
+        LayoutCanvas canvas = new();
+        canvas.VisualChildren.Add(comboBox);
+        root.VisualChildren.Add(canvas);
+        root.ProcessFrame();
+        UIElement part = (UIElement)comboBox.ComponentTemplateInstance!.Parts[
+            editable ? "PART_EditableTextBox" : "PART_SelectionPresenter"];
+        return (part.ArrangedBounds.X - comboBox.ArrangedBounds.X, comboBox.DesiredSize.Width, comboBox.DesiredSize.Height);
+    }
+
     [Fact]
     public void RetemplatingWithdrawsOldOverlayAndDetachesOldHandlers()
     {

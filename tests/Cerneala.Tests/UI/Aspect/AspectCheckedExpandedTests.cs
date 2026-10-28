@@ -20,8 +20,8 @@ public sealed class AspectCheckedExpandedTests
         (Control control, UiProperty<bool> property, AspectState state) = CreateControl(controlType);
         control.IsPointerOver = true;
         control.IsEnabled = false;
-        // A submenu can only open on an enabled MenuItem.
-        if (control is MenuItem)
+        // A submenu can only open on an enabled MenuItem, and a drop-down only on an enabled ComboBox (#841).
+        if (control is MenuItem or ComboBox)
         {
             control.IsEnabled = true;
         }
