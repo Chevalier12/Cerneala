@@ -372,6 +372,63 @@ public sealed class DrawStrokeTests
         Assert.Equal(71, maximumY, 3);
     }
 
+    // Contract (#797): a flattened curve is within the flattening tolerance of the
+    // curve, so the polyline reaches the curve's extent. 0.2 is the tolerance that
+    // DrawStrokeMeshBuilder uses at scale 1. The first row is a hairpin whose control
+    // points lie 90 units beyond the end point but only 0.05 from the chord's line.
+    [Theory]
+    [InlineData(100f, 0.05f, 100f, 0.05f, 10f, 0f)]
+    [InlineData(3f, 5f, 7f, 5f, 10f, 0f)]
+    public void FlattenedCubicStrokeReachesTheExtentOfTheCurve(
+        float c1x, float c1y, float c2x, float c2y, float endX, float endY)
+    {
+        DrawPoint c1 = new(c1x, c1y), c2 = new(c2x, c2y), end = new(endX, endY);
+        DrawPath path = new DrawPathBuilder()
+            .MoveTo(new DrawPoint(0, 0))
+            .CubicTo(c1, c2, end)
+            .Build();
+        float trueMaxX = float.MinValue, trueMaxY = float.MinValue;
+        for (int step = 0; step <= 1000; step++)
+        {
+            float t = step / 1000f, u = 1 - t;
+            trueMaxX = MathF.Max(trueMaxX, (3 * u * u * t * c1x) + (3 * u * t * t * c2x) + (t * t * t * endX));
+            trueMaxY = MathF.Max(trueMaxY, (3 * u * u * t * c1y) + (3 * u * t * t * c2y) + (t * t * t * endY));
+        }
+
+        DrawStrokeContour contour = Assert.Single(DrawPathFlattener.FlattenStroke(path, 0.2f));
+
+        float flattenedMaxX = contour.Points.Max(point => point.X);
+        float flattenedMaxY = contour.Points.Max(point => point.Y);
+        Assert.True(flattenedMaxX >= trueMaxX - 0.2f, $"max X {flattenedMaxX}, curve reaches {trueMaxX}");
+        Assert.True(flattenedMaxY >= trueMaxY - 0.2f, $"max Y {flattenedMaxY}, curve reaches {trueMaxY}");
+    }
+
+    [Theory]
+    [InlineData(100f, 0.05f, 10f, 0f)]
+    [InlineData(5f, 5f, 10f, 0f)]
+    public void FlattenedQuadraticStrokeReachesTheExtentOfTheCurve(
+        float cx, float cy, float endX, float endY)
+    {
+        DrawPath path = new DrawPathBuilder()
+            .MoveTo(new DrawPoint(0, 0))
+            .QuadraticTo(new DrawPoint(cx, cy), new DrawPoint(endX, endY))
+            .Build();
+        float trueMaxX = float.MinValue, trueMaxY = float.MinValue;
+        for (int step = 0; step <= 1000; step++)
+        {
+            float t = step / 1000f, u = 1 - t;
+            trueMaxX = MathF.Max(trueMaxX, (2 * u * t * cx) + (t * t * endX));
+            trueMaxY = MathF.Max(trueMaxY, (2 * u * t * cy) + (t * t * endY));
+        }
+
+        DrawStrokeContour contour = Assert.Single(DrawPathFlattener.FlattenStroke(path, 0.2f));
+
+        float flattenedMaxX = contour.Points.Max(point => point.X);
+        float flattenedMaxY = contour.Points.Max(point => point.Y);
+        Assert.True(flattenedMaxX >= trueMaxX - 0.2f, $"max X {flattenedMaxX}, curve reaches {trueMaxX}");
+        Assert.True(flattenedMaxY >= trueMaxY - 0.2f, $"max Y {flattenedMaxY}, curve reaches {trueMaxY}");
+    }
+
     private static DrawStrokeMesh Tessellate(
         IReadOnlyList<DrawPoint> points,
         bool isClosed,
