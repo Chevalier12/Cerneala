@@ -31,7 +31,7 @@ internal static class AspectAttachmentScanner
             char character = text[position];
             if (quote != '\0')
             {
-                if (character == quote && text[position - 1] != '\\')
+                if (character == quote && !EmbeddedText.IsEscaped(text, position))
                 {
                     quote = '\0';
                 }
@@ -123,7 +123,7 @@ internal static class AspectAttachmentScanner
             char character = text[position];
             if (quote != '\0')
             {
-                if (character == quote && text[position - 1] != '\\')
+                if (character == quote && !EmbeddedText.IsEscaped(text, position))
                 {
                     quote = '\0';
                 }
@@ -156,7 +156,7 @@ internal static class AspectAttachmentScanner
             char character = text[position];
             if (quote != '\0')
             {
-                if (character == quote && text[position - 1] != '\\')
+                if (character == quote && !EmbeddedText.IsEscaped(text, position))
                 {
                     quote = '\0';
                 }

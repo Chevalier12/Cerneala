@@ -1056,7 +1056,7 @@ internal sealed partial class CernealaSemanticModel
             char character = text[index];
             if (quoted)
             {
-                if (character == quote && (index == 0 || text[index - 1] != '\\'))
+                if (character == quote && !EmbeddedText.IsEscaped(text, index))
                 {
                     quoted = false;
                 }
@@ -1103,7 +1103,7 @@ internal sealed partial class CernealaSemanticModel
             char character = text[index];
             if (quoted)
             {
-                if (character == quote && text[index - 1] != '\\')
+                if (character == quote && !EmbeddedText.IsEscaped(text, index))
                 {
                     quoted = false;
                 }
@@ -1183,7 +1183,7 @@ internal sealed partial class CernealaSemanticModel
             char character = text[index];
             if (quoted)
             {
-                if (character == quote && (index == 0 || text[index - 1] != '\\'))
+                if (character == quote && !EmbeddedText.IsEscaped(text, index))
                 {
                     quoted = false;
                 }

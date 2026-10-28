@@ -130,6 +130,42 @@ public sealed class DiagnosticsTests
         }
     }
 
+    // A leading XML declaration and a comment in an Aspect body are not content, also without a project.
+    [Theory]
+    [InlineData("<TextBlock />")]
+    [InlineData("<?xml version=\"1.0\"?>\n<TextBlock />")]
+    [InlineData("<Border><Border.Resources><Aspect Name=\"A\" TargetType=\"Border\">@default { Opacity = 1; }</Aspect></Border.Resources></Border>")]
+    [InlineData("<Border><Border.Resources><Aspect Name=\"A\" TargetType=\"Border\"><!-- @timbre $Old --> @default { Opacity = 1; }</Aspect></Border.Resources></Border>")]
+    public async Task StandaloneDocumentIgnoresTheXmlDeclarationAndComments(string markup)
+    {
+        string root = Path.Combine(Path.GetTempPath(), $"cerneala-lsp-trivia-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(root);
+        try
+        {
+            string path = Path.Combine(root, "Loose.crn");
+            File.WriteAllText(path, markup);
+            WorkspaceConfiguration configuration = new(root, null, null, "Debug", WatchFileSystem: false);
+            await using CernealaWorkspace workspace = await CernealaWorkspace.CreateAsync(
+                configuration,
+                new StructuredServerLogger(TextWriter.Null),
+                CancellationToken.None);
+            DiagnosticService service = new(workspace, new BuildDiagnosticStore());
+
+            VersionedDocumentResult<IReadOnlyList<LspDiagnostic>>? result = await service.AnalyzeAsync(
+                new Uri(path).AbsoluteUri,
+                CancellationToken.None);
+
+            Assert.NotNull(result);
+            Assert.Empty(result.Value
+                .Where(diagnostic => diagnostic.Code != "CERNEALAWORKSPACE001")
+                .Select(diagnostic => diagnostic.Code + " " + diagnostic.Message));
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
     [Theory]
     [InlineData(
         "<StackPanel><StackPanel.Resources><TimbreClip Name=\"Tone\">@sound Tone { Source = \"tone.wav\"; Volume = 2; }</TimbreClip></StackPanel.Resources></StackPanel>",

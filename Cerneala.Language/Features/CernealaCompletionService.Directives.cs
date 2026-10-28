@@ -285,7 +285,7 @@ internal sealed partial class CernealaCompletionService
     {
         PrismCompletionContext? context = FindPrismCompletionContext(site.Source, site.Offset);
         string elementName = element?.Name.Split(':').Last() ?? string.Empty;
-        string lexicalElementName = FindUnclosedElementName(site.Source, site.Offset)?.Split(':').Last() ?? string.Empty;
+        string lexicalElementName = FindUnclosedElementName(site)?.Split(':').Last() ?? string.Empty;
         if (lexicalElementName.Length > 0)
         {
             elementName = lexicalElementName;

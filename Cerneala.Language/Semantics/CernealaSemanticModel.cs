@@ -159,7 +159,7 @@ internal sealed partial class CernealaSemanticModel : IDisposable
         TextSyntax? topLevelText = document.Syntax.Children
             .OfType<TextSyntax>()
             .FirstOrDefault(text =>
-                text.Kind is not SyntaxKind.Comment &&
+                text.Kind is not (SyntaxKind.Comment or SyntaxKind.ProcessingInstruction) &&
                 !string.IsNullOrWhiteSpace(text.Token.Text));
         if (topLevelText is not null || roots.Length != 1)
         {

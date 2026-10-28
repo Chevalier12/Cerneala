@@ -589,6 +589,36 @@ public sealed class MotionPrismSemanticTests
         return workspace.GetSemanticModel(path);
     }
 
+    [Theory]
+    [InlineData("@default { Opacity = 1; }")]
+    [InlineData("<!-- @timbre $OldClip; -->@default { Opacity = 1; }")]
+    [InlineData("<!-- @prism $OldClip; -->@default { Opacity = 1; }")]
+    [InlineData("@default { <!-- Bogus = 1; --> Opacity = 0.5; }")]
+    [InlineData("@default { Opacity = 0.5; } <!-- @default { Bogus = 1; } -->")]
+    public void CommentsInsideAnAspectBodyAreNotDirectiveText(string body)
+    {
+        string markup = "<Border Aspect=\"$A\"><Border.Resources><Aspect Name=\"A\" TargetType=\"Border\">" +
+            body + "</Aspect></Border.Resources></Border>";
+        LanguagePipelineResult result = LanguagePipelineHarness.Analyze("AspectComment.crn", markup);
+
+        Assert.Empty(result.SemanticDiagnostics);
+        Assert.Empty(result.SourceGeneratorDiagnostics);
+    }
+
+    [Fact]
+    public void DirectiveAfterACommentInAnAspectBodyKeepsItsSpan()
+    {
+        const string prefix = "<Border Aspect=\"$A\"><Border.Resources><Aspect Name=\"A\" TargetType=\"Border\">" +
+            "<!-- @timbre $OldClip; --> ";
+        string markup = prefix + "@timbre $NewClip;</Aspect></Border.Resources></Border>";
+        LanguagePipelineResult result = LanguagePipelineHarness.Analyze("AspectComment.crn", markup);
+
+        HarnessDiagnostic diagnostic = Assert.Single(result.SemanticDiagnostics);
+        Assert.Equal("CERNEALAUI031", diagnostic.Id);
+        Assert.Contains("$NewClip", diagnostic.Message, StringComparison.Ordinal);
+        Assert.InRange(diagnostic.StartCharacter, prefix.Length, markup.Length);
+    }
+
     private static IEnumerable<MetadataReference> PlatformReferences()
     {
         string trustedAssemblies = (string?)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")

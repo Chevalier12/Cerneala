@@ -1,3 +1,5 @@
+using Cerneala.Language.Diagnostics;
+using Cerneala.Language.Semantics;
 using Cerneala.Language.Syntax;
 using Cerneala.Language.Text;
 
@@ -5,6 +7,39 @@ namespace Cerneala.Tests.Language;
 
 public sealed class MarkupParserTests
 {
+    [Theory]
+    [InlineData("<TextBlock />")]
+    [InlineData("<?xml version=\"1.0\"?>\n<TextBlock />")]
+    public void XmlDeclarationBeforeTheRootProducesNoSyntaxDiagnostics(string markup)
+    {
+        DocumentSyntax document = MarkupParser.Parse(SourceText.From(markup));
+
+        Assert.Empty(document.Diagnostics);
+        Assert.Equal(markup, document.ToFullString());
+    }
+
+    [Theory]
+    [InlineData("<TextBlock />")]
+    [InlineData("<?xml version=\"1.0\"?>\n<TextBlock />")]
+    public void XmlDeclarationBeforeTheRootProducesNoSemanticErrors(string markup)
+    {
+        CernealaSemanticModel model = LanguagePipelineHarness.BindSemanticModel("XmlDeclaration.crn", markup, out IDisposable lifetime);
+        using (lifetime)
+        {
+            Assert.DoesNotContain(model.Diagnostics, diagnostic => diagnostic.Severity == LanguageDiagnosticSeverity.Error);
+        }
+    }
+
+    [Fact]
+    public void TextBeforeTheRootStillReportsTopLevelText()
+    {
+        DocumentSyntax document = MarkupParser.Parse(SourceText.From("hello<TextBlock />"));
+
+        SyntaxDiagnostic diagnostic = Assert.Single(document.Diagnostics);
+        Assert.Equal("CERNEALASYN001", diagnostic.Id);
+        Assert.Equal(new TextSpan(0, 5), diagnostic.Span);
+    }
+
     [Fact]
     public void LexerIsLosslessAcrossXmlTriviaNamespacesAndEmbeddedComparators()
     {
