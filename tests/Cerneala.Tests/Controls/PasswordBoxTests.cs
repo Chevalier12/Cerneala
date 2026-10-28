@@ -6,6 +6,7 @@ using Cerneala.UI.Input;
 using Cerneala.UI.Layout;
 using Cerneala.UI.Motion.Core;
 using Cerneala.UI.Platform;
+using Cerneala.UI.Text;
 
 namespace Cerneala.Tests.Controls;
 
@@ -258,6 +259,30 @@ public sealed class PasswordBoxTests
         Assert.Equal("X", passwordBox.Password);
     }
 
+    // As TextBox: the text view lays out the masked text with every font property of the box, so a change of any of them
+    // after the first layout measures the text again, as a box created with that font does (#805).
+    [Theory]
+    [InlineData("FontSize")]
+    [InlineData("FontWeight")]
+    [InlineData("FontStyle")]
+    [InlineData("FontStretch")]
+    public void PasswordBoxRemeasuresTheTextWhenAFontPropertyChangesAfterTheFirstLayout(string property)
+    {
+        TextMeasurer measurer = new StyleSensitiveMeasurer();
+        PasswordBox changed = LaidOutPasswordBox(measurer, property: null, out UIRoot changedRoot);
+        float before = TextWidth(changed);
+
+        ApplyFontChange(changed, property);
+        changed.Invalidate(
+            InvalidationFlags.Measure | InvalidationFlags.Arrange | InvalidationFlags.Render,
+            "Font property changed");
+        changedRoot.ProcessFrame();
+        PasswordBox fresh = LaidOutPasswordBox(measurer, property, out _);
+
+        Assert.NotEqual(before, TextWidth(fresh));
+        Assert.Equal(TextWidth(fresh), TextWidth(changed));
+    }
+
     [Fact]
     public void PasswordBoxDoesNotExposePlainTextEditingApi()
     {
@@ -287,6 +312,66 @@ public sealed class PasswordBoxTests
         ElementInputRouteMap routeMap = root.InputCache.EnsureCurrent(root);
         Assert.True(bridge.FocusManager.Focus(passwordBox, routeMap));
         return root;
+    }
+
+    private static PasswordBox LaidOutPasswordBox(TextMeasurer measurer, string? property, out UIRoot root)
+    {
+        root = new UIRoot(500, 200);
+        PasswordBox passwordBox = new() { Password = "abcdefghij", TextMeasurer = measurer };
+        ApplyFontChange(passwordBox, property);
+        root.VisualChildren.Add(passwordBox);
+        passwordBox.Invalidate(
+            InvalidationFlags.Measure | InvalidationFlags.Arrange | InvalidationFlags.Render,
+            "Initial password test frame");
+        root.ProcessFrame();
+        return passwordBox;
+    }
+
+    private static void ApplyFontChange(PasswordBox passwordBox, string? property)
+    {
+        switch (property)
+        {
+            case null:
+                break;
+            case "FontSize":
+                passwordBox.FontSize = 20;
+                break;
+            case "FontWeight":
+                passwordBox.FontWeight = FontWeight.Bold;
+                break;
+            case "FontStyle":
+                passwordBox.FontStyle = FontStyle.Italic;
+                break;
+            case "FontStretch":
+                passwordBox.FontStretch = FontStretch.Condensed;
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(property), property, null);
+        }
+    }
+
+    private static float TextWidth(PasswordBox passwordBox)
+    {
+        return FindTextInputView(passwordBox)?.DesiredSize.Width
+            ?? throw new InvalidOperationException("The password box template has no text view.");
+    }
+
+    private static TextInputView? FindTextInputView(UIElement element)
+    {
+        if (element is TextInputView view)
+        {
+            return view;
+        }
+
+        foreach (UIElement child in element.VisualChildren)
+        {
+            if (FindTextInputView(child) is { } found)
+            {
+                return found;
+            }
+        }
+
+        return null;
     }
 
     private static void SelectAll(UIRoot root, ElementInputBridge bridge)
@@ -368,6 +453,30 @@ public sealed class PasswordBoxTests
         public void SetText(string text)
         {
             Text = text;
+        }
+    }
+
+    // Measures text twice as wide when the aspect has a weight, style or stretch other than normal, so the measured
+    // width shows which aspect the text view used.
+    private sealed class StyleSensitiveMeasurer : TextMeasurer
+    {
+        public override TextMeasureResult Measure(string text, TextAspect aspect, LayoutSize availableSize)
+        {
+            TextMeasureResult result = base.Measure(text, aspect, availableSize);
+            bool styled = aspect.FontWeight != FontWeight.Normal ||
+                aspect.FontStyle != FontStyle.Normal ||
+                aspect.FontStretch != FontStretch.Normal;
+            if (!styled)
+            {
+                return result;
+            }
+
+            return new TextMeasureResult(
+                new LayoutSize(result.Size.Width * 2, result.Size.Height),
+                result.LineCount,
+                result.CacheKey,
+                result.ResolvedFontIdentity,
+                result.Lines);
         }
     }
 
