@@ -1860,6 +1860,92 @@ public sealed class ComboBoxTests
         Assert.Equal("Banana", editor.Text);
     }
 
+    // A click on an editable field focuses PART_EditableTextBox, which takes Home and End as caret keys, as in WPF's
+    // editable ComboBox: they do not move the preview (#1172).
+    [Fact]
+    public void HomeAndEndMoveTheEditorCaretAndKeepThePreviewWhenTheEditableFieldIsClicked()
+    {
+        UIRoot root = new(300, 200);
+        ComboBox comboBox = new() { Width = 200 };
+        comboBox.SetItems(new[] { "Apple", "Banana", "Cherry" });
+        root.VisualChildren.Add(comboBox);
+        root.ProcessFrame();
+        TextBox editor = Assert.IsType<TextBox>(
+            comboBox.ComponentTemplateInstance!.Parts["PART_EditableTextBox"]);
+        ElementInputBridge bridge = new();
+
+        ClickAt(
+            root,
+            bridge,
+            comboBox.ArrangedBounds.X + 20,
+            comboBox.ArrangedBounds.Y + comboBox.ArrangedBounds.Height / 2);
+        Assert.Same(editor, bridge.FocusManager.FocusedElement);
+        DispatchKey(root, bridge, InputKey.F4);
+        DispatchKey(root, bridge, InputKey.Down);
+        root.ProcessFrame();
+        Assert.True(comboBox.IsDropDownOpen);
+        Assert.Equal("Apple", editor.Text);
+
+        DispatchKey(root, bridge, InputKey.End);
+        root.ProcessFrame();
+        Assert.Equal("Apple", editor.Text);
+        Assert.Equal("Apple", HighlightedItems(comboBox));
+        Assert.Equal((5, 5), (editor.Selection.Start, editor.Selection.End));
+
+        DispatchKey(root, bridge, InputKey.Home);
+        root.ProcessFrame();
+        Assert.Equal("Apple", editor.Text);
+        Assert.Equal("Apple", HighlightedItems(comboBox));
+        Assert.Equal((0, 0), (editor.Selection.Start, editor.Selection.End));
+
+        DispatchKey(root, bridge, InputKey.End);
+        DispatchKey(root, bridge, InputKey.Enter);
+        root.ProcessFrame();
+
+        Assert.False(comboBox.IsDropDownOpen);
+        Assert.Equal(0, comboBox.SelectedIndex);
+        Assert.Equal("Apple", comboBox.Text);
+    }
+
+    // A click on a non-editable field opens the drop-down and focuses the ComboBox, so End previews the last item.
+    [Fact]
+    public void EndPreviewsTheLastItemWhenTheNonEditableFieldIsClicked()
+    {
+        UIRoot root = new(300, 200);
+        ComboBox comboBox = new() { IsEditable = false, Width = 200 };
+        comboBox.SetItems(new[] { "Apple", "Banana", "Cherry" });
+        comboBox.SelectedIndex = 0;
+        root.VisualChildren.Add(comboBox);
+        root.ProcessFrame();
+        ElementInputBridge bridge = new();
+
+        ClickAt(
+            root,
+            bridge,
+            comboBox.ArrangedBounds.X + 20,
+            comboBox.ArrangedBounds.Y + comboBox.ArrangedBounds.Height / 2);
+        Assert.Same(comboBox, bridge.FocusManager.FocusedElement);
+        Assert.True(comboBox.IsDropDownOpen);
+
+        DispatchKey(root, bridge, InputKey.End);
+        root.ProcessFrame();
+        Assert.Equal("Cherry", HighlightedItems(comboBox));
+        Assert.Equal(0, comboBox.SelectedIndex);
+        Assert.Equal("Apple", comboBox.Text);
+
+        DispatchKey(root, bridge, InputKey.Home);
+        root.ProcessFrame();
+        Assert.Equal("Apple", HighlightedItems(comboBox));
+
+        DispatchKey(root, bridge, InputKey.End);
+        DispatchKey(root, bridge, InputKey.Enter);
+        root.ProcessFrame();
+
+        Assert.False(comboBox.IsDropDownOpen);
+        Assert.Equal(2, comboBox.SelectedIndex);
+        Assert.Equal("Cherry", comboBox.Text);
+    }
+
     [Fact]
     public void ActiveFilterRebuildsWhenItemsChange()
     {
