@@ -490,21 +490,25 @@ public class ListBox : Selector, ITabOnceScope
     // ScrollViewer, so the next scroll moves none of them. Each record holds the height of one item, so with rows whose
     // height does not change, the records change only as long as rows that were never measured are realized, which
     // happens at most once per item.
+    // As WPF's ListBox, which lays out before it focuses the row, a row that was realized in this layout pass and that
+    // the panel has not arranged yet gets the focus in a later arrange too: focusing a row brings it into view (#1158),
+    // and before its arrange the row has no place to bring into view.
     private void BringRowIntoView(int index, bool focus)
     {
         float[] offsetsBefore = GetScrollOffsetsAroundRows();
         bool realized = ScrollRowIntoView(index);
-        if (realized && focus)
+        bool arranged = realized && !ItemContainerGenerator.RealizedContainers[index].DirtyState.Has(InvalidationFlags.Arrange);
+        if (arranged && focus)
         {
             FocusRow(index);
         }
 
-        if (!offsetsBefore.AsSpan().SequenceEqual(GetScrollOffsetsAroundRows()))
+        if (!offsetsBefore.AsSpan().SequenceEqual(GetScrollOffsetsAroundRows()) || (focus && realized && !arranged))
         {
             pendingScrollItem = null;
             hasPendingScrollItem = false;
             pendingScrollIndex = index;
-            focusPendingRow = focus && !realized;
+            focusPendingRow = focus && !arranged;
             Invalidate(InvalidationFlags.Arrange, "ListBox bring row into view");
         }
     }

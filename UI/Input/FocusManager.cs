@@ -266,6 +266,13 @@ public sealed class FocusManager
                 new KeyboardFocusChangedEventArgs(InputEvents.GotKeyboardFocusEvent, newFocus, oldFocus, newFocus));
         }
 
+        // As WPF's FrameworkElement.OnGotFocus, an element that still has the keyboard focus when GotFocus is raised is
+        // brought into view first, so the ScrollViewers around it scroll until it is visible (#1158).
+        if (newFocus.IsKeyboardFocused)
+        {
+            newFocus.BringIntoView();
+        }
+
         RoutedEventRouter.Raise(routeMap.InputTree, newFocus, new RoutedEventArgs(InputEvents.GotFocusEvent, newFocus));
     }
 
