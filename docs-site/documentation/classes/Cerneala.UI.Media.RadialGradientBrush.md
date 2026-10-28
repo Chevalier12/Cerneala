@@ -21,6 +21,8 @@ shape.Fill = new RadialGradientBrush(
 ## Remarks
 Both radii must be finite and positive. Stops are copied and ordered exactly like linear gradients. Structural equality includes center, radii, opacity, and stop values.
 
+In markup, `RadiusX` and `RadiusY` are required, because no default radius is valid. A `<RadialGradientBrush>` resource or property element that leaves out a radius, or gives `0` or a negative value, is `CERNEALAUI004` in the editor and in the build, naming the attribute, and no code is generated. For example, `<RadialGradientBrush Name="P" Center="0.5,0.5" RadiusX="0.5">` reports `Markup property 'RadialGradientBrush.RadiusY' has invalid value ''`. The runtime `BrushMarkupReader` reports the same markup as `MARKUP031`.
+
 ## Constructors
 | Name | Description |
 | --- | --- |

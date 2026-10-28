@@ -52,6 +52,32 @@ public sealed class ColliderOwnershipLanguageTests
                 diagnostic.Message.Contains("one collider", StringComparison.OrdinalIgnoreCase));
     }
 
+    // #766: <Sprite2D.Collider> is the property-element form of the body slot. The build accepts it with one collider,
+    // so the editor does too; the build rejects an empty one, text and attributes on it, so the editor reports them.
+    [Theory]
+    [InlineData("<Scene2D><Sprite2D><Sprite2D.Collider><BoxCollider2D /></Sprite2D.Collider></Sprite2D></Scene2D>")]
+    [InlineData("<Scene2D><Sprite2D><BoxCollider2D /></Sprite2D></Scene2D>")]
+    [InlineData("<Scene2D><Sprite2D><Sprite2D.Collider>  <!-- body -->  <BoxCollider2D /></Sprite2D.Collider></Sprite2D></Scene2D>")]
+    public void SpriteColliderPropertyElementWithOneColliderRaisesNoErrorDiagnostics(string markup)
+    {
+        using CernealaCompilation compilation = Compile(markup);
+        Assert.DoesNotContain(compilation.GetSemanticModel(MarkupPath).Diagnostics,
+            diagnostic => diagnostic.Severity == LanguageDiagnosticSeverity.Error);
+    }
+
+    [Theory]
+    [InlineData("<Scene2D><Sprite2D><Sprite2D.Collider /></Sprite2D></Scene2D>", "Sprite2D.Collider requires exactly one collider child")]
+    [InlineData("<Scene2D><Sprite2D><Sprite2D.Collider>text<BoxCollider2D /></Sprite2D.Collider></Sprite2D></Scene2D>", "Sprite2D.Collider requires exactly one collider child")]
+    [InlineData("<Scene2D><Sprite2D><Sprite2D.Collider Width=\"5\"><BoxCollider2D /></Sprite2D.Collider></Sprite2D></Scene2D>", "Sprite2D.Collider requires exactly one collider child")]
+    [InlineData("<Scene2D><Sprite2D><Sprite2D.Collider><BoxCollider2D /><CircleCollider2D /></Sprite2D.Collider></Sprite2D></Scene2D>", "one collider")]
+    [InlineData("<Scene2D><Sprite2D><BoxCollider2D /><Sprite2D.Collider><CircleCollider2D /></Sprite2D.Collider></Sprite2D></Scene2D>", "one collider")]
+    public void SpriteColliderPropertyElementDiagnosticsMatchTheBuild(string markup, string expected)
+    {
+        using CernealaCompilation compilation = Compile(markup);
+        Assert.Contains(compilation.GetSemanticModel(MarkupPath).Diagnostics,
+            diagnostic => diagnostic.Id == "CERNEALAUI005" && diagnostic.Message.Contains(expected, StringComparison.Ordinal));
+    }
+
     // Vision is a separate slot (docs/plans/2026-10-25-scene2d-vision.md): a ConeCollider2D declared in
     // Sprite2D.Vision or Scene2D.Vision is neither a body nor a second collider, so it raises no
     // CERNEALAUI005 and no other error.

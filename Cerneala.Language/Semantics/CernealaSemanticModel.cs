@@ -222,7 +222,7 @@ internal sealed partial class CernealaSemanticModel : IDisposable
         if (element.Kind == SyntaxKind.PropertyElement)
         {
             ILanguageMemberSymbol? property = BindPropertyElement(element, parentType);
-            ReportVisionPropertyElementShape(element, parentType);
+            ReportSlotPropertyElementShape(element, parentType);
             ILanguageTypeSymbol? propertyDataType = dataType;
             foreach (ElementSyntax child in element.Children.OfType<ElementSyntax>())
             {
@@ -250,6 +250,12 @@ internal sealed partial class CernealaSemanticModel : IDisposable
         {
             AddDiagnostic("CERNEALAUI002", element.NameToken.Span, element.Name);
             return;
+        }
+
+        if (type.MetadataName == "Cerneala.UI.Media.RadialGradientBrush")
+        {
+            ValidateRequiredPositiveFloatAttribute(element, "RadiusX");
+            ValidateRequiredPositiveFloatAttribute(element, "RadiusY");
         }
 
         if (type.IsOrDerivesFrom("Cerneala.UI.Documents.Inline"))

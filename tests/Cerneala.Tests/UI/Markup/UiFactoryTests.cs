@@ -253,6 +253,66 @@ public sealed class UiFactoryTests
     }
 
     [Fact]
+    public void CreateResolvesBrushResourceDeclaredOnAnAncestor()
+    {
+        UiFactory factory = new(UiMarkupSchema.CreateDefault());
+        MarkupResult<UIElement> result = factory.Create(Read("""
+            <StackPanel>
+              <StackPanel.Resources>
+                <SolidColorBrush Name="Accent" Color="Tomato" />
+              </StackPanel.Resources>
+              <Border Background="$Accent" />
+            </StackPanel>
+            """));
+
+        Assert.False(result.HasErrors, string.Join("; ", result.Diagnostics.Select(diagnostic => diagnostic.Message)));
+        UIElement panel = Assert.IsType<StackPanel>(result.Value);
+        Border border = Assert.IsType<Border>(Assert.Single(panel.VisualChildren));
+        Assert.Equal(Color.Tomato, Assert.IsType<SolidColorBrush>(border.Background).Color);
+    }
+
+    [Fact]
+    public void CreateResolvesBrushResourceDeclaredOnAGrandparent()
+    {
+        UiFactory factory = new(UiMarkupSchema.CreateDefault());
+        MarkupResult<UIElement> result = factory.Create(Read("""
+            <StackPanel>
+              <StackPanel.Resources>
+                <SolidColorBrush Name="Accent" Color="Tomato" />
+              </StackPanel.Resources>
+              <Border>
+                <Button Background="$Accent" />
+              </Border>
+            </StackPanel>
+            """));
+
+        Assert.False(result.HasErrors, string.Join("; ", result.Diagnostics.Select(diagnostic => diagnostic.Message)));
+        Border border = Assert.IsType<Border>(Assert.Single(Assert.IsType<StackPanel>(result.Value).VisualChildren));
+        Button button = Assert.IsType<Button>(border.Child);
+        Assert.Equal(Color.Tomato, Assert.IsType<SolidColorBrush>(button.Background).Color);
+    }
+
+    [Fact]
+    public void CreateDoesNotResolveBrushResourceDeclaredOnASibling()
+    {
+        UiFactory factory = new(UiMarkupSchema.CreateDefault());
+        MarkupResult<UIElement> result = factory.Create(Read("""
+            <StackPanel>
+              <Border>
+                <Border.Resources>
+                  <SolidColorBrush Name="Accent" Color="Tomato" />
+                </Border.Resources>
+              </Border>
+              <Border Background="$Accent" />
+            </StackPanel>
+            """));
+
+        Assert.Null(result.Value);
+        Assert.Contains(result.Diagnostics, diagnostic =>
+            diagnostic.Code == "MARKUP027" && diagnostic.Message.Contains("Brush resource 'Accent' was not found.", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void CreateParsesBackgroundShorthandResourceAndPropertyElement()
     {
         UiFactory factory = new(UiMarkupSchema.CreateDefault());

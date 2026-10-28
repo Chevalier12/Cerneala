@@ -31,12 +31,19 @@ internal sealed partial class CernealaSemanticModel
         type.Name == "PolygonCollider2D" && name == "Points" ||
         type.Name == "SegmentCollider2D" && name is "EndX" or "EndY";
 
-    // The shape of a Vision property element itself: one per owner, with one cone inside and nothing else (no text,
-    // no attribute other than a namespace declaration; the source generator rejects the same). What the cone is
-    // is checked where the cone is bound (GetColliderPlacementError).
-    private void ReportVisionPropertyElementShape(ElementSyntax element, ILanguageTypeSymbol? ownerType)
+    // The shape of a Vision or Sprite2D.Collider property element itself: one per owner, with one element inside and
+    // nothing else (no text, no attribute other than a namespace declaration; the source generator rejects the same).
+    // What the child is, and that a sprite has at most one collider, is checked where the child is bound
+    // (GetColliderPlacementError, BindElement).
+    private void ReportSlotPropertyElementShape(ElementSyntax element, ILanguageTypeSymbol? ownerType)
     {
-        if (element.Name.Split('.').Last() != "Vision" || !IsVisionOwner(ownerType))
+        string? requiredChild = element.Name.Split('.').Last() switch
+        {
+            "Vision" when IsVisionOwner(ownerType) => "ConeCollider2D",
+            "Collider" when IsLiveColliderOwner(ownerType) => "collider",
+            _ => null
+        };
+        if (requiredChild is null)
         {
             return;
         }
@@ -47,7 +54,7 @@ internal sealed partial class CernealaSemanticModel
             attribute.NameToken.Text != "xmlns" && !attribute.NameToken.Text.StartsWith("xmlns:", StringComparison.Ordinal));
         if (!element.Children.OfType<ElementSyntax>().Any() || hasText || hasAttribute)
         {
-            AddShapeDiagnostic(element.NameToken.Span, element.Name + " requires exactly one ConeCollider2D child.");
+            AddShapeDiagnostic(element.NameToken.Span, element.Name + " requires exactly one " + requiredChild + " child.");
         }
 
         if (parents.TryGetValue(element, out ElementSyntax? owner) && owner is not null &&
