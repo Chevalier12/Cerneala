@@ -117,13 +117,13 @@ public sealed class SkiaTextRasterizer
         if (matchedTypeface is null)
         {
             SkiaFont fallbackFont = new(SKTypeface.Default, textRun.Font.FamilyName, textRun.Size);
-            return rasterize(new DrawTextRun(fallbackFont, textRun.Text, textRun.Size), fallbackFont);
+            return rasterize(new DrawTextRun(fallbackFont, textRun.Text, textRun.Size, textRun.Direction), fallbackFont);
         }
 
         using (matchedTypeface)
         {
             SkiaFont resolvedFont = new(matchedTypeface, textRun.Font.FamilyName, textRun.Size);
-            return rasterize(new DrawTextRun(resolvedFont, textRun.Text, textRun.Size), resolvedFont);
+            return rasterize(new DrawTextRun(resolvedFont, textRun.Text, textRun.Size, textRun.Direction), resolvedFont);
         }
     }
 

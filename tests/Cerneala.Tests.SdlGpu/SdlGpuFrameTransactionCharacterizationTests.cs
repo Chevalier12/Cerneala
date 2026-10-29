@@ -2030,6 +2030,7 @@ public sealed class SdlGpuFrameTransactionCharacterizationTests
             font is SkiaFont skiaFont ? skiaFont.Typeface : font,
             text,
             size,
+            DrawTextDirection.Auto,
             CoordinateScale: 1,
             PixelPhase: new DrawPoint(0.125f, 0));
         return new TextCommandScenario(
@@ -2046,6 +2047,7 @@ public sealed class SdlGpuFrameTransactionCharacterizationTests
             new object(),
             text,
             Size: 8,
+            Direction: DrawTextDirection.Auto,
             CoordinateScale: 1,
             PixelPhase: new DrawPoint(0.125f, 0.375f));
         return new TextAtlasKeySet(
@@ -2184,6 +2186,7 @@ public sealed class SdlGpuFrameTransactionCharacterizationTests
                     new object(),
                     $"direct-{createdRevision}-{x}-{y}",
                     8,
+                    DrawTextDirection.Auto,
                     1,
                     default),
                 SdlGpuColorWriteMask.Red),

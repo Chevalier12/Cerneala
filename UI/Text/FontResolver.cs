@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Cerneala.Drawing;
 using Cerneala.Drawing.Text;
 using Cerneala.UI.Resources;
@@ -6,6 +7,8 @@ namespace Cerneala.UI.Text;
 
 public sealed class FontResolver
 {
+    private static readonly ConditionalWeakTable<IResourceProvider, StrongBox<long>> ProviderNumbers = new();
+    private static long nextProviderNumber;
     private readonly IFontSource? fontSource;
     private readonly IResourceProvider? resourceProvider;
 
@@ -105,8 +108,16 @@ public sealed class FontResolver
         }
 
         FontResource resource = resourceProvider.GetResource(id);
-        return new ResolvedTextFont(resource.Resolve(), $"resource:{id}:{GetResourceVersion(id)}");
+        return new ResolvedTextFont(
+            resource.Resolve(),
+            $"resource:{id}:{GetProviderNumber(resourceProvider)}:{GetResourceVersion(id)}");
     }
+
+    // Two providers can hold the same id at the same version, so the identity also names the provider. Otherwise text
+    // measured with the font of one provider reuses the cached layout of the other, for example after
+    // UIRoot.SetResourceProvider replaces the root provider.
+    private static long GetProviderNumber(IResourceProvider provider) =>
+        ProviderNumbers.GetValue(provider, static _ => new StrongBox<long>(Interlocked.Increment(ref nextProviderNumber))).Value;
 
     private long GetResourceVersion(ResourceId<FontResource> id)
     {

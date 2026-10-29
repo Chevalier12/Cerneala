@@ -25,7 +25,7 @@ There are **two layout engines**:
 | `LineBreakService` | `UI/Text/LineBreakService.cs` | Splits text into lines and applies ellipsis, through `UnicodeLineBreakEngine`; measures widths with the shaper | `LineBreakService.Default` |
 | `UnicodeLineBreakEngine` | `Drawing/Text/UnicodeLineBreakEngine.cs` (internal) | Rule-based greedy wrapping on text elements (grapheme clusters) | static |
 | `TextRenderer` | `UI/Text/TextRenderer.cs` | Measures again (cache hit), then calls `DrawingContext.DrawText` once per line | `TextRenderer.Default`, or one per control |
-| `FontResolver`, `ResolvedTextFont` | `UI/Text/FontResolver.cs`, `ResolvedTextFont.cs` | Turns a `TextAspect` into an `IDrawFont` plus a string identity (`"Family:Size"`, or `"resource:{id}:{version}"` for a font resource); no caching | `FontResolver.Default` |
+| `FontResolver`, `ResolvedTextFont` | `UI/Text/FontResolver.cs`, `ResolvedTextFont.cs` | Turns a `TextAspect` into an `IDrawFont` plus a string identity (`"Family:Size"`, or `"resource:{id}:{provider}:{version}"` for a font resource, where `{provider}` is a process-wide number per provider instance, so two providers with the same id and version never share a layout cache entry); no caching | `FontResolver.Default` |
 | `TextLineMetrics` | `UI/Text/TextLineMetrics.cs` | Line height and baseline, from the sample `"Ag"` | static |
 | `TextShaper`, `SkiaTextShaper` | `Drawing/Text/TextShaper.cs`, `SkiaTextShaper.cs` | HarfBuzz shaping (`HarfBuzzSharp`) for `SkiaFont`; shape cache of 4,096 entries per typeface | static, process-wide |
 | `IDrawFont`, `IFontSource` | `Drawing/IDrawFont.cs`, `Drawing/IFontSource.cs` | `IDrawFont` has only `FamilyName` and `Size`; `IFontSource.LoadFont(familyName, size)` | contract |

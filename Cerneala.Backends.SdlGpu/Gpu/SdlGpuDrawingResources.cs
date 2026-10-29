@@ -1614,10 +1614,12 @@ internal readonly record struct SdlGpuTextAtlasEntries(
     };
 }
 
+// The direction is part of the key because the same text gives other glyphs in another shaping direction.
 internal readonly record struct SdlGpuTextRasterKey(
     object FontIdentity,
     string Text,
     float Size,
+    DrawTextDirection Direction,
     float CoordinateScale,
     DrawPoint PixelPhase);
 
