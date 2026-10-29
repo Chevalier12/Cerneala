@@ -22,19 +22,22 @@ internal static class SkiaTextBlobCache
             font,
             size,
             shapeResult.Text,
+            shapeResult.Direction,
             shapeResult.GlyphIdBuffer,
             shapeResult.GlyphPositionBuffer);
     }
 
+    // The glyph order of a text depends on the direction it was shaped in, so the direction is part of the key.
     public static Lease Rent(
         SkiaFont font,
         float size,
         string text,
+        DrawTextDirection direction,
         ushort[] glyphIds,
         DrawPoint[] glyphPositions)
     {
         TypefaceCache cache = Caches.GetValue(font.Typeface, _ => new TypefaceCache());
-        CacheKey key = new(text, size);
+        CacheKey key = new(text, size, direction);
         return cache.Rent(key, font, glyphIds, glyphPositions);
     }
 
@@ -143,5 +146,5 @@ internal static class SkiaTextBlobCache
         }
     }
 
-    private readonly record struct CacheKey(string Text, float Size);
+    private readonly record struct CacheKey(string Text, float Size, DrawTextDirection Direction);
 }

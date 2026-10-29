@@ -428,7 +428,8 @@ internal static class DrawTextLayoutEngine
         float Size,
         IDrawBrush Brush,
         float Opacity,
-        UnicodeTextDirection Direction,
+        // The embedding level of Unicode UAX #9: an odd level is right-to-left.
+        int Level,
         float Width,
         bool IsWhitespace,
         int SpanIndex);
@@ -499,13 +500,17 @@ internal static class DrawTextLayoutEngine
             }
         }
 
+        // As in UAX #9, the levels and the base direction belong to the paragraph, so every wrapped line of a paragraph has
+        // the same direction.
+        UnicodeBidiLevels bidiLevels = UnicodeBidiEngine.ResolveLevels(text, MapRequestedDirection(options.Direction));
         List<DrawTextLayoutLine> lines = [];
         float y = 0;
         float maximumRight = 0;
         for (int index = 0; index < accepted.Count; index++)
         {
             UnicodeLineSegment segment = accepted[index];
-            DrawTextDirection baseDirection = ResolveBaseDirection(segment.Text, options.Direction);
+            int paragraphLevel = bidiLevels.GetParagraphLevel(segment.SourceStart);
+            DrawTextDirection baseDirection = MapLevel(paragraphLevel);
             LineMetrics contentMetrics = ResolveLineMetrics(ranges, segment, options.Scale);
             float contentHeight = contentMetrics.Height;
             float contentBaseline = contentMetrics.Baseline;
@@ -518,7 +523,7 @@ internal static class DrawTextLayoutEngine
             // The candidates decide it, so a line after which MaxLines or MaxHeight hides more of the paragraph is justified.
             bool justify = options.Alignment == DrawTextAlignment.Justify &&
                 !segment.IsTrimmed && !EndsParagraph(text, candidates, index);
-            Fragment[] fragments = CreateFragments(text, ranges, segment, options.Scale, baseDirection, justify);
+            Fragment[] fragments = CreateFragments(text, ranges, segment, options.Scale, bidiLevels, paragraphLevel, justify);
             float contentWidth = fragments.Sum(static fragment => fragment.Width);
             float layoutWidth = float.IsFinite(options.MaxWidth)
                 ? options.MaxWidth
@@ -526,13 +531,20 @@ internal static class DrawTextLayoutEngine
             float justification = justify
                 ? ResolveJustification(layoutWidth, contentWidth, fragments)
                 : 0;
-            float x = ResolveAlignmentOffset(options.Alignment, baseDirection, layoutWidth, contentWidth);
+            // A stretched line fills the layout width. A justified line that is not stretched starts at its start edge.
+            float lineX = ResolveAlignmentOffset(
+                options.Alignment,
+                baseDirection,
+                layoutWidth,
+                justification > 0 ? layoutWidth : contentWidth);
+            float x = lineX;
             List<DrawTextLayoutRun> runs = [];
             foreach (Fragment fragment in fragments)
             {
                 if (fragment.Text.Length > 0)
                 {
-                    DrawTextRun textRun = new(fragment.Font, fragment.Text, fragment.Size);
+                    DrawTextDirection runDirection = MapLevel(fragment.Level);
+                    DrawTextRun textRun = new(fragment.Font, fragment.Text, fragment.Size, runDirection);
                     // A justified space includes its share of the extra width, so the runs of the line touch each other.
                     float runWidth = fragment.IsWhitespace ? fragment.Width + justification : fragment.Width;
                     DrawRect runBounds = new(x, y, runWidth, lineHeight);
@@ -541,7 +553,7 @@ internal static class DrawTextLayoutEngine
                         new DrawPoint(x, y + baseline),
                         fragment.Brush,
                         fragment.Opacity,
-                        MapDirection(fragment.Direction),
+                        runDirection,
                         runBounds,
                         fragment.SpanIndex));
                 }
@@ -552,8 +564,7 @@ internal static class DrawTextLayoutEngine
                 }
             }
 
-            float actualWidth = MathF.Max(0, x - ResolveAlignmentOffset(options.Alignment, baseDirection, layoutWidth, contentWidth));
-            float lineX = ResolveAlignmentOffset(options.Alignment, baseDirection, layoutWidth, contentWidth);
+            float actualWidth = MathF.Max(0, x - lineX);
             DrawRect bounds = new(lineX, y, actualWidth, lineHeight);
             lines.Add(new DrawTextLayoutLine(
                 runs.ToArray(),
@@ -749,28 +760,30 @@ internal static class DrawTextLayoutEngine
         SpanRange[] ranges,
         UnicodeLineSegment segment,
         float scale,
-        DrawTextDirection baseDirection,
-        bool preserveClusters)
+        UnicodeBidiLevels bidiLevels,
+        int paragraphLevel,
+        bool separateWhitespace)
     {
         List<Fragment> logical = [];
         int sourceEnd = segment.SourceStart + segment.SourceLength;
-        foreach (UnicodeTextElement element in UnicodeLineBreakEngine.CreateTextElements(
+        UnicodeTextElement[] elements = UnicodeLineBreakEngine.CreateTextElements(
             text,
             segment.SourceStart,
-            segment.SourceLength))
+            segment.SourceLength);
+        // Unicode UAX #9 rule L1: the white space at the end of a line has the paragraph level.
+        int trailingWhitespace = elements.Length;
+        while (trailingWhitespace > 0 && UnicodeLineBreakEngine.IsBreakWhitespace(elements[trailingWhitespace - 1].Text))
         {
+            trailingWhitespace--;
+        }
+
+        for (int index = 0; index < elements.Length; index++)
+        {
+            UnicodeTextElement element = elements[index];
             int spanIndex = FindSpanIndex(ranges, element.Start);
             DrawTextSpan span = ranges[spanIndex].Span;
             IDrawFont font = ResolveFont(span, element.Text, scale);
-            UnicodeTextDirection direction = UnicodeBidiEngine.GetDirection(element.Text);
-            if (direction == UnicodeTextDirection.Neutral)
-            {
-                direction = logical.Count > 0
-                    ? logical[^1].Direction
-                    : baseDirection == DrawTextDirection.RightToLeft
-                        ? UnicodeTextDirection.RightToLeft
-                        : UnicodeTextDirection.LeftToRight;
-            }
+            int level = index >= trailingWhitespace ? paragraphLevel : bidiLevels.GetLevel(element.Start);
             AddOrMerge(
                 logical,
                 new Fragment(
@@ -779,11 +792,11 @@ internal static class DrawTextLayoutEngine
                     span.Size * scale,
                     span.Brush,
                     span.Opacity,
-                    direction,
-                    MeasureLiteral(element.Text, font, span.Size * scale),
+                    level,
+                    0,
                     UnicodeLineBreakEngine.IsBreakWhitespace(element.Text),
                     spanIndex),
-                preserveClusters);
+                separateWhitespace);
         }
 
         if (segment.IsTrimmed && segment.Text.EndsWith(UnicodeLineBreakEngine.Ellipsis, StringComparison.Ordinal))
@@ -792,9 +805,6 @@ internal static class DrawTextLayoutEngine
             DrawTextSpan span = ranges[spanIndex].Span;
             // The ellipsis is a neutral at the end of the line, so it takes the paragraph direction (UAX #9 rules N1 and N2)
             // and ReorderVisually keeps it at the visual end of the line.
-            UnicodeTextDirection direction = baseDirection == DrawTextDirection.RightToLeft
-                ? UnicodeTextDirection.RightToLeft
-                : UnicodeTextDirection.LeftToRight;
             AddOrMerge(
                 logical,
                 new Fragment(
@@ -803,40 +813,51 @@ internal static class DrawTextLayoutEngine
                     span.Size * scale,
                     span.Brush,
                     span.Opacity,
-                    direction,
-                    MeasureLiteral(UnicodeLineBreakEngine.Ellipsis, span, scale),
+                    paragraphLevel,
+                    0,
                     false,
                     spanIndex),
-                preserveClusters);
+                separateWhitespace);
         }
 
-        ReorderVisually(logical, baseDirection);
+        // A fragment is drawn as one shaped run, so its width is the width of its whole text, as the line breaker measured
+        // it: joined Arabic letters are narrower than the same letters measured one by one.
+        for (int index = 0; index < logical.Count; index++)
+        {
+            Fragment fragment = logical[index];
+            logical[index] = fragment with { Width = MeasureLiteral(fragment.Text, fragment.Font, fragment.Size) };
+        }
+
+        ReorderVisually(logical);
         return logical.ToArray();
     }
 
     // Unicode UAX #9 rule L2: from the highest embedding level down to the lowest odd level, reverse every sequence of
-    // fragments at that level or higher. A right-to-left fragment has level 1; a left-to-right fragment has the base level,
-    // 0 in a left-to-right line and 2 in a right-to-left line. So the fragments of a right-to-left word in a left-to-right
-    // line, and of a left-to-right word in a right-to-left line, keep the reading order of their word. This matters when
-    // justification keeps every grapheme as its own fragment.
-    private static void ReorderVisually(List<Fragment> fragments, DrawTextDirection baseDirection)
+    // fragments at that level or higher. So the fragments of a right-to-left word in a left-to-right line, of a
+    // left-to-right word in a right-to-left line, and of a number in a right-to-left word keep the reading order of their
+    // word. The text of one fragment stays in logical order: the shaper orders its glyphs in the fragment's direction.
+    private static void ReorderVisually(List<Fragment> fragments)
     {
-        int leftToRightLevel = baseDirection == DrawTextDirection.RightToLeft ? 2 : 0;
-        int Level(Fragment fragment) => fragment.Direction == UnicodeTextDirection.RightToLeft ? 1 : leftToRightLevel;
+        if (fragments.Count == 0)
+        {
+            return;
+        }
 
-        for (int level = Math.Max(1, leftToRightLevel); level >= 1; level--)
+        int highest = fragments.Max(static fragment => fragment.Level);
+        int lowestOdd = fragments.Min(static fragment => fragment.Level) | 1;
+        for (int level = highest; level >= lowestOdd; level--)
         {
             int index = 0;
             while (index < fragments.Count)
             {
-                if (Level(fragments[index]) < level)
+                if (fragments[index].Level < level)
                 {
                     index++;
                     continue;
                 }
 
                 int end = index + 1;
-                while (end < fragments.Count && Level(fragments[end]) >= level)
+                while (end < fragments.Count && fragments[end].Level >= level)
                 {
                     end++;
                 }
@@ -847,22 +868,24 @@ internal static class DrawTextLayoutEngine
         }
     }
 
-    private static void AddOrMerge(List<Fragment> fragments, Fragment candidate, bool preserveClusters)
+    // Justification widens the white space only, so a justified line keeps each white space element as a fragment of its
+    // own and still merges the letters of a word, which the shaper then joins as on any other line.
+    private static void AddOrMerge(List<Fragment> fragments, Fragment candidate, bool separateWhitespace)
     {
-        if (!preserveClusters && fragments.Count > 0)
+        if (fragments.Count > 0)
         {
             Fragment previous = fragments[^1];
-            if (ReferenceEquals(previous.Font, candidate.Font) &&
+            if (!(separateWhitespace && (previous.IsWhitespace || candidate.IsWhitespace)) &&
+                ReferenceEquals(previous.Font, candidate.Font) &&
                 ReferenceEquals(previous.Brush, candidate.Brush) &&
                 previous.SpanIndex == candidate.SpanIndex &&
                 previous.Size == candidate.Size &&
                 previous.Opacity == candidate.Opacity &&
-                previous.Direction == candidate.Direction)
+                previous.Level == candidate.Level)
             {
                 fragments[^1] = previous with
                 {
                     Text = previous.Text + candidate.Text,
-                    Width = previous.Width + candidate.Width,
                     IsWhitespace = false
                 };
                 return;
@@ -908,19 +931,17 @@ internal static class DrawTextLayoutEngine
         return ranges.Length - 1;
     }
 
-    private static DrawTextDirection ResolveBaseDirection(string text, DrawTextDirection requested)
-    {
-        if (requested != DrawTextDirection.Auto)
+    // Auto resolves the direction of each paragraph from its text.
+    private static UnicodeTextDirection? MapRequestedDirection(DrawTextDirection direction) =>
+        direction switch
         {
-            return requested;
-        }
-        return UnicodeBidiEngine.GetBaseDirection(text) == UnicodeTextDirection.RightToLeft
-            ? DrawTextDirection.RightToLeft
-            : DrawTextDirection.LeftToRight;
-    }
+            DrawTextDirection.LeftToRight => UnicodeTextDirection.LeftToRight,
+            DrawTextDirection.RightToLeft => UnicodeTextDirection.RightToLeft,
+            _ => null
+        };
 
-    private static DrawTextDirection MapDirection(UnicodeTextDirection direction) =>
-        direction == UnicodeTextDirection.RightToLeft
+    private static DrawTextDirection MapLevel(int level) =>
+        (level & 1) == 1
             ? DrawTextDirection.RightToLeft
             : DrawTextDirection.LeftToRight;
 
@@ -948,6 +969,8 @@ internal static class DrawTextLayoutEngine
             DrawTextAlignment.Left => 0,
             DrawTextAlignment.End when direction == DrawTextDirection.LeftToRight => remaining,
             DrawTextAlignment.Start when direction == DrawTextDirection.RightToLeft => remaining,
+            // As in WPF, a justified line that is not stretched is aligned to its start edge.
+            DrawTextAlignment.Justify when direction == DrawTextDirection.RightToLeft => remaining,
             _ => 0
         };
     }

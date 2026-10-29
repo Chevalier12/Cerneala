@@ -24,7 +24,7 @@ public sealed class SkiaTextShaper
         }
 
         ShapeCache cache = ShapesByTypeface.GetValue(font.Typeface, _ => new ShapeCache());
-        ShapeCacheKey key = new(textRun.Text, textRun.Size);
+        ShapeCacheKey key = new(textRun.Text, textRun.Size, textRun.Direction);
         return cache.GetOrAdd(key, () => ShapeCore(textRun, font));
     }
 
@@ -32,6 +32,14 @@ public sealed class SkiaTextShaper
     {
         using HarfBuzzBuffer buffer = new();
         buffer.AddUtf16(textRun.Text);
+        // HarfBuzz guesses only the properties that are not set, so the script is still guessed from the text.
+        if (textRun.Direction != DrawTextDirection.Auto)
+        {
+            buffer.Direction = textRun.Direction == DrawTextDirection.RightToLeft
+                ? Direction.RightToLeft
+                : Direction.LeftToRight;
+        }
+
         buffer.GuessSegmentProperties();
 
         CachedHarfBuzzFace cachedFace = FaceCache.GetValue(
@@ -50,7 +58,8 @@ public sealed class SkiaTextShaper
             textRun.Text,
             glyphIds,
             glyphPositions,
-            advanceWidth);
+            advanceWidth,
+            textRun.Direction);
     }
 
     private static ushort[] GetGlyphIds(HarfBuzzBuffer buffer)
@@ -153,5 +162,5 @@ public sealed class SkiaTextShaper
         }
     }
 
-    private readonly record struct ShapeCacheKey(string Text, float Size);
+    private readonly record struct ShapeCacheKey(string Text, float Size, DrawTextDirection Direction);
 }

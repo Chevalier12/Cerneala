@@ -115,6 +115,48 @@ public sealed class FontResourceInvalidationTests
         Assert.Same(serifFont, DrawnFont(root));
     }
 
+    // Issue #1163: the two providers give the same font identity ("resource:Body:1"), so only the swap tells them apart.
+    [Theory]
+    [InlineData("ResourceStore")]
+    [InlineData("ResourceDictionary")]
+    public void SwappingTheRootResourceProviderDrawsTextBlockWithTheFontOfTheNewProvider(string providerType)
+    {
+        ResourceId<FontResource> id = new("Body");
+        TestFont regularFont = new("Regular", 16);
+        TestFont largeFont = new("Large", 32);
+        IResourceProvider regular = CreateProvider(providerType, id, regularFont);
+        IResourceProvider large = CreateProvider(providerType, id, largeFont);
+        UIRoot root = new(400, 400);
+        root.SetResourceProvider(regular);
+        TextBlock textBlock = new()
+        {
+            Text = "Hello",
+            FontResourceId = id
+        };
+        root.VisualChildren.Add(textBlock);
+        root.ProcessFrame();
+        Assert.Same(regularFont, DrawnFont(root));
+
+        root.SetResourceProvider(large);
+        root.ProcessFrame();
+
+        Assert.Same(largeFont, DrawnFont(root));
+    }
+
+    private static IResourceProvider CreateProvider(string providerType, ResourceId<FontResource> id, IDrawFont font)
+    {
+        if (providerType == "ResourceStore")
+        {
+            ResourceStore store = new();
+            store.SetResource(id, new FontResource(font));
+            return store;
+        }
+
+        ResourceDictionary dictionary = new();
+        dictionary.SetResource(id, new FontResource(font));
+        return dictionary;
+    }
+
     private static IDrawFont DrawnFont(UIRoot root)
     {
         DrawCommandList commands = root.RetainedRenderer.Commit(root);

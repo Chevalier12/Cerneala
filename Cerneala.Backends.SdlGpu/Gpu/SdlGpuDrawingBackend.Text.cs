@@ -79,6 +79,7 @@ internal sealed partial class SdlGpuDrawingBackend
             textRun.Font is SkiaFont skiaFont ? skiaFont.Typeface : textRun.Font,
             textRun.Text,
             textRun.Size,
+            textRun.Direction,
             CoordinateScale,
             phase);
         SdlGpuTextLayerTextureKey redKey = new(

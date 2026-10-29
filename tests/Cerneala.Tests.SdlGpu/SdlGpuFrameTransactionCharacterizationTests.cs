@@ -2184,6 +2184,7 @@ public sealed class SdlGpuFrameTransactionCharacterizationTests
                     new object(),
                     $"direct-{createdRevision}-{x}-{y}",
                     8,
+                    DrawTextDirection.Auto,
                     1,
                     default),
                 SdlGpuColorWriteMask.Red),

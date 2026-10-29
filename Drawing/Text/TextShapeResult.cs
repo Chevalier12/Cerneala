@@ -19,7 +19,7 @@ public readonly record struct TextShapeResult
     }
 
     public TextShapeResult(string text, int glyphCount, ushort[] glyphIds, DrawPoint[] glyphPositions, float advanceWidth)
-        : this(text, glyphCount, glyphIds, glyphPositions, advanceWidth, takeOwnership: false)
+        : this(text, glyphCount, glyphIds, glyphPositions, advanceWidth, DrawTextDirection.Auto, takeOwnership: false)
     {
     }
 
@@ -29,6 +29,7 @@ public readonly record struct TextShapeResult
         ushort[] glyphIds,
         DrawPoint[] glyphPositions,
         float advanceWidth,
+        DrawTextDirection direction,
         bool takeOwnership)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(glyphCount);
@@ -55,6 +56,7 @@ public readonly record struct TextShapeResult
         _glyphPositions = takeOwnership ? glyphPositions : (DrawPoint[])glyphPositions.Clone();
         GlyphCount = glyphCount;
         AdvanceWidth = advanceWidth;
+        Direction = direction;
     }
 
     public string Text => _text ?? string.Empty;
@@ -71,11 +73,15 @@ public readonly record struct TextShapeResult
 
     internal DrawPoint[] GlyphPositionBuffer => _glyphPositions ?? Array.Empty<DrawPoint>();
 
+    // The DrawTextRun.Direction the glyphs were shaped with. The same text gives other glyphs in another direction.
+    internal DrawTextDirection Direction { get; }
+
     internal static TextShapeResult FromOwnedGlyphs(
         string text,
         ushort[] glyphIds,
         DrawPoint[] glyphPositions,
-        float advanceWidth)
+        float advanceWidth,
+        DrawTextDirection direction)
     {
         return new TextShapeResult(
             text,
@@ -83,6 +89,7 @@ public readonly record struct TextShapeResult
             glyphIds,
             glyphPositions,
             advanceWidth,
+            direction,
             takeOwnership: true);
     }
 
