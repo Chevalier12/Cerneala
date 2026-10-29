@@ -271,9 +271,10 @@ public sealed class SdlGpuTextCacheContractTests
     public void TextRasterKeySeparatesGeometryAndExcludesForegroundColor()
     {
         object firstFont = new(), secondFont = new();
-        SdlGpuTextRasterKey key = new(firstFont, "key", 16, 1, new DrawPoint(0.125f, 0.125f));
+        SdlGpuTextRasterKey key = new(firstFont, "key", 16, DrawTextDirection.Auto, 1, new DrawPoint(0.125f, 0.125f));
         Assert.NotEqual(key, key with { FontIdentity = secondFont });
         Assert.NotEqual(key, key with { Size = 17 });
+        Assert.NotEqual(key, key with { Direction = DrawTextDirection.LeftToRight });
         Assert.NotEqual(key, key with { CoordinateScale = 1.25f });
         Assert.NotEqual(key, key with { Text = "changed" });
         Assert.DoesNotContain(typeof(SdlGpuTextRasterKey).GetProperties(), property => property.Name.Contains("Color"));
@@ -593,7 +594,7 @@ public sealed class SdlGpuTextCacheContractTests
     {
         internal KeySet(string text, object? fontIdentity = null)
         {
-            SdlGpuTextRasterKey raster = new(fontIdentity ?? this, text, 16, 1, default);
+            SdlGpuTextRasterKey raster = new(fontIdentity ?? this, text, 16, DrawTextDirection.Auto, 1, default);
             Red = new(raster, SdlGpuColorWriteMask.Red);
             Green = new(raster, SdlGpuColorWriteMask.Green);
             Blue = new(raster, SdlGpuColorWriteMask.Blue);

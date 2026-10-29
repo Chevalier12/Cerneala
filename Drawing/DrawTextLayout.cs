@@ -669,9 +669,13 @@ internal static class DrawTextLayoutEngine
     private static float MeasureLiteral(string value, DrawTextSpan span, float scale) =>
         MeasureLiteral(value, span.Font, span.Size * scale);
 
-    private static float MeasureLiteral(string value, IDrawFont font, float size)
+    private static float MeasureLiteral(
+        string value,
+        IDrawFont font,
+        float size,
+        DrawTextDirection direction = DrawTextDirection.Auto)
     {
-        DrawTextRun run = new(font, value, size);
+        DrawTextRun run = new(font, value, size, direction);
         return TextShaper.Default.TryShape(run, out TextShapeResult result)
             ? MathF.Abs(result.AdvanceWidth)
             : StringInfo.ParseCombiningCharacters(value).Length * size * 0.5f;
@@ -821,11 +825,15 @@ internal static class DrawTextLayoutEngine
         }
 
         // A fragment is drawn as one shaped run, so its width is the width of its whole text, as the line breaker measured
-        // it: joined Arabic letters are narrower than the same letters measured one by one.
+        // it: joined Arabic letters are narrower than the same letters measured one by one. It is measured in the direction
+        // it is drawn in, so the shaper shapes the run once for both.
         for (int index = 0; index < logical.Count; index++)
         {
             Fragment fragment = logical[index];
-            logical[index] = fragment with { Width = MeasureLiteral(fragment.Text, fragment.Font, fragment.Size) };
+            logical[index] = fragment with
+            {
+                Width = MeasureLiteral(fragment.Text, fragment.Font, fragment.Size, MapLevel(fragment.Level))
+            };
         }
 
         ReorderVisually(logical);

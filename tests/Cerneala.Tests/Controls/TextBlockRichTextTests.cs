@@ -48,6 +48,14 @@ public sealed class TextBlockRichTextTests
         return commands.Where(static command => command.Kind == DrawCommandKind.DrawText).ToArray();
     }
 
+    // The right end of a drawn text run: its origin plus the advance width of its shaped glyphs. A justified line draws
+    // a whole word as one run, so the start of the last run is not the right edge of the line.
+    private static float RightOf(DrawCommand command)
+    {
+        Assert.True(TextShaper.Default.TryShape(command.TextRun!, out TextShapeResult shape));
+        return command.Position.X + shape.AdvanceWidth;
+    }
+
     private static float SingleLineHeight(string family = Family, float size = 16)
     {
         TextBlock probe = new() { Text = "Hg", FontFamily = family, FontSize = size };
@@ -115,7 +123,7 @@ public sealed class TextBlockRichTextTests
 
         float[] lineYs = text.Select(static command => command.Position.Y).Distinct().OrderBy(static y => y).ToArray();
         Assert.True(lineYs.Length >= 3, $"{lineYs.Length} lines");
-        float RightEdge(float y) => text.Where(command => command.Position.Y == y).Max(static command => command.Position.X);
+        float RightEdge(float y) => text.Where(command => command.Position.Y == y).Max(static command => RightOf(command));
         for (int index = 0; index < lineYs.Length - 1; index++)
         {
             Assert.True(RightEdge(lineYs[index]) > 2 + 80, $"wrapped line {index} right edge {RightEdge(lineYs[index])}");
